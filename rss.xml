@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?><rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title><![CDATA[bananaappletw's blog]]></title><description><![CDATA[bananaappletw's blog]]></description><link>https://bananaappletw.github.io</link><generator>GatsbyJS</generator><lastBuildDate>Sun, 24 May 2020 12:04:12 GMT</lastBuildDate><item><title><![CDATA[AWS account strategy]]></title><description><![CDATA[基本介紹 登入介面會需要  Account ID (12 digits) or account alias  IAM user name AWS account: 12 digits 和 account alias 都是獨特的(大部分程式方面都要寫 12 digits…]]></description><link>https://bananaappletw.github.io/aws-account-strategy/</link><guid isPermaLink="false">https://bananaappletw.github.io/aws-account-strategy/</guid><content:encoded>&lt;h2&gt;基本介紹&lt;/h2&gt;
+<?xml version="1.0" encoding="UTF-8"?><rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title><![CDATA[bananaappletw's blog]]></title><description><![CDATA[bananaappletw's blog]]></description><link>https://bananaappletw.github.io</link><generator>GatsbyJS</generator><lastBuildDate>Sun, 24 May 2020 12:11:27 GMT</lastBuildDate><item><title><![CDATA[AWS account strategy]]></title><description><![CDATA[基本介紹 登入介面會需要  Account ID (12 digits) or account alias  IAM user name AWS account: 12 digits 和 account alias 都是獨特的(大部分程式方面都要寫 12 digits…]]></description><link>https://bananaappletw.github.io/aws-account-strategy/</link><guid isPermaLink="false">https://bananaappletw.github.io/aws-account-strategy/</guid><content:encoded>&lt;h2&gt;基本介紹&lt;/h2&gt;
 &lt;p&gt;登入介面會需要 &lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;Account ID (12 digits) or account alias &lt;/li&gt;
@@ -86,7 +86,7 @@
 &lt;ul&gt;
 &lt;li&gt;&lt;a href=&quot;https://aws.amazon.com/blogs/mt/tag/aws-multi-account-management/&quot; title=&quot;https://aws.amazon.com/blogs/mt/tag/aws-multi-account-management/&quot;&gt;https://aws.amazon.com/blogs/mt/tag/aws-multi-account-management/&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href=&quot;https://d0.awsstatic.com/aws-answers/AWS_Multi_Account_Security_Strategy.pdf&quot; title=&quot;https://d0.awsstatic.com/aws-answers/AWS_Multi_Account_Security_Strategy.pdf&quot;&gt;https://d0.awsstatic.com/aws-answers/AWS&lt;em&gt;Multi&lt;/em&gt;Account&lt;em&gt;Security&lt;/em&gt;Strategy.pdf&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;</content:encoded></item><item><title><![CDATA[Official website review]]></title><description><![CDATA[釐清需求 這次官網的目的是要做出一個靜態的網站 然後提供非技術人員能夠寫稿然後發表(包含上傳圖片還有一些比較客製化的樣式) 這種東西比較精確的名詞是 Static Site Generators 可以參考 https://www.staticgen.com…]]></description><link>https://bananaappletw.github.io/2019-07-03-official-website-review/</link><guid isPermaLink="false">https://bananaappletw.github.io/2019-07-03-official-website-review/</guid><pubDate>Wed, 03 Jul 2019 00:00:00 GMT</pubDate><content:encoded>&lt;h1&gt;釐清需求&lt;/h1&gt;
+&lt;/ul&gt;</content:encoded></item><item><title><![CDATA[Official website review]]></title><description><![CDATA[釐清需求 這次官網的目的是要做出一個靜態的網站 然後提供非技術人員能夠寫稿然後發表(包含上傳圖片還有一些比較客製化的樣式) 這種東西比較精確的名詞是 Static Site Generators 可以參考 https://www.staticgen.com…]]></description><link>https://bananaappletw.github.io/official-website-review/</link><guid isPermaLink="false">https://bananaappletw.github.io/official-website-review/</guid><pubDate>Wed, 03 Jul 2019 00:00:00 GMT</pubDate><content:encoded>&lt;h1&gt;釐清需求&lt;/h1&gt;
 &lt;p&gt;這次官網的目的是要做出一個靜態的網站&lt;/p&gt;
 &lt;p&gt;然後提供非技術人員能夠寫稿然後發表(包含上傳圖片還有一些比較客製化的樣式)&lt;/p&gt;
 &lt;p&gt;這種東西比較精確的名詞是 Static Site Generators&lt;/p&gt;
@@ -653,7 +653,7 @@ CSS rules:
 &lt;li&gt;&lt;a href=&quot;https://zellwk.com/blog/css-architecture-1/&quot; title=&quot;https://zellwk.com/blog/css-architecture-1/&quot;&gt;https://zellwk.com/blog/css-architecture-1/&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href=&quot;https://gist.github.com/Integralist/4960210&quot; title=&quot;https://gist.github.com/Integralist/4960210&quot;&gt;https://gist.github.com/Integralist/4960210&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href=&quot;https://css-tricks.com/css-modules-part-1-need/&quot; title=&quot;https://css-tricks.com/css-modules-part-1-need/&quot;&gt;https://css-tricks.com/css-modules-part-1-need/&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;</content:encoded></item><item><title><![CDATA[Review of bamboofox platform]]></title><description><![CDATA[記錄一下寫 bamboofox 平台的心得 其實當初這個平台是為了 migrate 以前的課程所建置的 當初的課程平台只能容納一個課程 所以主要的設計是要能容納多個課程為主 為了註冊方便就寫了 OAuth 登入 大部分的時間都是在 survey OAuth…]]></description><link>https://bananaappletw.github.io/2017-08-28-review-of-bamboofox-platform/</link><guid isPermaLink="false">https://bananaappletw.github.io/2017-08-28-review-of-bamboofox-platform/</guid><pubDate>Mon, 28 Aug 2017 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;記錄一下寫 bamboofox 平台的心得&lt;/p&gt;
+&lt;/ul&gt;</content:encoded></item><item><title><![CDATA[Review of bamboofox platform]]></title><description><![CDATA[記錄一下寫 bamboofox 平台的心得 其實當初這個平台是為了 migrate 以前的課程所建置的 當初的課程平台只能容納一個課程 所以主要的設計是要能容納多個課程為主 為了註冊方便就寫了 OAuth 登入 大部分的時間都是在 survey OAuth…]]></description><link>https://bananaappletw.github.io/review-of-bamboofox-platform/</link><guid isPermaLink="false">https://bananaappletw.github.io/review-of-bamboofox-platform/</guid><pubDate>Mon, 28 Aug 2017 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;記錄一下寫 bamboofox 平台的心得&lt;/p&gt;
 &lt;p&gt;其實當初這個平台是為了 migrate 以前的課程所建置的&lt;/p&gt;
 &lt;p&gt;當初的課程平台只能容納一個課程&lt;/p&gt;
 &lt;p&gt;所以主要的設計是要能容納多個課程為主&lt;/p&gt;
@@ -675,7 +675,7 @@ CSS rules:
 &lt;p&gt;然後慢慢把舊網站的資料改成新網站的形式&lt;/p&gt;
 &lt;p&gt;最後再直接 import 到新網站的資料庫&lt;/p&gt;</content:encoded></item><item><title><![CDATA[Rails on Ubuntu]]></title><description><![CDATA[Introduction 簡單記錄一下 Ruby on Rails server setup
 這裡用的是最新版的 Ubuntu 17.04 server 版
-這篇會教你設定 nginx passenger Let’s Encrypt(https) postfix(mail…]]></description><link>https://bananaappletw.github.io/2017-06-22-Rails-on-Ubuntu/</link><guid isPermaLink="false">https://bananaappletw.github.io/2017-06-22-Rails-on-Ubuntu/</guid><pubDate>Thu, 22 Jun 2017 00:00:00 GMT</pubDate><content:encoded>&lt;h1&gt;Introduction&lt;/h1&gt;
+這篇會教你設定 nginx passenger Let’s Encrypt(https) postfix(mail…]]></description><link>https://bananaappletw.github.io/Rails-on-Ubuntu/</link><guid isPermaLink="false">https://bananaappletw.github.io/Rails-on-Ubuntu/</guid><pubDate>Thu, 22 Jun 2017 00:00:00 GMT</pubDate><content:encoded>&lt;h1&gt;Introduction&lt;/h1&gt;
 &lt;p&gt;簡單記錄一下 Ruby on Rails server setup
 這裡用的是最新版的 Ubuntu 17.04 server 版
 這篇會教你設定&lt;/p&gt;
@@ -815,7 +815,7 @@ sudo apt-get update &amp;amp;&amp;amp; sudo apt-get install yarn&lt;/code&gt;&lt
         root /home/deploy/myapp/public;
 }&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 &lt;p&gt;重啟 nginx&lt;/p&gt;
-&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;text&quot;&gt;&lt;pre class=&quot;language-text&quot;&gt;&lt;code class=&quot;language-text&quot;&gt;sudo service nginx restart&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</content:encoded></item><item><title><![CDATA[Rails best practices]]></title><description><![CDATA[Introduction Rails best practices 是一個可以幫你檢查 Rails 專案架構的 gem 比如說你在 route 裡面增加了一些 routing path 但是你的 controller 沒有相對應的 action…]]></description><link>https://bananaappletw.github.io/2017-04-21-Rails-Best-practice/</link><guid isPermaLink="false">https://bananaappletw.github.io/2017-04-21-Rails-Best-practice/</guid><pubDate>Fri, 21 Apr 2017 00:00:00 GMT</pubDate><content:encoded>&lt;h1&gt;Introduction&lt;/h1&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;text&quot;&gt;&lt;pre class=&quot;language-text&quot;&gt;&lt;code class=&quot;language-text&quot;&gt;sudo service nginx restart&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</content:encoded></item><item><title><![CDATA[Rails best practices]]></title><description><![CDATA[Introduction Rails best practices 是一個可以幫你檢查 Rails 專案架構的 gem 比如說你在 route 裡面增加了一些 routing path 但是你的 controller 沒有相對應的 action…]]></description><link>https://bananaappletw.github.io/Rails-Best-practice/</link><guid isPermaLink="false">https://bananaappletw.github.io/Rails-Best-practice/</guid><pubDate>Fri, 21 Apr 2017 00:00:00 GMT</pubDate><content:encoded>&lt;h1&gt;Introduction&lt;/h1&gt;
 &lt;p&gt;Rails best practices 是一個可以幫你檢查 Rails 專案架構的 gem&lt;/p&gt;
 &lt;p&gt;比如說你在 route 裡面增加了一些 routing path 但是你的 controller 沒有相對應的 action 的話&lt;/p&gt;
 &lt;p&gt;它就會幫你檢查出來，並且顯示警告訊息&lt;/p&gt;
@@ -857,7 +857,7 @@ task default: [:rails_best_practices]&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;a href=&quot;https://github.com/railsbp/rails_best_practices&quot;&gt;Github&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;</content:encoded></item><item><title><![CDATA[Rubocop - Ruby static code analyzer]]></title><description><![CDATA[Rubocop 是一個 Ruby static code analyzer
-主要用來 format coding style Installation Add following line to Gemfile.rb Configuration Config…]]></description><link>https://bananaappletw.github.io/2017-02-04-Rubocop-Ruby-static-code-analyzer/</link><guid isPermaLink="false">https://bananaappletw.github.io/2017-02-04-Rubocop-Ruby-static-code-analyzer/</guid><pubDate>Sat, 04 Feb 2017 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;Rubocop 是一個 Ruby static code analyzer
+主要用來 format coding style Installation Add following line to Gemfile.rb Configuration Config…]]></description><link>https://bananaappletw.github.io/Rubocop-Ruby-static-code-analyzer/</link><guid isPermaLink="false">https://bananaappletw.github.io/Rubocop-Ruby-static-code-analyzer/</guid><pubDate>Sat, 04 Feb 2017 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;Rubocop 是一個 Ruby static code analyzer
 主要用來 format coding style&lt;/p&gt;
 &lt;h1&gt;Installation&lt;/h1&gt;
 &lt;p&gt;Add following line to Gemfile.rb&lt;/p&gt;
@@ -938,7 +938,7 @@ Rails.application.load_tasks
 task default: [:rubocop]&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 &lt;p&gt;這樣當你打 &lt;code class=&quot;language-text&quot;&gt;rake&lt;/code&gt; 的時候就會自動幫你檢查語法了&lt;/p&gt;
 &lt;p&gt;要是有不懂的名詞可以查 &lt;a href=&quot;http://www.rubydoc.info/github/bbatsov/rubocop/Rubocop/&quot;&gt;Official document&lt;/a&gt;&lt;/p&gt;</content:encoded></item><item><title><![CDATA[Concurrency vs parallelism]]></title><description><![CDATA[主要記錄一下兩者的差別 有興趣的話可以看一下這個 talk 簡單摘錄一下裡面的重點 像是這兩句就道出了主要的差別 Concurrency is about dealing with lots of things at once.
-Parallelism is about…]]></description><link>https://bananaappletw.github.io/2017-02-01-concurrency-vs-parallelism/</link><guid isPermaLink="false">https://bananaappletw.github.io/2017-02-01-concurrency-vs-parallelism/</guid><pubDate>Wed, 01 Feb 2017 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;主要記錄一下兩者的差別&lt;/p&gt;
+Parallelism is about…]]></description><link>https://bananaappletw.github.io/concurrency-vs-parallelism/</link><guid isPermaLink="false">https://bananaappletw.github.io/concurrency-vs-parallelism/</guid><pubDate>Wed, 01 Feb 2017 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;主要記錄一下兩者的差別&lt;/p&gt;
 &lt;p&gt;有興趣的話可以看一下這個 &lt;a href=&quot;https://talks.golang.org/2012/waza.slide#1&quot;&gt;talk&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;簡單摘錄一下裡面的重點&lt;/p&gt;
 &lt;p&gt;像是這兩句就道出了主要的差別&lt;/p&gt;
@@ -964,7 +964,7 @@ Parallelism 則是其中一種實踐這種概念的做法&lt;/p&gt;
 &lt;p&gt;&lt;img src=&quot;https://talks.golang.org/2012/waza/gophersimple2.jpg&quot;&gt;&lt;/p&gt;
 &lt;h1&gt;Parallelism&lt;/h1&gt;
 &lt;p&gt;parallelism 則是說，現在我的 CPU 核心不只一顆，既然工作是獨立的，那我就可以同時去做這些工作，所以有機會發生，兩堆不同的書，在同一時間被拿去燒&lt;/p&gt;
-&lt;p&gt;&lt;img src=&quot;https://talks.golang.org/2012/waza/gophersimple4.jpg&quot;&gt;&lt;/p&gt;</content:encoded></item><item><title><![CDATA[Preview file using send_file]]></title><description><![CDATA[在 Ruby on rails 裡面 通常都是因為要做檔案權限控管 所以才會使用  這個 method 如果不需要做檔案下載的權限控管的話 直接把檔案放在 public 資料夾即可 有 access control 的檔案下載可以參考這篇 carrierwave secure…]]></description><link>https://bananaappletw.github.io/2017-01-05-Preview-file-using-send-file/</link><guid isPermaLink="false">https://bananaappletw.github.io/2017-01-05-Preview-file-using-send-file/</guid><pubDate>Thu, 05 Jan 2017 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;在 Ruby on rails 裡面&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;https://talks.golang.org/2012/waza/gophersimple4.jpg&quot;&gt;&lt;/p&gt;</content:encoded></item><item><title><![CDATA[Preview file using send_file]]></title><description><![CDATA[在 Ruby on rails 裡面 通常都是因為要做檔案權限控管 所以才會使用  這個 method 如果不需要做檔案下載的權限控管的話 直接把檔案放在 public 資料夾即可 有 access control 的檔案下載可以參考這篇 carrierwave secure…]]></description><link>https://bananaappletw.github.io/Preview-file-using-send-file/</link><guid isPermaLink="false">https://bananaappletw.github.io/Preview-file-using-send-file/</guid><pubDate>Thu, 05 Jan 2017 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;在 Ruby on rails 裡面&lt;/p&gt;
 &lt;p&gt;通常都是因為要做檔案權限控管&lt;/p&gt;
 &lt;p&gt;所以才會使用 &lt;code class=&quot;language-text&quot;&gt;send_file&lt;/code&gt; 這個 method&lt;/p&gt;
 &lt;p&gt;如果不需要做檔案下載的權限控管的話&lt;/p&gt;
@@ -985,7 +985,7 @@ end&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;a href=&quot;http://api.rubyonrails.org/classes/ActionController/DataStreaming.html#method-i-send_file&quot;&gt;send_file&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;</content:encoded></item><item><title><![CDATA[db/seeds for carrierwave]]></title><description><![CDATA[這篇主要是紀錄對 Carrierwave 寫  的方法 單一檔案 Model 是 Material
-其中 attachment 欄位是紀錄檔案的欄位  通常會把測試的檔案放在  資料夾下 我有一個檔案路徑在   多個檔案 Database 是使用 sqlite…]]></description><link>https://bananaappletw.github.io/2017-01-04-db-seeds-for-carrierwave/</link><guid isPermaLink="false">https://bananaappletw.github.io/2017-01-04-db-seeds-for-carrierwave/</guid><pubDate>Wed, 04 Jan 2017 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;這篇主要是紀錄對 Carrierwave 寫 &lt;code class=&quot;language-text&quot;&gt;db/seeds&lt;/code&gt; 的方法&lt;/p&gt;
+其中 attachment 欄位是紀錄檔案的欄位  通常會把測試的檔案放在  資料夾下 我有一個檔案路徑在   多個檔案 Database 是使用 sqlite…]]></description><link>https://bananaappletw.github.io/db-seeds-for-carrierwave/</link><guid isPermaLink="false">https://bananaappletw.github.io/db-seeds-for-carrierwave/</guid><pubDate>Wed, 04 Jan 2017 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;這篇主要是紀錄對 Carrierwave 寫 &lt;code class=&quot;language-text&quot;&gt;db/seeds&lt;/code&gt; 的方法&lt;/p&gt;
 &lt;h1&gt;單一檔案&lt;/h1&gt;
 &lt;p&gt;Model 是 Material
 其中 attachment 欄位是紀錄檔案的欄位&lt;/p&gt;
@@ -1022,7 +1022,7 @@ attachments.map! do | attachment |
   attachment = File.new(File.join(&amp;quot;test/fixtures/files/&amp;quot;,attachment))
 end
 challenge.attachments = attachments
-challenge.save!&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</content:encoded></item><item><title><![CDATA[N+1 issue]]></title><description><![CDATA[Introduction 比如說你現在有兩個 Database Models 一個是 Cars 另一個是 Wheels 他們的關係會是 one to many 一台車會有多個輪子 每個輪子都會有一個 column: car_id…]]></description><link>https://bananaappletw.github.io/2016-12-05-N-1-issue/</link><guid isPermaLink="false">https://bananaappletw.github.io/2016-12-05-N-1-issue/</guid><pubDate>Mon, 05 Dec 2016 00:00:00 GMT</pubDate><content:encoded>&lt;h1&gt;Introduction&lt;/h1&gt;
+challenge.save!&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</content:encoded></item><item><title><![CDATA[N+1 issue]]></title><description><![CDATA[Introduction 比如說你現在有兩個 Database Models 一個是 Cars 另一個是 Wheels 他們的關係會是 one to many 一台車會有多個輪子 每個輪子都會有一個 column: car_id…]]></description><link>https://bananaappletw.github.io/N-1-issue/</link><guid isPermaLink="false">https://bananaappletw.github.io/N-1-issue/</guid><pubDate>Mon, 05 Dec 2016 00:00:00 GMT</pubDate><content:encoded>&lt;h1&gt;Introduction&lt;/h1&gt;
 &lt;p&gt;比如說你現在有兩個 Database Models&lt;/p&gt;
 &lt;p&gt;一個是 Cars 另一個是 Wheels&lt;/p&gt;
 &lt;p&gt;他們的關係會是 one to many&lt;/p&gt;
@@ -1044,7 +1044,7 @@ SELECT * FROM Wheels;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;a href=&quot;http://stackoverflow.com/questions/97197/what-is-the-n1-selects-issue&quot;&gt;stack overflow&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href=&quot;https://secure.phabricator.com/book/phabcontrib/article/n_plus_one/&quot;&gt;google search&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;</content:encoded></item><item><title><![CDATA[Virtualization]]></title><description><![CDATA[紀錄一下自己最近研讀虛擬化技術的筆記 因為最近要寫有關 qemu 的東西順便學習一下 在介紹之前讓我們先了解一下一些名詞 Hypervisor ( virtual machine monitor ) 用來管理和執行 virtual machine 的軟體 Host machine…]]></description><link>https://bananaappletw.github.io/2016-11-18-Virtualization/</link><guid isPermaLink="false">https://bananaappletw.github.io/2016-11-18-Virtualization/</guid><pubDate>Fri, 18 Nov 2016 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;紀錄一下自己最近研讀虛擬化技術的筆記&lt;/p&gt;
+&lt;/ul&gt;</content:encoded></item><item><title><![CDATA[Virtualization]]></title><description><![CDATA[紀錄一下自己最近研讀虛擬化技術的筆記 因為最近要寫有關 qemu 的東西順便學習一下 在介紹之前讓我們先了解一下一些名詞 Hypervisor ( virtual machine monitor ) 用來管理和執行 virtual machine 的軟體 Host machine…]]></description><link>https://bananaappletw.github.io/Virtualization/</link><guid isPermaLink="false">https://bananaappletw.github.io/Virtualization/</guid><pubDate>Fri, 18 Nov 2016 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;紀錄一下自己最近研讀虛擬化技術的筆記&lt;/p&gt;
 &lt;p&gt;因為最近要寫有關 qemu 的東西順便學習一下&lt;/p&gt;
 &lt;p&gt;在介紹之前讓我們先了解一下一些名詞&lt;/p&gt;
 &lt;h2&gt;Hypervisor ( virtual machine monitor )&lt;/h2&gt;
@@ -1091,7 +1091,7 @@ SELECT * FROM Wheels;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;a href=&quot;https://en.wikipedia.org/wiki/Virtual_machine&quot;&gt;Virtual machine wiki&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href=&quot;https://en.wikipedia.org/wiki/Hypervisor&quot;&gt;Hypervisor wiki&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;</content:encoded></item><item><title><![CDATA[Javascript function paramter default  value]]></title><description><![CDATA[Can be rewrited as following code First statement will evaluate value of s is true or not. If true, s is assigned to a. Else, statement will…]]></description><link>https://bananaappletw.github.io/2016-11-16-Javascript-function-paramter-default-value/</link><guid isPermaLink="false">https://bananaappletw.github.io/2016-11-16-Javascript-function-paramter-default-value/</guid><pubDate>Wed, 16 Nov 2016 00:00:00 GMT</pubDate><content:encoded>&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;text&quot;&gt;&lt;pre class=&quot;language-text&quot;&gt;&lt;code class=&quot;language-text&quot;&gt;function f(s)
+&lt;/ul&gt;</content:encoded></item><item><title><![CDATA[Javascript function paramter default  value]]></title><description><![CDATA[Can be rewrited as following code First statement will evaluate value of s is true or not. If true, s is assigned to a. Else, statement will…]]></description><link>https://bananaappletw.github.io/Javascript-function-paramter-default-value/</link><guid isPermaLink="false">https://bananaappletw.github.io/Javascript-function-paramter-default-value/</guid><pubDate>Wed, 16 Nov 2016 00:00:00 GMT</pubDate><content:encoded>&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;text&quot;&gt;&lt;pre class=&quot;language-text&quot;&gt;&lt;code class=&quot;language-text&quot;&gt;function f(s)
 {
 	var a = (s == undefined) ? &amp;#39;qq&amp;#39; : s;
 }&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
@@ -1107,10 +1107,10 @@ SELECT * FROM Wheels;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 &lt;p&gt;For further, you could directly write code like this in ES6.&lt;/p&gt;
 &lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;text&quot;&gt;&lt;pre class=&quot;language-text&quot;&gt;&lt;code class=&quot;language-text&quot;&gt;function f(s = &amp;#39;qq&amp;#39;)
 {
-}&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</content:encoded></item><item><title><![CDATA[My favorite script]]></title><description><![CDATA[Format code Full document can be found here. http://astyle.sourceforge.net/astyle.html]]></description><link>https://bananaappletw.github.io/2016-06-10-My-favorite-script/</link><guid isPermaLink="false">https://bananaappletw.github.io/2016-06-10-My-favorite-script/</guid><pubDate>Fri, 10 Jun 2016 00:00:00 GMT</pubDate><content:encoded>&lt;h2&gt;Format code&lt;/h2&gt;
+}&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</content:encoded></item><item><title><![CDATA[My favorite script]]></title><description><![CDATA[Format code Full document can be found here. http://astyle.sourceforge.net/astyle.html]]></description><link>https://bananaappletw.github.io/My-favorite-script/</link><guid isPermaLink="false">https://bananaappletw.github.io/My-favorite-script/</guid><pubDate>Fri, 10 Jun 2016 00:00:00 GMT</pubDate><content:encoded>&lt;h2&gt;Format code&lt;/h2&gt;
 &lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;text&quot;&gt;&lt;pre class=&quot;language-text&quot;&gt;&lt;code class=&quot;language-text&quot;&gt;astyle --style=allman --unpad-paren --pad-oper --convert-tabs --pad-header --delete-empty-lines [source_code_file]&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 &lt;p&gt;Full document can be found here.&lt;/p&gt;
-&lt;p&gt;&lt;a href=&quot;http://astyle.sourceforge.net/astyle.html&quot;&gt;http://astyle.sourceforge.net/astyle.html&lt;/a&gt;&lt;/p&gt;</content:encoded></item><item><title><![CDATA[I don't know c language]]></title><description><![CDATA[allocate string by array or pointer What’s difference between them? Answer When string is allocated by array, all the characters are saved…]]></description><link>https://bananaappletw.github.io/2016-04-21-I-don-t-know-c-language/</link><guid isPermaLink="false">https://bananaappletw.github.io/2016-04-21-I-don-t-know-c-language/</guid><pubDate>Thu, 21 Apr 2016 00:00:00 GMT</pubDate><content:encoded>&lt;h2&gt;allocate string by array or pointer&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&quot;http://astyle.sourceforge.net/astyle.html&quot;&gt;http://astyle.sourceforge.net/astyle.html&lt;/a&gt;&lt;/p&gt;</content:encoded></item><item><title><![CDATA[I don't know c language]]></title><description><![CDATA[allocate string by array or pointer What’s difference between them? Answer When string is allocated by array, all the characters are saved…]]></description><link>https://bananaappletw.github.io/I-don-t-know-c-language/</link><guid isPermaLink="false">https://bananaappletw.github.io/I-don-t-know-c-language/</guid><pubDate>Thu, 21 Apr 2016 00:00:00 GMT</pubDate><content:encoded>&lt;h2&gt;allocate string by array or pointer&lt;/h2&gt;
 &lt;p&gt;What’s difference between them?&lt;/p&gt;
 &lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;text&quot;&gt;&lt;pre class=&quot;language-text&quot;&gt;&lt;code class=&quot;language-text&quot;&gt;#include&amp;lt;stdio.h&amp;gt;
 
@@ -1172,7 +1172,7 @@ printf(&amp;quot;%zu&amp;quot;,sizeof(char *));
 8
 */
 // sizeof(variable) == sizeof(variable type)&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-&lt;p&gt;&lt;a href=&quot;https://en.wikipedia.org/wiki/Sizeof&quot;&gt;https://en.wikipedia.org/wiki/Sizeof&lt;/a&gt;&lt;/p&gt;</content:encoded></item><item><title><![CDATA[alignment and round number using & and ~]]></title><description><![CDATA[While tracing malloc.c code, I found some interesting bitwise operation. I found the answer in the stackoverflow. http://stackoverflow.com…]]></description><link>https://bananaappletw.github.io/2016-03-31-alignment-and-round-number-using-and/</link><guid isPermaLink="false">https://bananaappletw.github.io/2016-03-31-alignment-and-round-number-using-and/</guid><pubDate>Thu, 31 Mar 2016 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;While tracing malloc.c code, I found some interesting bitwise operation.&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://en.wikipedia.org/wiki/Sizeof&quot;&gt;https://en.wikipedia.org/wiki/Sizeof&lt;/a&gt;&lt;/p&gt;</content:encoded></item><item><title><![CDATA[alignment and round number using & and ~]]></title><description><![CDATA[While tracing malloc.c code, I found some interesting bitwise operation. I found the answer in the stackoverflow. http://stackoverflow.com…]]></description><link>https://bananaappletw.github.io/alignment-and-round-number-using-and/</link><guid isPermaLink="false">https://bananaappletw.github.io/alignment-and-round-number-using-and/</guid><pubDate>Thu, 31 Mar 2016 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;While tracing malloc.c code, I found some interesting bitwise operation.&lt;/p&gt;
 &lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;text&quot;&gt;&lt;pre class=&quot;language-text&quot;&gt;&lt;code class=&quot;language-text&quot;&gt;#define MALLOC_ALIGN_MASK      (MALLOC_ALIGNMENT - 1)
 #define MINSIZE  
   (unsigned long)(((MIN_CHUNK_SIZE+MALLOC_ALIGN_MASK) &amp;amp; ~MALLOC_ALIGN_MASK))&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
@@ -1194,7 +1194,7 @@ MALLOC_ALIGNMENT = 8
 MALLOC_ALIGN_MASK = 8-1 = 7;
 MINSIZE = (25+7) &amp;amp; ~7 = 32;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 &lt;h1&gt;More&lt;/h1&gt;
-&lt;p&gt;&lt;a href=&quot;https://graphics.stanford.edu/%5C~seander/bithacks.html&quot;&gt;https://graphics.stanford.edu/\~seander/bithacks.html&lt;/a&gt;&lt;/p&gt;</content:encoded></item><item><title><![CDATA[2016 review]]></title><description><![CDATA[TODO list: O K&R The C Programming Language (Second Edition) Robert Love linux kernel development (Third Edition) O sqlab website]]></description><link>https://bananaappletw.github.io/2016-03-22-review/</link><guid isPermaLink="false">https://bananaappletw.github.io/2016-03-22-review/</guid><pubDate>Tue, 22 Mar 2016 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;TODO list:&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://graphics.stanford.edu/%5C~seander/bithacks.html&quot;&gt;https://graphics.stanford.edu/\~seander/bithacks.html&lt;/a&gt;&lt;/p&gt;</content:encoded></item><item><title><![CDATA[2016 review]]></title><description><![CDATA[TODO list: O K&R The C Programming Language (Second Edition) Robert Love linux kernel development (Third Edition) O sqlab website]]></description><link>https://bananaappletw.github.io/review/</link><guid isPermaLink="false">https://bananaappletw.github.io/review/</guid><pubDate>Tue, 22 Mar 2016 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;TODO list:&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;[O] K&amp;#x26;R The C Programming Language (Second Edition)&lt;/li&gt;
 &lt;li class=&quot;task-list-item&quot;&gt;&lt;input type=&quot;checkbox&quot; disabled&gt; Robert Love linux kernel development (Third Edition)&lt;/li&gt;
@@ -1203,7 +1203,7 @@ MINSIZE = (25+7) &amp;amp; ~7 = 32;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 call by value vs call by reference
 事實上 call by assignment 才是 python 傳遞參數的方式
 主要要介紹 python 的 object
-像是以下這行程式碼 a 就是一個 reference…]]></description><link>https://bananaappletw.github.io/2016-03-22-how-python-pass-argument-in-function/</link><guid isPermaLink="false">https://bananaappletw.github.io/2016-03-22-how-python-pass-argument-in-function/</guid><pubDate>Tue, 22 Mar 2016 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;網路上看到蠻多說法的像是
+像是以下這行程式碼 a 就是一個 reference…]]></description><link>https://bananaappletw.github.io/how-python-pass-argument-in-function/</link><guid isPermaLink="false">https://bananaappletw.github.io/how-python-pass-argument-in-function/</guid><pubDate>Tue, 22 Mar 2016 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;網路上看到蠻多說法的像是
 call by value vs call by reference
 事實上 call by assignment 才是 python 傳遞參數的方式
 主要要介紹 python 的 object
@@ -1299,7 +1299,7 @@ print id(a)
 &lt;ul&gt;
 &lt;li&gt;&lt;a href=&quot;https://docs.python.org/2/faq/programming.html#how-do-i-write-a-function-with-output-parameters-call-by-reference&quot;&gt;call by assignment&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href=&quot;https://github.com/python/cpython/blob/master/Python%2Fbltinmodule.c#L1092&quot;&gt;cpython&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;</content:encoded></item><item><title><![CDATA[qira introduction]]></title><description><![CDATA[image from qira.me website QIRA is timeless debugger Fullname is QEMU Interactive Runtime Analyser QIRA was initially developed at Google by…]]></description><link>https://bananaappletw.github.io/2016-03-22-qira-introduction/</link><guid isPermaLink="false">https://bananaappletw.github.io/2016-03-22-qira-introduction/</guid><pubDate>Tue, 22 Mar 2016 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;&lt;img src=&quot;http://qira.me/img/first_splash.png&quot; alt=&quot;image from qira.me website&quot;&gt;&lt;/p&gt;
+&lt;/ul&gt;</content:encoded></item><item><title><![CDATA[qira introduction]]></title><description><![CDATA[image from qira.me website QIRA is timeless debugger Fullname is QEMU Interactive Runtime Analyser QIRA was initially developed at Google by…]]></description><link>https://bananaappletw.github.io/qira-introduction/</link><guid isPermaLink="false">https://bananaappletw.github.io/qira-introduction/</guid><pubDate>Tue, 22 Mar 2016 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;&lt;img src=&quot;http://qira.me/img/first_splash.png&quot; alt=&quot;image from qira.me website&quot;&gt;&lt;/p&gt;
 &lt;hr&gt;
 &lt;ul&gt;
 &lt;li&gt;QIRA is timeless debugger&lt;/li&gt;
@@ -1386,7 +1386,7 @@ u -- make undefined at iaddr&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 &lt;p&gt;Copy qira&lt;em&gt;ida66&lt;/em&gt;windows.p64 and qira&lt;em&gt;ida66&lt;/em&gt;windows.plw from qira/ida/bin/ to ida pro plugins/ directory&lt;/p&gt;
 &lt;p&gt;Open Chrome and IDA PRO on windows 10&lt;/p&gt;
 &lt;p&gt;It should work like this&lt;/p&gt;
-&lt;p&gt;&lt;img src=&quot;http://qira.me/img/ida.png&quot; alt=&quot;ida plugin&quot;&gt;&lt;/p&gt;</content:encoded></item><item><title><![CDATA[useful tools]]></title><description><![CDATA[markdown online editor hackmd https://hackmd.io/ 還蠻推薦 hackmd 的 當初是看到 lab 的同學在用 他其中一個功能很好用就是上傳圖片 他會把圖片直接上傳到 http://imgur.com/ 再用 markdown…]]></description><link>https://bananaappletw.github.io/2016-03-22-useful-tools/</link><guid isPermaLink="false">https://bananaappletw.github.io/2016-03-22-useful-tools/</guid><pubDate>Tue, 22 Mar 2016 00:00:00 GMT</pubDate><content:encoded>&lt;h1&gt;markdown online editor&lt;/h1&gt;
+&lt;p&gt;&lt;img src=&quot;http://qira.me/img/ida.png&quot; alt=&quot;ida plugin&quot;&gt;&lt;/p&gt;</content:encoded></item><item><title><![CDATA[useful tools]]></title><description><![CDATA[markdown online editor hackmd https://hackmd.io/ 還蠻推薦 hackmd 的 當初是看到 lab 的同學在用 他其中一個功能很好用就是上傳圖片 他會把圖片直接上傳到 http://imgur.com/ 再用 markdown…]]></description><link>https://bananaappletw.github.io/useful-tools/</link><guid isPermaLink="false">https://bananaappletw.github.io/useful-tools/</guid><pubDate>Tue, 22 Mar 2016 00:00:00 GMT</pubDate><content:encoded>&lt;h1&gt;markdown online editor&lt;/h1&gt;
 &lt;h2&gt;hackmd&lt;/h2&gt;
 &lt;p&gt;&lt;a href=&quot;https://hackmd.io/&quot;&gt;https://hackmd.io/&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;還蠻推薦 hackmd 的&lt;/p&gt;
@@ -1427,7 +1427,7 @@ u -- make undefined at iaddr&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 &lt;h2&gt;strace&lt;/h2&gt;
 &lt;h2&gt;ltrace&lt;/h2&gt;
 &lt;h2&gt;ODA&lt;/h2&gt;
-&lt;p&gt;&lt;a href=&quot;https://www.onlinedisassembler.com/odaweb/&quot;&gt;https://www.onlinedisassembler.com/odaweb/&lt;/a&gt;&lt;/p&gt;</content:encoded></item><item><title><![CDATA[symbolic exection introduction]]></title><description><![CDATA[Symbolic execution Defenition Symbolic execution (also symbolic evaluation) is a means of analyzing a program to determine what inputs cause…]]></description><link>https://bananaappletw.github.io/2016-02-23-symbolic-exection-introduction/</link><guid isPermaLink="false">https://bananaappletw.github.io/2016-02-23-symbolic-exection-introduction/</guid><pubDate>Tue, 23 Feb 2016 00:00:00 GMT</pubDate><content:encoded>&lt;h1&gt;Symbolic execution&lt;/h1&gt;
+&lt;p&gt;&lt;a href=&quot;https://www.onlinedisassembler.com/odaweb/&quot;&gt;https://www.onlinedisassembler.com/odaweb/&lt;/a&gt;&lt;/p&gt;</content:encoded></item><item><title><![CDATA[symbolic exection introduction]]></title><description><![CDATA[Symbolic execution Defenition Symbolic execution (also symbolic evaluation) is a means of analyzing a program to determine what inputs cause…]]></description><link>https://bananaappletw.github.io/symbolic-exection-introduction/</link><guid isPermaLink="false">https://bananaappletw.github.io/symbolic-exection-introduction/</guid><pubDate>Tue, 23 Feb 2016 00:00:00 GMT</pubDate><content:encoded>&lt;h1&gt;Symbolic execution&lt;/h1&gt;
 &lt;hr&gt;
 &lt;h1&gt;Defenition&lt;/h1&gt;
 &lt;p&gt;Symbolic execution (also symbolic evaluation) is a means of analyzing a program to determine what inputs cause each part of a program to execute.&lt;/p&gt;
