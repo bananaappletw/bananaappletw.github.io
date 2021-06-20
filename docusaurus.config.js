@@ -5,13 +5,25 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 module.exports = {
   title: 'My Site',
   tagline: 'Dinosaurs are cool',
-  url: 'https://your-docusaurus-test-site.com',
+  url: 'https://bananaappletw.github.io',
   baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
-  organizationName: 'facebook', // Usually your GitHub org/user name.
-  projectName: 'docusaurus', // Usually your repo name.
+  organizationName: 'bananaappletw', // Usually your GitHub org/user name.
+  projectName: 'blog', // Usually your repo name.
+  plugins: ['@docusaurus/theme-live-codeblock',
+    [
+      '@docusaurus/plugin-content-blog',
+      {
+        id: 'archives',
+        path: 'archives',
+        routeBasePath: 'archives',
+        editUrl:
+          'https://github.com/banananappletw/blog/edit/master/blog/archives',
+      },
+    ],
+  ],
   themeConfig: {
     navbar: {
       title: 'My Site',
@@ -26,9 +38,10 @@ module.exports = {
           position: 'left',
           label: 'Tutorial',
         },
-        {to: '/blog', label: 'Blog', position: 'left'},
+        { to: '/blog', label: 'Blog', position: 'left' },
+        { to: '/archives', label: 'Archives', position: 'left' },
         {
-          href: 'https://github.com/facebook/docusaurus',
+          href: 'https://github.com/bananaappletw/blog',
           label: 'GitHub',
           position: 'right',
         },
@@ -92,13 +105,20 @@ module.exports = {
           sidebarPath: require.resolve('./sidebars.js'),
           // Please change this to your repo.
           editUrl:
-            'https://github.com/facebook/docusaurus/edit/master/website/',
+            'https://github.com/bananaappletw/blog/edit/master/',
         },
         blog: {
+          path: 'blog',
           showReadingTime: true,
           // Please change this to your repo.
           editUrl:
-            'https://github.com/facebook/docusaurus/edit/master/website/blog/',
+            'https://github.com/facebook/docusaurus/edit/master/blog/',
+        },
+        archives: {
+          showReadingTime: true,
+          // Please change this to your repo.
+          editUrl:
+            'https://github.com/facebook/docusaurus/edit/master/archive/',
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),

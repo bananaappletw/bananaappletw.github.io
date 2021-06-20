@@ -63,8 +63,8 @@ tags: []
         permalink: /
         i18n_prefix: index
         lang: en
-    ---    
-    
+    ---
+
     {% t title %}
     // hello
 
@@ -75,7 +75,7 @@ tags: []
     i18n_prefix: index
     lang: en
     ---
-    
+
     {% t title %}
     // 你好
 
@@ -97,7 +97,7 @@ tags: []
           super
           @text = text.strip
         end
-    
+
         def render(context)
           site = context.registers[:site]
           page = context.registers[:page]
@@ -110,7 +110,7 @@ tags: []
         end
       end
     end
-    
+
     Liquid::Template.register_tag('t', Jekyll::I18nTag)
 
 # Pagination
@@ -141,7 +141,7 @@ tags: []
         per_page: 5
         enabled: true
         locale: en
-    
+
     ---
 
 `resource-browse-by-tag-technical`
@@ -259,8 +259,8 @@ Jekyll 有個爛的點就是他的 plugin 都是要用猜的去寫
 
 ### HTML
 
-    <a href="..."> 
-      <a href="..."> 
+    <a href="...">
+      <a href="...">
     	...
       </a>
     </a>
@@ -428,9 +428,6 @@ Jekyll 有個爛的點就是他的 plugin 都是要用猜的去寫
 ### Youtube
 
 詳細可以參考這篇文章 [https://codeburst.io/understanding-css-bem-naming-convention-a8cca116d252](https://codeburst.io/understanding-css-bem-naming-convention-a8cca116d252 "https://codeburst.io/understanding-css-bem-naming-convention-a8cca116d252")
-
-![](/uploads/1_Qnp9OzN6VV7e2IY32wsBbQ.png)
-
 #### HTML
 
     <header class="youtube-header">
@@ -491,7 +488,7 @@ elem1 和 elem2 相對於 block
     <form class="search-form">
         <div class="search-form__content">
             <input class="search-form__input">
-    
+
             <button class="search-form__button">Search</button>
         </div>
     </form>
@@ -503,7 +500,7 @@ elem1 和 elem2 相對於 block
     <form class="search-form">
         <div class="search-form__content">
             <input class="search-form__content-input">
-    
+
             <button class="search-form__content-button">Search</button>
         </div>
     </form>
@@ -643,7 +640,7 @@ elem1 和 elem2 相對於 block
         }
         .button_theme_islands{
         	...
-        }        
+        }
     }
 
 #### Specific page HTML
@@ -673,7 +670,7 @@ elem1 和 elem2 相對於 block
 
     // component (button)
     @import "component";
-    
+
     // Specific page(index)
     @import "index";
 
@@ -739,8 +736,8 @@ HTML 雖然有 [semantic elements](https://www.w3schools.com/html/html5_semantic
 
 ## Bad HTML
 
-    <header class="navber">    
-        <div class="navbar-menu">        
+    <header class="navber">
+        <div class="navbar-menu">
             <div class="navbar-menu-item>
             	<div class="navbar-menu-item-submenu">
                 	<div class="navbar-menu-item-submenu-item>
@@ -752,8 +749,8 @@ HTML 雖然有 [semantic elements](https://www.w3schools.com/html/html5_semantic
 
 ## Good HTML
 
-    <header class="navber">    
-        <div class="navbar-menu">        
+    <header class="navber">
+        <div class="navbar-menu">
             <div class="navbar-item>
             	<div class="navbar-submenu">
                 	<div class="navbar-submenu-item>
