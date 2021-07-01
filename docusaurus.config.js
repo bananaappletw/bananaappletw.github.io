@@ -11,7 +11,7 @@ module.exports = {
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
   organizationName: 'bananaappletw', // Usually your GitHub org/user name.
-  projectName: 'blog', // Usually your repo name.
+  projectName: 'bananaappletw.github.io', // Usually your repo name.
   plugins: ['@docusaurus/theme-live-codeblock',
     [
       '@docusaurus/plugin-content-blog',
