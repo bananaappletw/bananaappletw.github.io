@@ -1,0 +1,1 @@
+(self.webpackChunkmy_website=self.webpackChunkmy_website||[]).push([[2563],{1053:function(a){"use strict";a.exports=JSON.parse('{"allTagsPath":"/archives/tags","slug":"virtualization","name":"virtualization","count":1,"permalink":"/archives/tags/virtualization"}')}}]);

@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>https://bananaappletw.github.io/archives</id>
+    <title>My Site Blog</title>
+    <updated>2019-07-03T02:35:06.000Z</updated>
+    <generator>https://github.com/jpmonette/feed</generator>
+    <link rel="alternate" href="https://bananaappletw.github.io/archives"/>
+    <subtitle>My Site Blog</subtitle>
+    <icon>https://bananaappletw.github.io/img/favicon.ico</icon>
+    <entry>
+        <title type="html"><![CDATA[Official website review]]></title>
+        <id>Official website review</id>
+        <link href="https://bananaappletw.github.io/archives/official-website-review"/>
+        <updated>2019-07-03T02:35:06.000Z</updated>
+        <summary type="html"><![CDATA[這次官網的目的是要做出一個靜態的網站]]></summary>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Review of bamboofox platform]]></title>
+        <id>Review of bamboofox platform</id>
+        <link href="https://bananaappletw.github.io/archives/review-of-bamboofox-platform"/>
+        <updated>2017-08-28T09:19:00.000Z</updated>
+        <summary type="html"><![CDATA[記錄一下寫 bamboofox 平台的心得]]></summary>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Rails on Ubuntu]]></title>
+        <id>Rails on Ubuntu</id>
+        <link href="https://bananaappletw.github.io/archives/Rails-on-Ubuntu"/>
+        <updated>2017-06-22T12:39:00.000Z</updated>
+        <summary type="html"><![CDATA[簡單記錄一下 Ruby on Rails server setup]]></summary>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Rails best practices]]></title>
+        <id>Rails best practices</id>
+        <link href="https://bananaappletw.github.io/archives/Rails-Best-practice"/>
+        <updated>2017-04-21T16:38:00.000Z</updated>
+        <summary type="html"><![CDATA[Rails best practices 是一個可以幫你檢查 Rails 專案架構的 gem]]></summary>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Rubocop - Ruby static code analyzer]]></title>
+        <id>Rubocop - Ruby static code analyzer</id>
+        <link href="https://bananaappletw.github.io/archives/Rubocop-Ruby-static-code-analyzer"/>
+        <updated>2017-02-04T13:44:00.000Z</updated>
+        <summary type="html"><![CDATA[Rubocop 是一個 Ruby static code analyzer]]></summary>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Concurrency vs parallelism]]></title>
+        <id>Concurrency vs parallelism</id>
+        <link href="https://bananaappletw.github.io/archives/concurrency-vs-parallelism"/>
+        <updated>2017-02-01T19:48:00.000Z</updated>
+        <summary type="html"><![CDATA[主要記錄一下兩者的差別]]></summary>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Preview file using send_file]]></title>
+        <id>Preview file using send_file</id>
+        <link href="https://bananaappletw.github.io/archives/Preview-file-using-send-file"/>
+        <updated>2017-01-05T16:15:00.000Z</updated>
+        <summary type="html"><![CDATA[在 Ruby on rails 裡面]]></summary>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[db/seeds for carrierwave]]></title>
+        <id>db/seeds for carrierwave</id>
+        <link href="https://bananaappletw.github.io/archives/db-seeds-for-carrierwave"/>
+        <updated>2017-01-04T13:58:00.000Z</updated>
+        <summary type="html"><![CDATA[這篇主要是紀錄對 Carrierwave 寫 db/seeds 的方法]]></summary>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[N+1 issue]]></title>
+        <id>N+1 issue</id>
+        <link href="https://bananaappletw.github.io/archives/N-1-issue"/>
+        <updated>2016-12-05T14:32:00.000Z</updated>
+        <summary type="html"><![CDATA[比如說你現在有兩個 Database Models]]></summary>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Virtualization]]></title>
+        <id>Virtualization</id>
+        <link href="https://bananaappletw.github.io/archives/Virtualization"/>
+        <updated>2016-11-18T15:07:00.000Z</updated>
+        <summary type="html"><![CDATA[紀錄一下自己最近研讀虛擬化技術的筆記]]></summary>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Javascript function paramter default  value]]></title>
+        <id>Javascript function paramter default  value</id>
+        <link href="https://bananaappletw.github.io/archives/Javascript-function-paramter-default-value"/>
+        <updated>2016-11-16T22:56:00.000Z</updated>
+        <summary type="html"><![CDATA[function f(s)]]></summary>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[My favorite script]]></title>
+        <id>My favorite script</id>
+        <link href="https://bananaappletw.github.io/archives/My-favorite-script"/>
+        <updated>2016-06-10T20:35:00.000Z</updated>
+        <summary type="html"><![CDATA[Format code]]></summary>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[I don't know c language]]></title>
+        <id>I don't know c language</id>
+        <link href="https://bananaappletw.github.io/archives/I-don-t-know-c-language"/>
+        <updated>2016-04-21T21:12:00.000Z</updated>
+        <summary type="html"><![CDATA[allocate string by array or pointer]]></summary>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[alignment and round number using & and ~]]></title>
+        <id>alignment and round number using &amp; and ~</id>
+        <link href="https://bananaappletw.github.io/archives/alignment-and-round-number-using-and"/>
+        <updated>2016-03-31T02:02:00.000Z</updated>
+        <summary type="html"><![CDATA[While tracing malloc.c code, I found some interesting bitwise operation.]]></summary>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[2016 review]]></title>
+        <id>2016 review</id>
+        <link href="https://bananaappletw.github.io/archives/review"/>
+        <updated>2016-03-22T13:48:00.000Z</updated>
+        <summary type="html"><![CDATA[TODO list:]]></summary>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[how python pass argument in function]]></title>
+        <id>how python pass argument in function</id>
+        <link href="https://bananaappletw.github.io/archives/how-python-pass-argument-in-function"/>
+        <updated>2016-03-22T13:47:00.000Z</updated>
+        <summary type="html"><![CDATA[網路上看到蠻多說法的像是]]></summary>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[qira introduction]]></title>
+        <id>qira introduction</id>
+        <link href="https://bananaappletw.github.io/archives/qira-introduction"/>
+        <updated>2016-03-22T13:42:00.000Z</updated>
+        <summary type="html"><![CDATA[image from qira.me website]]></summary>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[useful tools]]></title>
+        <id>useful tools</id>
+        <link href="https://bananaappletw.github.io/archives/useful-tools"/>
+        <updated>2016-03-22T13:40:00.000Z</updated>
+        <summary type="html"><![CDATA[hackmd]]></summary>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[symbolic exection introduction]]></title>
+        <id>symbolic exection introduction</id>
+        <link href="https://bananaappletw.github.io/archives/symbolic-exection-introduction"/>
+        <updated>2016-02-23T09:19:00.000Z</updated>
+        <summary type="html"><![CDATA[*]]></summary>
+    </entry>
+</feed>

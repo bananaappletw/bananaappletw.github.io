@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0">
+    <channel>
+        <title>My Site Blog</title>
+        <link>https://bananaappletw.github.io/archives</link>
+        <description>My Site Blog</description>
+        <lastBuildDate>Wed, 03 Jul 2019 02:35:06 GMT</lastBuildDate>
+        <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
+        <generator>https://github.com/jpmonette/feed</generator>
+        <item>
+            <title><![CDATA[Official website review]]></title>
+            <link>https://bananaappletw.github.io/archives/official-website-review</link>
+            <guid>Official website review</guid>
+            <pubDate>Wed, 03 Jul 2019 02:35:06 GMT</pubDate>
+            <description><![CDATA[這次官網的目的是要做出一個靜態的網站]]></description>
+        </item>
+        <item>
+            <title><![CDATA[Review of bamboofox platform]]></title>
+            <link>https://bananaappletw.github.io/archives/review-of-bamboofox-platform</link>
+            <guid>Review of bamboofox platform</guid>
+            <pubDate>Mon, 28 Aug 2017 09:19:00 GMT</pubDate>
+            <description><![CDATA[記錄一下寫 bamboofox 平台的心得]]></description>
+        </item>
+        <item>
+            <title><![CDATA[Rails on Ubuntu]]></title>
+            <link>https://bananaappletw.github.io/archives/Rails-on-Ubuntu</link>
+            <guid>Rails on Ubuntu</guid>
+            <pubDate>Thu, 22 Jun 2017 12:39:00 GMT</pubDate>
+            <description><![CDATA[簡單記錄一下 Ruby on Rails server setup]]></description>
+        </item>
+        <item>
+            <title><![CDATA[Rails best practices]]></title>
+            <link>https://bananaappletw.github.io/archives/Rails-Best-practice</link>
+            <guid>Rails best practices</guid>
+            <pubDate>Fri, 21 Apr 2017 16:38:00 GMT</pubDate>
+            <description><![CDATA[Rails best practices 是一個可以幫你檢查 Rails 專案架構的 gem]]></description>
+        </item>
+        <item>
+            <title><![CDATA[Rubocop - Ruby static code analyzer]]></title>
+            <link>https://bananaappletw.github.io/archives/Rubocop-Ruby-static-code-analyzer</link>
+            <guid>Rubocop - Ruby static code analyzer</guid>
+            <pubDate>Sat, 04 Feb 2017 13:44:00 GMT</pubDate>
+            <description><![CDATA[Rubocop 是一個 Ruby static code analyzer]]></description>
+        </item>
+        <item>
+            <title><![CDATA[Concurrency vs parallelism]]></title>
+            <link>https://bananaappletw.github.io/archives/concurrency-vs-parallelism</link>
+            <guid>Concurrency vs parallelism</guid>
+            <pubDate>Wed, 01 Feb 2017 19:48:00 GMT</pubDate>
+            <description><![CDATA[主要記錄一下兩者的差別]]></description>
+        </item>
+        <item>
+            <title><![CDATA[Preview file using send_file]]></title>
+            <link>https://bananaappletw.github.io/archives/Preview-file-using-send-file</link>
+            <guid>Preview file using send_file</guid>
+            <pubDate>Thu, 05 Jan 2017 16:15:00 GMT</pubDate>
+            <description><![CDATA[在 Ruby on rails 裡面]]></description>
+        </item>
+        <item>
+            <title><![CDATA[db/seeds for carrierwave]]></title>
+            <link>https://bananaappletw.github.io/archives/db-seeds-for-carrierwave</link>
+            <guid>db/seeds for carrierwave</guid>
+            <pubDate>Wed, 04 Jan 2017 13:58:00 GMT</pubDate>
+            <description><![CDATA[這篇主要是紀錄對 Carrierwave 寫 db/seeds 的方法]]></description>
+        </item>
+        <item>
+            <title><![CDATA[N+1 issue]]></title>
+            <link>https://bananaappletw.github.io/archives/N-1-issue</link>
+            <guid>N+1 issue</guid>
+            <pubDate>Mon, 05 Dec 2016 14:32:00 GMT</pubDate>
+            <description><![CDATA[比如說你現在有兩個 Database Models]]></description>
+        </item>
+        <item>
+            <title><![CDATA[Virtualization]]></title>
+            <link>https://bananaappletw.github.io/archives/Virtualization</link>
+            <guid>Virtualization</guid>
+            <pubDate>Fri, 18 Nov 2016 15:07:00 GMT</pubDate>
+            <description><![CDATA[紀錄一下自己最近研讀虛擬化技術的筆記]]></description>
+        </item>
+        <item>
+            <title><![CDATA[Javascript function paramter default  value]]></title>
+            <link>https://bananaappletw.github.io/archives/Javascript-function-paramter-default-value</link>
+            <guid>Javascript function paramter default  value</guid>
+            <pubDate>Wed, 16 Nov 2016 22:56:00 GMT</pubDate>
+            <description><![CDATA[function f(s)]]></description>
+        </item>
+        <item>
+            <title><![CDATA[My favorite script]]></title>
+            <link>https://bananaappletw.github.io/archives/My-favorite-script</link>
+            <guid>My favorite script</guid>
+            <pubDate>Fri, 10 Jun 2016 20:35:00 GMT</pubDate>
+            <description><![CDATA[Format code]]></description>
+        </item>
+        <item>
+            <title><![CDATA[I don't know c language]]></title>
+            <link>https://bananaappletw.github.io/archives/I-don-t-know-c-language</link>
+            <guid>I don't know c language</guid>
+            <pubDate>Thu, 21 Apr 2016 21:12:00 GMT</pubDate>
+            <description><![CDATA[allocate string by array or pointer]]></description>
+        </item>
+        <item>
+            <title><![CDATA[alignment and round number using & and ~]]></title>
+            <link>https://bananaappletw.github.io/archives/alignment-and-round-number-using-and</link>
+            <guid>alignment and round number using &amp; and ~</guid>
+            <pubDate>Thu, 31 Mar 2016 02:02:00 GMT</pubDate>
+            <description><![CDATA[While tracing malloc.c code, I found some interesting bitwise operation.]]></description>
+        </item>
+        <item>
+            <title><![CDATA[2016 review]]></title>
+            <link>https://bananaappletw.github.io/archives/review</link>
+            <guid>2016 review</guid>
+            <pubDate>Tue, 22 Mar 2016 13:48:00 GMT</pubDate>
+            <description><![CDATA[TODO list:]]></description>
+        </item>
+        <item>
+            <title><![CDATA[how python pass argument in function]]></title>
+            <link>https://bananaappletw.github.io/archives/how-python-pass-argument-in-function</link>
+            <guid>how python pass argument in function</guid>
+            <pubDate>Tue, 22 Mar 2016 13:47:00 GMT</pubDate>
+            <description><![CDATA[網路上看到蠻多說法的像是]]></description>
+        </item>
+        <item>
+            <title><![CDATA[qira introduction]]></title>
+            <link>https://bananaappletw.github.io/archives/qira-introduction</link>
+            <guid>qira introduction</guid>
+            <pubDate>Tue, 22 Mar 2016 13:42:00 GMT</pubDate>
+            <description><![CDATA[image from qira.me website]]></description>
+        </item>
+        <item>
+            <title><![CDATA[useful tools]]></title>
+            <link>https://bananaappletw.github.io/archives/useful-tools</link>
+            <guid>useful tools</guid>
+            <pubDate>Tue, 22 Mar 2016 13:40:00 GMT</pubDate>
+            <description><![CDATA[hackmd]]></description>
+        </item>
+        <item>
+            <title><![CDATA[symbolic exection introduction]]></title>
+            <link>https://bananaappletw.github.io/archives/symbolic-exection-introduction</link>
+            <guid>symbolic exection introduction</guid>
+            <pubDate>Tue, 23 Feb 2016 09:19:00 GMT</pubDate>
+            <description><![CDATA[*]]></description>
+        </item>
+    </channel>
+</rss>
