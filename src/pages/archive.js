@@ -2,7 +2,7 @@ import React from "react";
 import clsx from "clsx";
 import Layout from "@theme/Layout";
 import Link from "@docusaurus/Link";
-import styles from "./styles.module.css";
+import styles from "./archive.module.css";
 
 /**
  * @typedef {Object} BlogPost - creates a new type named 'BlogPost'

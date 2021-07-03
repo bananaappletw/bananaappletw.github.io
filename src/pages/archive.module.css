@@ -30,14 +30,3 @@
     padding: 2rem 0;
     width: 100%;
   }
-
-  .featureImage {
-    height: 200px;
-    width: 200px;
-  }
-
-  .profileImage {
-    border-radius: 50%;
-    height: 200px;
-    width: 200px;
-  }

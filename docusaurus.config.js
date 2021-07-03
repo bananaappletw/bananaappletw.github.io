@@ -34,7 +34,7 @@ module.exports = {
         src: 'img/logo.svg',
       },
       items: [
-        { to: '/', label: 'Blog', position: 'left' },
+        { to: '/blog', label: 'Blog', position: 'left' },
         { to: '/archive', label: 'Archive', position: 'left' },
         {
           href: 'https://github.com/bananaappletw/blog',
@@ -90,7 +90,7 @@ module.exports = {
           sidebarPath: require.resolve('./sidebars.js'),
         },
         blog: {
-          routeBasePath: '/',
+          routeBasePath: '/blog',
           path: 'blog',
           remarkPlugins: [mermaid],
           showReadingTime: true,
