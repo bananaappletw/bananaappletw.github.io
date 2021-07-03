@@ -1,10 +1,12 @@
 const lightCodeTheme = require('prism-react-renderer/themes/github');
 const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 
+const mermaid = require('remark-mermaid');
+
 /** @type {import('@docusaurus/types').DocusaurusConfig} */
 module.exports = {
-  title: 'My Site',
-  tagline: 'Dinosaurs are cool',
+  title: "bananaappletw's blog",
+  tagline: 'silver bullet',
   url: 'https://bananaappletw.github.io',
   baseUrl: '/',
   onBrokenLinks: 'throw',
@@ -26,20 +28,14 @@ module.exports = {
   ],
   themeConfig: {
     navbar: {
-      title: 'My Site',
+      title: "bananaappletw's blog",
       logo: {
-        alt: 'My Site Logo',
+        alt: 'My Logo',
         src: 'img/logo.svg',
       },
       items: [
-        {
-          type: 'doc',
-          docId: 'intro',
-          position: 'left',
-          label: 'Tutorial',
-        },
-        { to: '/blog', label: 'Blog', position: 'left' },
-        { to: '/archives', label: 'Archives', position: 'left' },
+        { to: '/', label: 'Blog', position: 'left' },
+        { to: '/archive', label: 'Archive', position: 'left' },
         {
           href: 'https://github.com/bananaappletw/blog',
           label: 'GitHub',
@@ -50,47 +46,36 @@ module.exports = {
     footer: {
       style: 'dark',
       links: [
+        {},
+        {},
+        {},
         {
-          title: 'Docs',
+          title: 'Links',
           items: [
             {
-              label: 'Tutorial',
-              to: '/docs/intro',
-            },
-          ],
-        },
-        {
-          title: 'Community',
-          items: [
-            {
-              label: 'Stack Overflow',
-              href: 'https://stackoverflow.com/questions/tagged/docusaurus',
+              label: 'slideshare',
+              to: 'https://www.slideshare.net/bananaappletw',
             },
             {
-              label: 'Discord',
-              href: 'https://discordapp.com/invite/docusaurus',
+              label: 'stackoverflow',
+              to: 'https://stackoverflow.com/users/4446356/bananaappletw',
             },
             {
               label: 'Twitter',
-              href: 'https://twitter.com/docusaurus',
+              to: 'https://twitter.com/bananaappletw',
             },
-          ],
-        },
-        {
-          title: 'More',
-          items: [
             {
-              label: 'Blog',
-              to: '/blog',
+              label: 'LinkedIn',
+              to: 'https://www.linkedin.com/in/bananaappletw/',
             },
             {
               label: 'GitHub',
-              href: 'https://github.com/facebook/docusaurus',
+              href: 'https://github.com/bananaappletw',
             },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} bananaappletw, Inc. Built with Docusaurus.`,
     },
     prism: {
       theme: lightCodeTheme,
@@ -103,22 +88,15 @@ module.exports = {
       {
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
+        },
+        blog: {
+          routeBasePath: '/',
+          path: 'blog',
+          remarkPlugins: [mermaid],
+          showReadingTime: true,
           // Please change this to your repo.
           editUrl:
             'https://github.com/bananaappletw/blog/edit/master/',
-        },
-        blog: {
-          path: 'blog',
-          showReadingTime: true,
-          // Please change this to your repo.
-          editUrl:
-            'https://github.com/facebook/docusaurus/edit/master/blog/',
-        },
-        archives: {
-          showReadingTime: true,
-          // Please change this to your repo.
-          editUrl:
-            'https://github.com/facebook/docusaurus/edit/master/archive/',
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
