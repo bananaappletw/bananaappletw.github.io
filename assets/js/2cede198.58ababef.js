@@ -1,0 +1,1 @@
+(self.webpackChunkblog=self.webpackChunkblog||[]).push([[2473],{30507:function(s){"use strict";s.exports=JSON.parse('{"allTagsPath":"/archives/tags","slug":"ruby-on-rails","name":"ruby on rails","count":6,"permalink":"/archives/tags/ruby-on-rails"}')}}]);

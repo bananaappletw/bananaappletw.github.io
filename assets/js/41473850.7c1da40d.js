@@ -1,0 +1,1 @@
+(self.webpackChunkblog=self.webpackChunkblog||[]).push([[2364],{87765:function(e){"use strict";e.exports=JSON.parse('{"allTagsPath":"/archives/tags","slug":"linux-kernel","name":"linux kernel","count":1,"permalink":"/archives/tags/linux-kernel"}')}}]);

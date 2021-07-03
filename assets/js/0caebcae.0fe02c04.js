@@ -1,1 +1,0 @@
-(self.webpackChunkmy_website=self.webpackChunkmy_website||[]).push([[6062],{869:function(e){"use strict";e.exports=JSON.parse('{"allTagsPath":"/archives/tags","slug":"rubocop","name":"rubocop","count":1,"permalink":"/archives/tags/rubocop"}')}}]);

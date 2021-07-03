@@ -1,0 +1,1 @@
+(self.webpackChunkblog=self.webpackChunkblog||[]).push([[1183],{1283:function(e){"use strict";e.exports=JSON.parse('{"allTagsPath":"/archives/tags","slug":"send-file","name":"send_file","count":1,"permalink":"/archives/tags/send-file"}')}}]);

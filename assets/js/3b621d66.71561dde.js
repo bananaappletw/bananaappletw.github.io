@@ -1,1 +1,0 @@
-(self.webpackChunkmy_website=self.webpackChunkmy_website||[]).push([[6691],{9801:function(e){"use strict";e.exports=JSON.parse('{"allTagsPath":"/archives/tags","slug":"ruby-code-formatter","name":"ruby code formatter","count":1,"permalink":"/archives/tags/ruby-code-formatter"}')}}]);

@@ -1,0 +1,1 @@
+(self.webpackChunkblog=self.webpackChunkblog||[]).push([[6598],{44808:function(a){"use strict";a.exports=JSON.parse('{"allTagsPath":"/archives/tags","slug":"facebook","name":"facebook","count":1,"permalink":"/archives/tags/facebook"}')}}]);

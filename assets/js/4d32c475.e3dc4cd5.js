@@ -1,0 +1,1 @@
+(self.webpackChunkblog=self.webpackChunkblog||[]).push([[2563],{71053:function(a){"use strict";a.exports=JSON.parse('{"allTagsPath":"/archives/tags","slug":"virtualization","name":"virtualization","count":1,"permalink":"/archives/tags/virtualization"}')}}]);

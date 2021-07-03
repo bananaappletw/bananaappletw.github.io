@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <rss version="2.0">
     <channel>
-        <title>My Site Blog</title>
+        <title>bananaappletw's blog Blog</title>
         <link>https://bananaappletw.github.io/archives</link>
-        <description>My Site Blog</description>
+        <description>bananaappletw's blog Blog</description>
         <lastBuildDate>Wed, 03 Jul 2019 02:35:06 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
         <generator>https://github.com/jpmonette/feed</generator>
@@ -13,6 +13,13 @@
             <guid>Official website review</guid>
             <pubDate>Wed, 03 Jul 2019 02:35:06 GMT</pubDate>
             <description><![CDATA[這次官網的目的是要做出一個靜態的網站]]></description>
+        </item>
+        <item>
+            <title><![CDATA[Welcome]]></title>
+            <link>https://bananaappletw.github.io/archives/welcome</link>
+            <guid>welcome</guid>
+            <pubDate>Thu, 30 May 2019 00:00:00 GMT</pubDate>
+            <description><![CDATA[Blog features are powered by the blog plugin. Simply add files to the blog directory. It supports tags as well!]]></description>
         </item>
         <item>
             <title><![CDATA[Review of bamboofox platform]]></title>

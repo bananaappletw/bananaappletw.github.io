@@ -1,0 +1,1 @@
+(self.webpackChunkblog=self.webpackChunkblog||[]).push([[7056],{68187:function(s){"use strict";s.exports=JSON.parse('{"allTagsPath":"/tags","slug":"aws","name":"aws","count":1,"permalink":"/tags/aws"}')}}]);
