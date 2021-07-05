@@ -1,0 +1,1 @@
+(self.webpackChunkblog=self.webpackChunkblog||[]).push([[2535],{66353:function(e){"use strict";e.exports=JSON.parse('{"title":"Recent posts","items":[{"title":"AWS Resource hierarchy","permalink":"/blog/aws-resource-hierarchy"}]}')}}]);
