@@ -2,6 +2,7 @@
 title: AWS Resource hierarchy
 tags:
 - aws
+date: 2021-07-03
 ---
 
 ## Overview
