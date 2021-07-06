@@ -1,5 +1,5 @@
 ---
-title: AWS Resource hierarchy
+title: AWS resource hierarchy
 tags:
 - aws
 date: 2021-07-03
@@ -27,13 +27,13 @@ Solution:
 import Mermaid from '@theme/Mermaid';
 
 <Mermaid chart={`
-	graph LR;
-		R[Organization root] --> C[Company OU];
-		C[Company OU] --> A1[Team A production account];
-		C[Company OU] --> A2[Team A staging account];
-		C[Company OU] --> B1[Team B production account];
-		C[Company OU] --> B2[Team B staging account];
-		R[Organization root] --> P[playground account];
+	graph LR
+		R[Organization root] --> C[Company OU]
+		C[Company OU] --> A1[Team A production account]
+		C[Company OU] --> A2[Team A staging account]
+		C[Company OU] --> B1[Team B production account]
+		C[Company OU] --> B2[Team B staging account]
+		R[Organization root] --> P[playground account]
 `}/>
 
 Company OU will whitelist AWS resource and region.
