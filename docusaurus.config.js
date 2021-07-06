@@ -27,11 +27,12 @@ module.exports = {
     ],
   ],
   themeConfig: {
+    image: 'img/profile.jpg',
     navbar: {
       title: "bananaappletw's blog",
       logo: {
         alt: 'My Logo',
-        src: 'img/logo.svg',
+        src: 'img/profile.jpg',
       },
       items: [
         { to: '/blog', label: 'Blog', position: 'left' },
