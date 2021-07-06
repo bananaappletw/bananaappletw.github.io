@@ -1,0 +1,1 @@
+(self.webpackChunkblog=self.webpackChunkblog||[]).push([[8044],{96038:function(s){"use strict";s.exports=JSON.parse('{"allTagsPath":"/blog/tags","slug":"kvm","name":"kvm","count":1,"permalink":"/blog/tags/kvm"}')}}]);

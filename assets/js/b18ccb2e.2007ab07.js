@@ -1,0 +1,1 @@
+(self.webpackChunkblog=self.webpackChunkblog||[]).push([[4159],{70465:function(l){"use strict";l.exports=JSON.parse('{"allTagsPath":"/blog/tags","slug":"cloud-init","name":"cloud-init","count":1,"permalink":"/blog/tags/cloud-init"}')}}]);

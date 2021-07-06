@@ -4,13 +4,20 @@
         <title>bananaappletw's blog Blog</title>
         <link>https://bananaappletw.github.io/blog</link>
         <description>bananaappletw's blog Blog</description>
-        <lastBuildDate>Sat, 03 Jul 2021 00:00:00 GMT</lastBuildDate>
+        <lastBuildDate>Mon, 05 Jul 2021 00:00:00 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
         <generator>https://github.com/jpmonette/feed</generator>
         <item>
-            <title><![CDATA[AWS Resource hierarchy]]></title>
+            <title><![CDATA[KVM GPU passthrough Ubuntu 20.04]]></title>
+            <link>https://bananaappletw.github.io/blog/kvm-gpu-passthrough-ubuntu-20.04</link>
+            <guid>KVM GPU passthrough Ubuntu 20.04</guid>
+            <pubDate>Mon, 05 Jul 2021 00:00:00 GMT</pubDate>
+            <description><![CDATA[Test environment]]></description>
+        </item>
+        <item>
+            <title><![CDATA[AWS resource hierarchy]]></title>
             <link>https://bananaappletw.github.io/blog/aws-resource-hierarchy</link>
-            <guid>AWS Resource hierarchy</guid>
+            <guid>AWS resource hierarchy</guid>
             <pubDate>Sat, 03 Jul 2021 00:00:00 GMT</pubDate>
             <description><![CDATA[Overview]]></description>
         </item>

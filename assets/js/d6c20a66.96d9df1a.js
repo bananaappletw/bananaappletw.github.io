@@ -1,0 +1,1 @@
+(self.webpackChunkblog=self.webpackChunkblog||[]).push([[2490],{24857:function(g){"use strict";g.exports=JSON.parse('{"allTagsPath":"/blog/tags","slug":"gpu","name":"gpu","count":1,"permalink":"/blog/tags/gpu"}')}}]);
