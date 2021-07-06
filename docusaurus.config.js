@@ -87,8 +87,6 @@ module.exports = {
     [
       '@docusaurus/preset-classic',
       {
-        docs: false
-        ,
         blog: {
           routeBasePath: '/blog',
           path: 'blog',
