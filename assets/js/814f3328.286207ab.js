@@ -1,1 +1,0 @@
-(self.webpackChunkblog=self.webpackChunkblog||[]).push([[2535],{66353:function(e){"use strict";e.exports=JSON.parse('{"title":"Recent posts","items":[{"title":"KVM GPU passthrough Ubuntu 20.04","permalink":"/blog/kvm-gpu-passthrough-ubuntu-20.04"},{"title":"AWS resource hierarchy","permalink":"/blog/aws-resource-hierarchy"}]}')}}]);

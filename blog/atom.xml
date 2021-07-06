@@ -10,7 +10,7 @@
     <entry>
         <title type="html"><![CDATA[KVM GPU passthrough Ubuntu 20.04]]></title>
         <id>KVM GPU passthrough Ubuntu 20.04</id>
-        <link href="https://bananaappletw.github.io/blog/kvm-gpu-passthrough-ubuntu-20.04"/>
+        <link href="https://bananaappletw.github.io/blog/kvm-gpu-passthrough-ubuntu-20-04"/>
         <updated>2021-07-05T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[Test environment]]></summary>
     </entry>
