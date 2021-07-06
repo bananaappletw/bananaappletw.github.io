@@ -8,7 +8,7 @@ tags:
 date: 2021-07-05
 ---
 
-## Test environment
+## Environment
 
 - Host: Ubuntu 20.04
 - Guest: Ubuntu 20.04
