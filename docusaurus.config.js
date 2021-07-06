@@ -87,6 +87,7 @@ module.exports = {
       '@docusaurus/preset-classic',
       {
         docs: {
+          routeBasePath: '/docs',
           sidebarPath: require.resolve('./sidebars.js'),
         },
         blog: {
@@ -98,6 +99,7 @@ module.exports = {
           editUrl:
             'https://github.com/bananaappletw/blog/edit/master/',
         },
+        pages: {},
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
         },
