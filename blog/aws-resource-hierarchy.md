@@ -8,6 +8,7 @@ date: 2021-07-03
 ## Overview
 
 Scenario:
+
 - A company size of `200` people seperated into `10` teams.
 - Administer can have the company-wide policy to limit AWS account.
 - Easy way to switch user to the other team.
@@ -26,14 +27,16 @@ Solution:
 
 import Mermaid from '@theme/Mermaid';
 
+## Organization
+
 <Mermaid chart={`
 	graph LR
 		R[Organization root] --> C[Company OU]
-		C[Company OU] --> A1[Team A production account]
-		C[Company OU] --> A2[Team A staging account]
-		C[Company OU] --> B1[Team B production account]
-		C[Company OU] --> B2[Team B staging account]
-		R[Organization root] --> P[playground account]
+		C[Company OU] --> A1[Team A production AWS account]
+		C[Company OU] --> A2[Team A staging AWS account]
+		C[Company OU] --> B1[Team B production AWS account]
+		C[Company OU] --> B2[Team B staging AWS account]
+		R[Organization root] --> P[playground AWS account]
 `}/>
 
 Company OU will whitelist AWS resource and region.
@@ -45,6 +48,18 @@ Periodically clean resource of playground account.
 [AWS Tag](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/cost-alloc-tags.html) is another solution to have more detail bill within AWS account.
 
 :::
+
+## Terraform
+
+Create `terraform` IAM access key and attach AdministratorAccess policy as Terraform repo's credential.
+
+<Mermaid chart={`
+	graph LR;
+		A[A AWS account] --> AT[A Terraform repo];
+		AT[A Terraform repo] --> A[A AWS account];
+		B[B AWS account] --> BT[B Terraform repo];
+		BT[B Terraform repo] --> B[B AWS account];
+`}/>
 
 ## SSO
 
@@ -74,16 +89,16 @@ By using GSuite Admin API
 
 Iterate the Google group, for each Google account, map to corresponding IAM role
 
-## AWS SSO
+### AWS SSO
 
 [https://aws.amazon.com/tw/single-sign-on/](https://aws.amazon.com/tw/single-sign-on/)
 
 <Mermaid chart={`
 	graph LR;
-		A[A account admin group] --> AA[Administer role of A account];
-		A[A account readonly group] --> AR[readonly role of account];
-		B[B account admin group] --> BA[Administer role of A account];
-		B[B account readonly group] --> BR[readonly role of account];
+		A[A AWS account admin group] --> AA[Administer role of A account];
+		A[A AWS account readonly group] --> AR[readonly role of account];
+		B[B AWS account admin group] --> BA[Administer role of A account];
+		B[B AWS account readonly group] --> BR[readonly role of account];
 `}/>
 
 Assign user to group to have access to account.
