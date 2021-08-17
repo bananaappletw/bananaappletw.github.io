@@ -11,7 +11,7 @@ Enable Two-Factor Authentication on every service, and keep your device with you
 
 ## FileVault
 
-請啟用 FileVault 來加密硬碟
+Enable FileVault to encrypt disk
 
 [Ref](https://support.apple.com/en-us/HT204837)
 
@@ -29,11 +29,9 @@ For example, I usually used two browsers(Chrome Stable and Chrome Canary). Chrom
 
 ## Email
 
-![](./unnamed.png)
+Register SPF for your domain to detect forging sender addresses
 
 [SPF](https://en.wikipedia.org/wiki/Sender_Policy_Framework)
-
-[https://support.google.com/mail/answer/7039474](https://support.google.com/mail/answer/7039474)
 
 ## Privacy
 
