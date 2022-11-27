@@ -5,13 +5,13 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import Link from '@docusaurus/Link';
-import Translate, { translate } from '@docusaurus/Translate';
-import useBaseUrl from '@docusaurus/useBaseUrl';
-import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
-import Layout from '@theme/Layout';
-import React from 'react';
-import styles from './index.module.css';
+import Link from "@docusaurus/Link";
+import Translate, { translate } from "@docusaurus/Translate";
+import useBaseUrl from "@docusaurus/useBaseUrl";
+import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
+import Layout from "@theme/Layout";
+import React from "react";
+import styles from "./index.module.css";
 
 function Home() {
   const context = useDocusaurusContext();
@@ -23,19 +23,19 @@ function Home() {
           <div className={styles.heroInner}>
             <h1 className={styles.heroProjectTagline}>
               <img
-                alt={translate({ message: 'sea cucumber' })}
+                alt={translate({ message: "sea cucumber" })}
                 className={styles.heroLogo}
-                src={useBaseUrl('/img/profile.jpg')}
+                src={useBaseUrl("/img/profile.jpg")}
               />
               <span
                 className={styles.heroTitleTextHtml}
                 dangerouslySetInnerHTML={{
                   __html: translate({
-                    id: 'homepage.hero.title',
+                    id: "homepage.hero.title",
                     message:
-                      'Read <b>fantastic</b> articles written by <b>programmable animal - sea cucumber</b>, level up your <b>skills</b> with ease',
+                      "Read <b>fantastic</b> articles written by <b>programmable animal - sea cucumber</b>, level up your <b>skills</b> with ease",
                     description:
-                      'Home page hero title, can contain simple html tags',
+                      "Home page hero title, can contain simple html tags",
                   }),
                 }}
               />

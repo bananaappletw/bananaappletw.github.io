@@ -19,14 +19,14 @@ const allPosts = ((ctx) => {
         permalink,
       },
     ];
-  }, /** @type {string[]}>} */ ([]));
-})(require.context("../../blog", false, /.md/));
+  }, /** @type {string[]}>} */([]));
+})(require.context("../../treasure", false, /.md/));
 
 const postsByYear = allPosts.reduceRight((posts, post) => {
   const year = post.date.split("-")[0];
   const yearPosts = posts.get(year) || [];
   return posts.set(year, [post, ...yearPosts]);
-}, /** @type {Map<string, BlogPost[]>}>} */ (new Map()));
+}, /** @type {Map<string, BlogPost[]>}>} */(new Map()));
 
 const yearsOfPosts = Array.from(postsByYear, ([year, posts]) => ({
   year,
@@ -51,14 +51,13 @@ function Year(
     </div>
   );
 }
-
-function BlogArchive() {
+function Treasure() {
   return (
-    <Layout title="Blog Archive">
+    <Layout title="Treasure">
       <header className={clsx("hero hero--primary")}>
         <div className="container">
-          <h1 className="hero__title">Blog Archive</h1>
-          <p className="hero__subtitle">Historic posts</p>
+          <h1 className="hero__title">Treasure</h1>
+          <p className="hero__subtitle">bookmarked</p>
         </div>
       </header>
       <main>
@@ -78,4 +77,4 @@ function BlogArchive() {
   );
 }
 
-export default BlogArchive;
+export default Treasure;
