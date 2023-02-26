@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkblog=self.webpackChunkblog||[]).push([[6136],{83412:a=>{a.exports=JSON.parse('{"label":"qira","permalink":"/archives/tags/qira","allTagsPath":"/archives/tags","count":1}')}}]);

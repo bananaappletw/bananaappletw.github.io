@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkblog=self.webpackChunkblog||[]).push([[1019],{61695:e=>{e.exports=JSON.parse('{"title":"Recent posts","items":[{"title":"Everything you do is ultimately pointless","permalink":"/treasure/everything-you-do-is-ultimately-pointless"}]}')}}]);

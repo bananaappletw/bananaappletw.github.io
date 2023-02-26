@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>https://bananaappletw.github.io/treasure</id>
+    <title>bananaappletw's blog Blog</title>
+    <updated>2022-11-27T00:00:00.000Z</updated>
+    <generator>https://github.com/jpmonette/feed</generator>
+    <link rel="alternate" href="https://bananaappletw.github.io/treasure"/>
+    <subtitle>bananaappletw's blog Blog</subtitle>
+    <icon>https://bananaappletw.github.io/img/favicon.ico</icon>
+    <entry>
+        <title type="html"><![CDATA[Everything you do is ultimately pointless]]></title>
+        <id>https://bananaappletw.github.io/treasure/everything-you-do-is-ultimately-pointless</id>
+        <link href="https://bananaappletw.github.io/treasure/everything-you-do-is-ultimately-pointless"/>
+        <updated>2022-11-27T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[Everything you do is ultimately pointless. You feel that becoming a particular type of engineer you aspire to is meaningful, but once you get there you’ll realize you’re still yourself and you didn’t ascend to some higher level of being. Probably the most meaningful thing we can do is through social interactions. Your time in WoW must have incorporated social interactions. Be proud of those experiences - they’re in no way worse than others. Enjoy who you are and where you’ve been, avoid hurting people directly or indirectly, and you’ll be fine. If now you value your work with computers more then pursue that with the same vigor - but realize it’s not more meaningful than playing WoW, because meaning is what you make of it. Our culture will tell you productive activities that create capital and productivity are meaningful, but they only are if you find meaning and purpose in them for yourself without regard to the monetary necessities. I’m certain you felt purpose and meaning in your WoW playing at the time, and maybe you’ve just grown and changed. That’s ok too. Just because you wouldn’t spend your time doing WoW now doesn’t change you were driven to then, and the fact you could have “leap frogged” your current skill doesn’t matter one little bit. It’s not a race.]]></summary>
+        <content type="html"><![CDATA[<blockquote><p>Everything you do is ultimately pointless. You feel that becoming a particular type of engineer you aspire to is meaningful, but once you get there you’ll realize you’re still yourself and you didn’t ascend to some higher level of being. Probably the most meaningful thing we can do is through social interactions. Your time in WoW must have incorporated social interactions. Be proud of those experiences - they’re in no way worse than others. Enjoy who you are and where you’ve been, avoid hurting people directly or indirectly, and you’ll be fine. If now you value your work with computers more then pursue that with the same vigor - but realize it’s not more meaningful than playing WoW, because meaning is what you make of it. Our culture will tell you productive activities that create capital and productivity are meaningful, but they only are if you find meaning and purpose in them for yourself without regard to the monetary necessities. I’m certain you felt purpose and meaning in your WoW playing at the time, and maybe you’ve just grown and changed. That’s ok too. Just because you wouldn’t spend your time doing WoW now doesn’t change you were driven to then, and the fact you could have “leap frogged” your current skill doesn’t matter one little bit. It’s not a race.</p></blockquote><p><a href="https://news.ycombinator.com/item?id=32618664" target="_blank" rel="noopener noreferrer">https://news.ycombinator.com/item?id=32618664</a></p>]]></content>
+        <category label="life" term="life"/>
+    </entry>
+</feed>
