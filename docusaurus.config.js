@@ -7,7 +7,7 @@ const mermaid = require("remark-mermaid");
 module.exports = {
   title: "bananaappletw's blog",
   tagline: "silver bullet",
-  url: "https://bananaappletw.github.io",
+  url: "https://bananaappletw.github.io/",
   baseUrl: "/",
   onBrokenLinks: "throw",
   onBrokenMarkdownLinks: "warn",
