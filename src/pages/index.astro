@@ -37,10 +37,6 @@ const homePath = getRelativeLocaleUrl(locale, "");
       <h1 class="my-4 inline-block text-5xl sm:text-6xl font-bold sm:my-8">
         The journey matters more than the destination.
       </h1>
-      {
-        socials.length > 0 && (
-          <div class="mt-4 flex items-center gap-4">
-            <Socials />
             <a
               target="_blank"
               href={`${import.meta.env.BASE_URL.replace(/\/?$/, "/")}rss.xml`}
@@ -55,9 +51,6 @@ const homePath = getRelativeLocaleUrl(locale, "");
               />
               <span class="sr-only">RSS Feed</span>
             </a>
-          </div>
-        )
-      }
     </section>
 
     {

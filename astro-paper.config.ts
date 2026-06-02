@@ -3,8 +3,8 @@ import { defineAstroPaperConfig } from "./src/types/config";
 export default defineAstroPaperConfig({
   site: {
     url: "https://bananaappletw.github.io/",
-    title: "bananaappletw's blog",
-    description: "Personal blog and knowledge base",
+    title: "Weibo's Home",
+    description: "Weibo's Home",
     author: "bananaappletw",
     profile: "https://github.com/bananaappletw",
     ogImage: "default-og.jpg",
