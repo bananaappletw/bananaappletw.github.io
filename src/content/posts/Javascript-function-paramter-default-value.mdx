@@ -1,0 +1,46 @@
+---
+title: Javascript function paramter default  value
+pubDatetime: 2026-06-02T20:18:23.001411Z
+description: Javascript function paramter default  value
+tags: ['javascript', 'computer science', 'archive']
+---
+
+```
+function f(s)
+{
+```
+```
+	var a = (s == undefined) ? 'qq' : s;
+```
+```
+}
+```
+
+Can be rewrited as following code
+
+```
+function f(s)
+{
+```
+```
+	var a = s || 'qq';
+```
+```
+}
+```
+
+First statement will evaluate value of s is true or not.
+
+If true, s is assigned to a.
+
+Else, statement will find next value a.k.a. 'qq'.
+
+'qq' will be assigned to a.
+
+For further, you could directly write code like this in ES6.
+
+```
+function f(s = 'qq')
+{
+}
+```

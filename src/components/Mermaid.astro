@@ -6,17 +6,11 @@ interface Props {
 const { chart } = Astro.props;
 ---
 
-<pre class="mermaid">{chart}</pre>
+<div class="mermaid">{chart}</div>
 
 <script>
-  import mermaid from 'mermaid';
-  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
-</script>
+  import mermaid from "mermaid";
 
-<style>
-  pre.mermaid {
-    display: flex;
-    justify-content: center;
-    margin: 1rem 0;
-  }
-</style>
+  mermaid.initialize({ startOnLoad: true, theme: "dark" });
+  mermaid.contentLoaded();
+</script>

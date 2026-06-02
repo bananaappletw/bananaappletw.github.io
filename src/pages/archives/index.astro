@@ -1,29 +1,89 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getCollection } from 'astro:content';
+import { getRelativeLocaleUrl } from "astro:i18n";
+import { getCollection } from "astro:content";
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Breadcrumb from "@/components/Breadcrumb.astro";
+import Main from "@/components/Main.astro";
+import Footer from "@/components/Footer.astro";
+import Card from "@/components/Card.astro";
+import { postFilter } from "@/utils/postFilter";
+import { getPostsByGroupCondition } from "./_utils/getPostsByGroupCondition";
+import { useTranslations } from "@/i18n";
+import config from "@/config";
 
-const posts = (await getCollection('archives')).sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+const locale = Astro.currentLocale ?? config.site.lang;
+
+// Redirect to 404 page if `showArchives` config is false
+const notFoundUrl = getRelativeLocaleUrl(locale, "404");
+if (!config.features.showArchives && notFoundUrl) {
+  return Astro.rewrite(notFoundUrl);
+}
+
+const t = useTranslations(locale);
+
+const posts = await getCollection("posts");
+const filteredPosts = posts.filter(postFilter);
+const monthFormatter = new Intl.DateTimeFormat(locale, { month: "long" });
 ---
 
-<BaseLayout title="Archives">
-  <h1>Archives</h1>
-  <div style="margin-top: 2rem;">
-    {posts.map(post => (
-      <article style="margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid #30363d;">
-        <h2 style="margin-bottom: 0.5rem;">
-          <a href={`/archives/${post.slug}`}>{post.data.title}</a>
-        </h2>
-        <p style="color: #8b949e; margin-bottom: 0.5rem;">
-          {post.data.date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-        </p>
-        {post.data.tags && post.data.tags.length > 0 && (
+<Layout title={`${t.pages.archivesTitle} | ${config.site.title}`}>
+  <Header />
+
+  <Breadcrumb />
+
+  <Main pageTitle={t.pages.archivesTitle} pageDesc={t.pages.archivesDesc}>
+    {
+      Object.entries(
+        getPostsByGroupCondition(filteredPosts, post =>
+          post.data.pubDatetime.getFullYear()
+        )
+      )
+        .sort(([yearA], [yearB]) => Number(yearB) - Number(yearA))
+        .map(([year, yearGroup]) => (
           <div>
-            {post.data.tags.map(tag => (
-              <span class="tag">{tag}</span>
-            ))}
+            <span class="text-2xl font-bold">{year}</span>
+            <sup class="text-muted-foreground text-sm">{yearGroup.length}</sup>
+            {Object.entries(
+              getPostsByGroupCondition(
+                yearGroup,
+                post => post.data.pubDatetime.getMonth() + 1
+              )
+            )
+              .sort(([monthA], [monthB]) => Number(monthB) - Number(monthA))
+              .map(([month, monthGroup]) => (
+                <div class="flex flex-col sm:flex-row">
+                  <div class="mt-6 min-w-36 text-lg sm:my-6">
+                    <span class="font-bold">
+                      {monthFormatter.format(
+                        new Date(2000, Number(month) - 1, 1)
+                      )}
+                    </span>
+                    <sup class="text-muted-foreground text-xs">
+                      {monthGroup.length}
+                    </sup>
+                  </div>
+                  <ul>
+                    {monthGroup
+                      .sort(
+                        (a, b) =>
+                          Math.floor(
+                            new Date(b.data.pubDatetime).getTime() / 1000
+                          ) -
+                          Math.floor(
+                            new Date(a.data.pubDatetime).getTime() / 1000
+                          )
+                      )
+                      .map(data => (
+                        <Card {...data} />
+                      ))}
+                  </ul>
+                </div>
+              ))}
           </div>
-        )}
-      </article>
-    ))}
-  </div>
-</BaseLayout>
+        ))
+    }
+  </Main>
+
+  <Footer />
+</Layout>
