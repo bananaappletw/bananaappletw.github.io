@@ -1,20 +1,20 @@
-# Dependencies
+# Astro
+/dist
+/.astro
 /node_modules
+npm-debug.log
 
-# Production
-/build
-
-# Generated files
-.docusaurus
-.cache-loader
-
-# Misc
-.DS_Store
+# Environment
+.env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*.local
 
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

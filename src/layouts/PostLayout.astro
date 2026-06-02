@@ -1,0 +1,42 @@
+---
+import BaseLayout from './BaseLayout.astro';
+
+interface Props {
+  frontmatter: {
+    title: string;
+    date: Date;
+    tags?: string[];
+    author?: string;
+  };
+}
+
+const { frontmatter } = Astro.props;
+const formattedDate = frontmatter.date.toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+---
+
+<BaseLayout title={frontmatter.title}>
+  <article>
+    <h1>{frontmatter.title}</h1>
+    <div class="post-meta">
+      <p>{formattedDate}</p>
+      {frontmatter.tags && frontmatter.tags.length > 0 && (
+        <div>
+          {frontmatter.tags.map(tag => (
+            <span class="tag">{tag}</span>
+          ))}
+        </div>
+      )}
+    </div>
+    <slot />
+  </article>
+</BaseLayout>
+
+<style>
+  article {
+    max-width: 100%;
+  }
+</style>
