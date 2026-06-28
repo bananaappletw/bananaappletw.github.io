@@ -3,6 +3,7 @@
 /.astro
 /node_modules
 npm-debug.log
+/public/pagefind
 
 # Environment
 .env
