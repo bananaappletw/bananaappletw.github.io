@@ -1,6 +1,11 @@
-# Website
+# bananaappletw.github.io
 
-This website is built using [Docusaurus 2](https://docusaurus.io/), a modern static website generator.
+A personal blog and knowledge base built with [Astro](https://astro.build/) using the [AstroPaper](https://astro-paper.pages.dev/) theme. Hosted on GitHub Pages at https://bananaappletw.github.io/
+
+## Requirements
+
+- Node.js >=22.0.0
+- npm or yarn
 
 ## Installation
 
@@ -11,23 +16,35 @@ npm install
 ## Local Development
 
 ```console
-yarn start
+npm run dev
 ```
 
-This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
+Starts a local development server at `http://localhost:4321` with hot reloading. Changes are reflected live without restarting the server.
 
 ## Build
 
 ```console
-yarn build
+npm run build
 ```
 
-This command generates static content into the `build` directory and can be served using any static contents hosting service.
+Generates static content into the `dist/` directory and creates a Pagefind search index at `dist/pagefind/`. Ready to be served by any static content hosting service.
+
+## Preview Built Site
+
+```console
+npm run preview
+```
+
+Serves the built `dist/` directory locally for testing before deployment.
+
+## Formatting & Linting
+
+```console
+npm run format:check  # Check formatting
+npm run format       # Apply Prettier formatting
+npm run lint         # Run ESLint
+```
 
 ## Deployment
 
-```console
-GIT_USER=<Your GitHub username> USE_SSH=true yarn deploy
-```
-
-If you are using GitHub pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.
+Push to the `main` branch to trigger automatic deployment to GitHub Pages via GitHub Actions.
