@@ -1,6 +1,4 @@
-@import "tailwindcss";
 @import "./theme.css";
-@import "./typography.css";
 
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
@@ -20,17 +18,29 @@
   }
 }
 
-@utility max-w-app {
-  @apply max-w-3xl;
+@layer utilities {
+  .max-w-app {
+    max-width: 48rem;
+  }
+
+  .app-layout {
+    max-width: 48rem;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .active-nav {
+    text-decoration: underline;
+    text-decoration-style: wavy;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 8px;
+  }
 }
 
-@utility app-layout {
-  @apply max-w-app mx-auto w-full px-4;
-}
-
-@utility active-nav {
-  @apply underline decoration-wavy decoration-2 underline-offset-8;
-}
+@import "./typography.css";
 
 :target {
   scroll-margin-block: 1rem;
