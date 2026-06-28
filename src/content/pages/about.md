@@ -1,37 +1,58 @@
 ---
-title: "About"
-description: "A bit about me and this blog."
+title: "About Me"
+description: "Learn more about Weibo Chen, a Senior DevOps Engineer passionate about infrastructure, cloud systems, and security."
 ---
 
-AstroPaper is a minimal, accessible and SEO-friendly blog theme built with [Astro](https://astro.build/) and [Tailwind CSS](https://tailwindcss.com/).
+# Hello! I'm Weibo Chen 👋
 
-![Astro Paper](@/assets/images/astropaper-og.jpg)
+I'm a **Senior DevOps Engineer** based in Tokyo, with a passion for building scalable infrastructure, designing cloud systems, and exploring the intersection of security and software engineering.
 
-AstroPaper provides a solid foundation for blogs, or even portfolios\_ with full markdown support, built-in dark mode, and a clean layout that works out-of-the-box.
+Currently, I work at **メルカリ (Mercari)**, where I operate and maintain one of Japan's largest e-commerce platforms serving **10M+ monthly active users**. I lead infrastructure modernization initiatives, design developer experience improvements, and architect solutions that empower thousands of engineers to ship faster and more reliably.
 
-The blog posts in this theme also serve as guides, docs or example articles\_ making AstroPaper a flexible starting point for your next content-driven site.
+## What I Do
 
-## Features
+My expertise spans the modern DevOps and infrastructure landscape:
 
-AstroPaper comes with a set of useful features that make content publishing easy and effective:
+- **Cloud Platforms**: AWS, GCP with deep Kubernetes expertise
+- **Infrastructure as Code**: Terraform, Helm, Kustomize, CDK8s
+- **Container Orchestration**: Kubernetes, Istio, Docker
+- **CI/CD & Deployment**: GitHub Actions, ArgoCD, Argo Rollout, Spinnaker
+- **Observability**: Prometheus, Grafana, Loki, ELK Stack, OpenTelemetry, Datadog
+- **Programming**: Go, Python, Bash, Node.js, C++
 
-- SEO-friendly
-- Fast performance
-- Light & dark mode
-- Highly customizable
-- Organizable blog posts
-- Responsive & accessible
-- Static search with [PageFind](https://pagefind.app/)
-- Automatic social image generation
+## What I Like
 
-and so much more.
+- Playing pianos <3 I plan to record more, but currently this is what I have [check it out on Instagram](https://www.instagram.com/stories/highlights/17917500531032477/)
+- Watching Anime and Japanese TV shows. I loved anime & manga growing up, but funny enough living in Japan changed things a bit. I still watch sometimes for Japanese learning and the joy, just not as frequently as before.
+- Playing [Survival Chaos](https://www.w3sur5al.com/Home/surchaos), a custom [Warcraft III](https://en.wikipedia.org/wiki/Warcraft_III:_Reign_of_Chaos) map from 2002 that's still actively maintained. I'm an old-school person who appreciates nostalgia. sometimes the best gems are the ones that have stuck around.
 
-## Show your support
+## Education
 
-If you like [AstroPaper](https://github.com/satnaing/astro-paper), consider giving it a star ⭐️.
+**National Yang-Ming Chiao Tung University** (formerly National Chiao Tung University)
+- Bachelor's: Computer Science (2012–2016) • GPA: 3.48/4.3
+- Master's: Computer Science (2016–2017) • GPA: 3.9/4.3
+- Thesis: [SymGDB](https://github.com/SQLab/symgdb) Symbolic execution integration for debugging
 
-Found a bug 🐛 or have an improvement ✨ in mind? Feel free to open an [issue](https://github.com/satnaing/astro-paper/issues), submit a [pull request](https://github.com/satnaing/astro-paper/pulls) or start a [discussion](https://github.com/satnaing/astro-paper/discussions).
+I worked pretty hard during my student days, diving deep into security, reverse engineering, and systems programming. I got to share my CTF knowledge at HITCON community events, which was fun.
 
-If you find this theme helpful, you can also [sponsor me on GitHub](https://github.com/sponsors/satnaing) or [buy me a coffee](https://buymeacoffee.com/satnaing) to show your support — every penny counts.
+## Open Source & Speaking
 
-Kyay zuu! 🙏🏼
+I've contributed to the open source community through speaking engagements at major security conferences:
+
+- **DEF CON China**: Spoke about Triton and symbolic execution on GDB
+- **HITCON Community**: Shared knowledge on CTF for beginners
+
+Some projects I've worked on:
+- **SymGDB**: A plugin bringing symbolic execution capabilities to GDB
+- **Bamboofox CTF Training Platform**: Educational resources for CTF competitions
+
+My GitHub profile reflects my journey through infrastructure, security, and developer tools.
+
+## Let's Connect
+
+- 📧 Email: [bananaappletw@gmail.com](mailto:bananaappletw@gmail.com)
+- 🐙 GitHub: [@bananaappletw](https://github.com/bananaappletw)
+- 💼 LinkedIn: [bananaappletw](https://www.linkedin.com/in/bananaappletw/)
+- 𝕏 Twitter: [@bananaappletw](https://x.com/bananaappletw)
+
+Feel free to reach out if you'd like to discuss infrastructure, DevOps, security, or anything else. I'm always happy to chat!
