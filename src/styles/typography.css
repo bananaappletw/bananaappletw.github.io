@@ -30,21 +30,22 @@
 
   .app-prose a {
     color: var(--foreground);
-    text-decoration: dashed;
-    text-decoration-line: underline;
+    text-decoration: underline;
+    text-decoration-style: dashed;
     text-underline-offset: 1rem;
+    word-wrap: break-word;
   }
 
   .app-prose a:hover {
     color: var(--accent);
   }
 
-  .app-prose ul {
-    overflow-x: clip;
+  .app-prose a:focus-visible {
+    text-decoration: none;
   }
 
-  .app-prose li {
-    color: var(--accent);
+  .app-prose ul {
+    overflow-x: clip;
   }
 
   .app-prose li::marker {
@@ -56,10 +57,9 @@
   }
 
   .app-prose img {
-    border-color: var(--border);
+    border: 1px solid var(--border);
     margin-left: auto;
     margin-right: auto;
-    border-width: 1px;
   }
 
   .app-prose figcaption {
@@ -68,8 +68,7 @@
 
   .app-prose table th,
   .app-prose table td {
-    border-color: var(--border);
-    border-width: 1px;
+    border: 1px solid var(--border);
     padding: 0.5rem;
   }
 
@@ -81,8 +80,9 @@
   .app-prose code {
     background-color: var(--muted);
     opacity: 0.75;
-    border-radius: 0.375rem;
+    border-radius: 0.25rem;
     padding: 0.25rem;
+    word-wrap: break-word;
   }
 
   .app-prose code::before,
@@ -99,7 +99,8 @@
   .app-prose blockquote {
     border-left-color: var(--accent);
     opacity: 0.8;
-    word-break: break-word;
+    word-wrap: break-word;
+    border-left-width: 0.25rem;
   }
 
   .app-prose details {
@@ -118,20 +119,33 @@
   }
 
   .app-prose summary {
+    outline-color: var(--accent);
+    text-decoration: none;
+    outline-width: 2px;
     outline-offset: 0.125rem;
+    outline-style: dashed;
   }
 
   .app-prose pre {
     outline-color: var(--accent);
-    outline-offset: 0.125rem;
+    border: transparent;
+    outline-width: 2px;
+    outline-style: dashed;
   }
 
-  /* Code Blocks */
+  .app-prose pre:focus-visible {
+    outline-color: var(--accent);
+    border-color: transparent;
+    outline-width: 2px;
+    outline-style: dashed;
+  }
+
   .astro-code {
+    outline-color: var(--border);
+    display: flex;
     border: 1px solid var(--border);
     background-color: var(--shiki-light-bg);
     color: var(--shiki-light);
-    display: flex;
   }
 
   .astro-code span {
@@ -147,7 +161,6 @@
     color: var(--shiki-dark);
   }
 
-  /* Shiki transformers */
   .astro-code .line.diff.add {
     position: relative;
     display: inline-block;
@@ -184,7 +197,7 @@
 
   .astro-code .highlighted-word {
     border: 1px solid var(--border);
-    border-radius: 0.126rem;
+    border-radius: 0.125rem;
     padding: 0px 0.125rem;
   }
 }
