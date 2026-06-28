@@ -20,6 +20,7 @@
     "@astrojs/rss": "^4.0.18",
     "@astrojs/sitemap": "^3.7.3",
     "@tailwindcss/postcss": "^4.3.0",
+    "@tailwindcss/vite": "^4.3.1",
     "astro": "^7.0.3",
     "dayjs": "^1.11.21",
     "lodash.kebabcase": "^4.1.1",
