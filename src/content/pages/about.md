@@ -3,8 +3,6 @@ title: "About Me"
 description: "Learn more about Weibo Chen, a Senior DevOps Engineer passionate about infrastructure, cloud systems, and security."
 ---
 
-# Hello! I'm Weibo Chen 👋
-
 I'm a **Senior DevOps Engineer** based in Tokyo, with a passion for building scalable infrastructure, designing cloud systems, and exploring the intersection of security and software engineering.
 
 Currently, I work at **メルカリ (Mercari)**, where I operate and maintain one of Japan's largest e-commerce platforms serving **10M+ monthly active users**. I lead infrastructure modernization initiatives, design developer experience improvements, and architect solutions that empower thousands of engineers to ship faster and more reliably.
