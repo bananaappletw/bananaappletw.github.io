@@ -1,7 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
+@import "tailwindcss";
 @import "./theme.css";
 @import "./typography.css";
 
@@ -9,22 +6,13 @@
 
 @layer base {
   * {
-    border-color: var(--border);
-    outline-color: var(--accent);
-    outline-width: 0.8px;
+    @apply border-border outline-accent/75;
     scrollbar-width: auto;
     scrollbar-color: var(--color-muted) transparent;
   }
   a,
   button {
-    outline-color: var(--accent);
-    outline-offset: 0.25rem;
-  }
-  a:focus-visible,
-  button:focus-visible {
-    text-decoration: none;
-    outline-width: 2px;
-    outline-style: dashed;
+    @apply outline-accent outline-offset-1 focus-visible:no-underline focus-visible:outline-2 focus-visible:outline-dashed;
   }
   button:not(:disabled),
   [role="button"]:not(:disabled) {
@@ -32,26 +20,16 @@
   }
 }
 
-@layer utilities {
-  .max-w-app {
-    max-width: 48rem;
-  }
+@utility max-w-app {
+  @apply max-w-3xl;
+}
 
-  .app-layout {
-    max-width: 48rem;
-    margin-left: auto;
-    margin-right: auto;
-    width: 100%;
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
+@utility app-layout {
+  @apply max-w-app mx-auto w-full px-4;
+}
 
-  .active-nav {
-    text-decoration: underline;
-    text-decoration-style: wavy;
-    text-decoration-thickness: 2px;
-    text-underline-offset: 0.5rem;
-  }
+@utility active-nav {
+  @apply underline decoration-wavy decoration-2 underline-offset-8;
 }
 
 :target {
