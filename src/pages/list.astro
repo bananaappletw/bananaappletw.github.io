@@ -1,0 +1,157 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Breadcrumb from "@/components/Breadcrumb.astro";
+import Main from "@/components/Main.astro";
+import Footer from "@/components/Footer.astro";
+import config from "@/config";
+import rawItems from "@/data/list.json";
+
+type ListItem = {
+  name: string;
+  link?: string;
+  type: "movie" | "anime" | "manga" | "article";
+  status: "done" | "todo";
+  date?: string;
+};
+
+const items = (rawItems as ListItem[]).sort((a, b) => {
+  if (!a.date && !b.date) return 0;
+  if (!a.date) return 1;
+  if (!b.date) return -1;
+  return b.date.localeCompare(a.date);
+});
+
+const typeColors: Record<string, string> = {
+  movie: "#3b82f6",
+  anime: "#a855f7",
+  manga: "#ec4899",
+  article: "#10b981",
+};
+---
+
+<Layout title={`List | ${config.site.title}`} description="Movies, anime, manga, and articles to watch or read.">
+  <Header />
+  <Breadcrumb />
+  <Main pageTitle="List" pageDesc="Movies, anime, manga, and articles.">
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+      <!-- Filter bar -->
+      <div style="display: flex; flex-direction: column; gap: 1rem;">
+        <!-- Type filters -->
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+          <button class="type-filter active" data-type="all" style="padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.875rem; font-weight: 500; background-color: var(--color-muted); color: var(--color-text);">
+            All
+          </button>
+          <button class="type-filter" data-type="movie" style="padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.875rem; font-weight: 500; background-color: var(--color-muted); color: var(--color-text);">
+            Movie
+          </button>
+          <button class="type-filter" data-type="anime" style="padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.875rem; font-weight: 500; background-color: var(--color-muted); color: var(--color-text);">
+            Anime
+          </button>
+          <button class="type-filter" data-type="manga" style="padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.875rem; font-weight: 500; background-color: var(--color-muted); color: var(--color-text);">
+            Manga
+          </button>
+          <button class="type-filter" data-type="article" style="padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.875rem; font-weight: 500; background-color: var(--color-muted); color: var(--color-text);">
+            Article
+          </button>
+        </div>
+
+        <!-- Status filters -->
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+          <button class="status-filter active" data-status="all" style="padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.875rem; font-weight: 500; background-color: var(--color-muted); color: var(--color-text);">
+            All
+          </button>
+          <button class="status-filter" data-status="todo" style="padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.875rem; font-weight: 500; background-color: var(--color-muted); color: var(--color-text);">
+            Todo
+          </button>
+          <button class="status-filter" data-status="done" style="padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.875rem; font-weight: 500; background-color: var(--color-muted); color: var(--color-text);">
+            Done
+          </button>
+        </div>
+      </div>
+
+      <!-- Items list -->
+      <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+        {items.map((item) => (
+          <div
+            class="list-item"
+            data-type={item.type}
+            data-status={item.status}
+            style="display: flex; align-items: flex-start; justify-content: space-between; padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--color-border);"
+          >
+            <div style="flex: 1;">
+              <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                <span style={`background-color: ${typeColors[item.type]}; color: white; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.5rem; border-radius: 0.25rem;`}>
+                  {item.type.charAt(0).toUpperCase() + item.type.slice(1)}
+                </span>
+                {item.link ? (
+                  <a href={item.link} target="_blank" rel="noopener noreferrer" style="color: var(--color-accent); font-weight: 500; text-decoration: none;">
+                    {item.name}
+                  </a>
+                ) : (
+                  <span style="font-weight: 500;">{item.name}</span>
+                )}
+                <span style={`font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 0.25rem; background-color: ${item.status === "done" ? "var(--color-muted)" : "var(--color-border)"}; color: var(--color-text);`}>
+                  {item.status === "done" ? "Done" : "Todo"}
+                </span>
+              </div>
+              {item.date && <p style="font-size: 0.75rem; color: var(--color-muted-foreground); margin-top: 0.5rem;">{item.date}</p>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </Main>
+  <Footer />
+</Layout>
+
+<script>
+  function setupFilters() {
+    const typeFilters = document.querySelectorAll(".type-filter");
+    const statusFilters = document.querySelectorAll(".status-filter");
+    const listItems = document.querySelectorAll(".list-item");
+
+    let activeType = "all";
+    let activeStatus = "all";
+
+    function updateItems() {
+      listItems.forEach((item) => {
+        const itemType = item.getAttribute("data-type");
+        const itemStatus = item.getAttribute("data-status");
+
+        const typeMatch = activeType === "all" || itemType === activeType;
+        const statusMatch = activeStatus === "all" || itemStatus === activeStatus;
+
+        (item as HTMLElement).style.display = typeMatch && statusMatch ? "" : "none";
+      });
+    }
+
+    typeFilters.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        typeFilters.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        activeType = btn.getAttribute("data-type") || "all";
+        updateItems();
+      });
+    });
+
+    statusFilters.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        statusFilters.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        activeStatus = btn.getAttribute("data-status") || "all";
+        updateItems();
+      });
+    });
+  }
+
+  setupFilters();
+</script>
+
+<style>
+  button.type-filter.active,
+  button.status-filter.active {
+    background-color: var(--color-accent);
+    color: var(--color-background);
+  }
+</style>

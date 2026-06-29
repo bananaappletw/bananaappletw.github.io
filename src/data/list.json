@@ -1,0 +1,42 @@
+[
+  {
+    "name": "Spirited Away",
+    "link": "https://example.com",
+    "type": "anime",
+    "status": "done",
+    "date": "2024-06"
+  },
+  {
+    "name": "Berserk",
+    "link": "https://example.com",
+    "type": "manga",
+    "status": "todo",
+    "date": "2024-05"
+  },
+  {
+    "name": "Inception",
+    "link": "https://example.com",
+    "type": "movie",
+    "status": "todo",
+    "date": "2024-04"
+  },
+  {
+    "name": "Article Title",
+    "link": "https://example.com",
+    "type": "article",
+    "status": "done"
+  },
+  {
+    "name": "Pulp Fiction",
+    "type": "movie",
+    "status": "todo",
+    "date": "2026-06"
+  },
+  {
+    "name": "ダンジョンに潜むヤンデレな彼女に俺は何度も殺される",
+    "link": "https://comic-walker.com/detail/KC_004603_S",
+    "type": "manga",
+    "status": "todo",
+    "date": "2026-06"
+  }
+]
