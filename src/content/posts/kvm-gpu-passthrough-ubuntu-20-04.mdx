@@ -76,20 +76,17 @@ If output is not expected, configure BIOS setting
 
 ## Isolation of the guest GPU
 
-<div class="mermaid">
+```mermaid
 graph LR
-</div>
-subgraph C [guest]
-C1[PCI device]
+subgraph A [Host]
+A1[PCI device] --> B1[VFIO]
 end
 subgraph B [hypervisor]
 B1[VFIO] --> C1[PCI device]
 end
-subgraph A [Host]
-A1[PCI device] --> B1[VFIO]
+subgraph C [guest]
+C1[PCI device]
 end
-```
-
 ```
 
 ## Using vfio-pci to manage PCI device
@@ -168,48 +165,32 @@ Increase virtio's bus number to spare small number for new added entry
 
 :::
 
-```
+```xml
 <devices>
   ...
-```
-<hostdev mode='subsystem' type='pci' managed='yes'>
-```
-```
-  <source>
-    <address domain='0x0000' bus='0x01' slot='0x00'function='0x0'/>
-  </source>
-  <address type='pci' domain='0x0000' bus='0x04'slot='0x00' function='0x0'/>
-```
-```
-</hostdev>
-<memballoon model='virtio'>
-```
-```
-  <address type='pci' domain='0x0000' bus='0x05'slot='0x00' function='0x0'/>
-```
-```
-</memballoon>
-<rng model='virtio'>
-```
-```
-  <backend model='random'>/dev/urandom</backend>
-  <address type='pci' domain='0x0000' bus='0x06'slot='0x00' function='0x0'/>
-```
-```
-</rng>
-```
+  <hostdev mode='subsystem' type='pci' managed='yes'>
+    <source>
+      <address domain='0x0000' bus='0x01' slot='0x00' function='0x0'/>
+    </source>
+    <address type='pci' domain='0x0000' bus='0x04' slot='0x00' function='0x0'/>
+  </hostdev>
+  <memballoon model='virtio'>
+    <address type='pci' domain='0x0000' bus='0x05' slot='0x00' function='0x0'/>
+  </memballoon>
+  <rng model='virtio'>
+    <backend model='random'>/dev/urandom</backend>
+    <address type='pci' domain='0x0000' bus='0x06' slot='0x00' function='0x0'/>
+  </rng>
 </devices>
 ```
 
 `kvm hidden` within `features` block
 
-```
+```xml
 <features>
-...
+  ...
   <kvm>
-```
-<hidden state='on'/>
-```
+    <hidden state='on'/>
   </kvm>
 </features>
 ```
