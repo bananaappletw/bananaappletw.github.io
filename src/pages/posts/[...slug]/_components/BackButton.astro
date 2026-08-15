@@ -1,6 +1,4 @@
 ---
-import IconChevronLeft from "@/assets/icons/IconChevronLeft.svg";
-import LinkButton from "@/components/LinkButton.astro";
 import { getRelativeLocaleUrl } from "astro:i18n";
 import { useTranslations } from "@/i18n";
 import config from "@/config";
@@ -11,31 +9,25 @@ const t = useTranslations(locale);
 
 {
   config.features.showBackButton && (
-    <div class="app-layout flex items-center justify-start">
-      <LinkButton
-        id="back-button"
-        href={getRelativeLocaleUrl(locale, "")}
-        class="label hover:text-text-2 -ms-2 mt-8 mb-2"
-      >
-        <IconChevronLeft class="inline-block size-6 rtl:rotate-180" />
-        <span>{t.post.goBack}</span>
-      </LinkButton>
-    </div>
+    <a
+      id="back-button"
+      href={getRelativeLocaleUrl(locale, "")}
+      class="label back"
+    >
+      {t.post.goBack}
+    </a>
   )
 }
 
-<script>
-  function updateGoBackUrl() {
-    const backButton: HTMLAnchorElement | null =
-      document.querySelector("#back-button");
-
-    const backUrl = sessionStorage.getItem("backUrl");
-
-    if (backUrl && backButton) {
-      backButton.href = backUrl;
-    }
+<style>
+  .back {
+    display: inline-block;
+    margin-top: 30px;
+    color: var(--text-4);
+    text-decoration: none;
   }
 
-  document.addEventListener("astro:page-load", updateGoBackUrl);
-  updateGoBackUrl();
-</script>
+  .back:hover {
+    color: var(--text-2);
+  }
+</style>

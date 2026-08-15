@@ -21,10 +21,45 @@ const backUrl = config.features.showBackButton
   id="main-content"
   class:list={["app-layout pb-4", className]}
 >
-  <h1 class="text-2xl font-semibold sm:text-3xl">{pageTitle}</h1>
-  <p class="mt-2 mb-6 italic">{pageDesc}</p>
-  <slot />
+  <section class="gate">
+    <h1>{pageTitle}</h1>
+    {pageDesc && <p class="sub">{pageDesc}</p>}
+  </section>
+
+  <hr class="rule" />
+
+  <div class="body"><slot /></div>
 </main>
+
+<style>
+  .gate {
+    padding-block: clamp(56px, 14vh, 140px) clamp(44px, 8vh, 90px);
+  }
+
+  .gate h1 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(30px, 6vw, 52px);
+    line-height: 1.08;
+    letter-spacing: 0.015em;
+    color: var(--text);
+    margin: 0;
+    max-width: 18ch;
+    text-wrap: balance;
+  }
+
+  .gate .sub {
+    margin: clamp(20px, 3vh, 32px) 0 0;
+    max-width: 48ch;
+    color: var(--text-3);
+    font-size: 16px;
+    line-height: 1.8;
+  }
+
+  .body {
+    padding-block: clamp(40px, 6vh, 72px) 0;
+  }
+</style>
 
 <script>
   document.addEventListener("astro:page-load", () => {

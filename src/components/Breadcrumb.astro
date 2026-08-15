@@ -58,22 +58,22 @@ if (breadcrumbList[0] === "tags" && !isNaN(Number(breadcrumbList[2]))) {
 }
 ---
 
-<nav class="app-layout mt-8 mb-1" aria-label="breadcrumb">
+<nav class="app-layout crumbs" aria-label="breadcrumb">
   <ul
-    class="font-light [&>li]:inline [&>li:not(:last-child)>a]:hover:opacity-100"
+    class="label"
   >
     <li>
-      <a href={getRelativeLocaleUrl(locale, "")} class="opacity-80">
+      <a href={getRelativeLocaleUrl(locale, "")} class="crumb">
         {t.nav.home}
       </a>
-      <span aria-hidden="true" class="opacity-80">&raquo;</span>
+      <span aria-hidden="true" class="crumb">&middot;</span>
     </li>
     {
       breadcrumbList.map((breadcrumb, index) =>
         index + 1 === breadcrumbList.length ? (
           <li>
             <span
-              class:list={["capitalize opacity-75", { lowercase: index > 0 }]}
+              class:list={["here", { lowercase: index > 0 }]}
               aria-current="page"
             >
               {/* make the last part lowercase in Home > Tags > some-tag */}
@@ -84,12 +84,12 @@ if (breadcrumbList[0] === "tags" && !isNaN(Number(breadcrumbList[2]))) {
           <li>
             <a
               href={getRelativeLocaleUrl(locale, breadcrumb)}
-              class="capitalize opacity-70"
+              class="crumb"
             >
               {navLabels[breadcrumb] ?? decodeSegment(breadcrumb)}
             </a>
-            <span aria-hidden="true" class="opacity-70">
-              &raquo;
+            <span aria-hidden="true" class="sep">
+              &middot;
             </span>
           </li>
         )
@@ -97,3 +97,42 @@ if (breadcrumbList[0] === "tags" && !isNaN(Number(breadcrumbList[2]))) {
     }
   </ul>
 </nav>
+
+<style>
+  .crumbs {
+    padding-top: 22px;
+  }
+
+  .crumbs :global(ul) {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .crumbs :global(li) {
+    display: flex;
+    gap: 8px;
+  }
+
+  .crumbs :global(a) {
+    color: var(--text-4);
+    text-decoration: none;
+  }
+
+  .crumbs :global(a:hover) {
+    color: var(--text-2);
+  }
+
+  .crumbs :global(.sep),
+  .crumbs :global(span[aria-hidden]) {
+    color: var(--text-4);
+    opacity: 0.5;
+  }
+
+  .crumbs :global(.here) {
+    color: var(--text-3);
+  }
+</style>

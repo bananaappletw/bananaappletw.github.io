@@ -30,25 +30,51 @@ const items = await Promise.all(
 ---
 
 {
-  items.some(({ Icon }) => Icon) && (
-    <div class="flex flex-none flex-col items-center justify-center gap-1 md:items-start">
-      <span class="italic">{t.post.sharePostIntro}</span>
-      <div class="text-center">
-        {items.map(({ url, title, Icon }) =>
-          Icon ? (
-            <LinkButton
+  items.length > 0 && (
+    <div class="share" data-pagefind-ignore>
+      <span class="label">{t.post.sharePostIntro}</span>
+      <ul>
+        {items.map(({ url, title }) => (
+          <li>
+            <a
               href={`${url}${pageUrl}`}
-              class="scale-90 p-2 hover:rotate-6 sm:p-1"
               title={title}
               target="_blank"
               rel="noopener noreferrer"
+              class="label"
             >
-              <Icon class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110" />
-              <span class="sr-only">{title}</span>
-            </LinkButton>
-          ) : null
-        )}
-      </div>
+              {title.split(" ").pop()}
+            </a>
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }
+
+<style>
+  .share {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 10px 16px;
+  }
+
+  .share ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .share a {
+    color: var(--text-4);
+    text-decoration: none;
+  }
+
+  .share a:hover {
+    color: var(--text-2);
+  }
+</style>

@@ -1,6 +1,4 @@
 ---
-import IconArrowLeft from "@/assets/icons/IconArrowLeft.svg";
-import IconArrowRight from "@/assets/icons/IconArrowRight.svg";
 import { getPostUrl } from "@/utils/getPostPaths";
 import { useTranslations } from "@/i18n";
 import config from "@/config";
@@ -21,33 +19,61 @@ const locale = Astro.currentLocale ?? config.site.lang;
 const t = useTranslations(locale);
 ---
 
-<div data-pagefind-ignore class="my-8 grid grid-cols-1 gap-6 sm:grid-cols-2">
-  {
-    prevPost && (
-      <a
-        href={getPostUrl(prevPost.id, prevPost.filePath, locale)}
-        class="flex w-full gap-1 hover:opacity-75"
-      >
-        <IconArrowLeft class="inline-block flex-none rtl:rotate-180" />
-        <div>
-          <span>{t.post.previousPost}</span>
-          <div class="text-text-3 text-sm">{prevPost.title}</div>
-        </div>
-      </a>
-    )
+{
+  (prevPost || nextPost) && (
+    <nav data-pagefind-ignore class="onward">
+      <p class="label label-wide">Further In</p>
+
+      {prevPost && (
+        <a href={getPostUrl(prevPost.id, prevPost.filePath, locale)}>
+          <span class="label">{t.post.previousPost}</span>
+          <span class="t">{prevPost.title}</span>
+        </a>
+      )}
+
+      {nextPost && (
+        <a href={getPostUrl(nextPost.id, nextPost.filePath, locale)}>
+          <span class="label">{t.post.nextPost}</span>
+          <span class="t">{nextPost.title}</span>
+        </a>
+      )}
+    </nav>
+  )
+}
+
+<style>
+  .onward {
+    padding-block: clamp(50px, 9vh, 100px) 0;
   }
-  {
-    nextPost && (
-      <a
-        href={getPostUrl(nextPost.id, nextPost.filePath, locale)}
-        class="flex w-full justify-end gap-1 text-end hover:opacity-75 sm:col-start-2"
-      >
-        <div>
-          <span>{t.post.nextPost}</span>
-          <div class="text-text-3 text-sm">{nextPost.title}</div>
-        </div>
-        <IconArrowRight class="inline-block flex-none rtl:rotate-180" />
-      </a>
-    )
+
+  .onward > .label-wide {
+    margin: 0 0 6px;
   }
-</div>
+
+  .onward a {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 24px 0;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+  }
+
+  .onward a:last-of-type {
+    border-bottom: 0;
+  }
+
+  .onward .t {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 18px;
+    letter-spacing: 0.06em;
+    line-height: 1.35;
+    color: var(--text-3);
+    transition: color 0.18s ease-out;
+  }
+
+  .onward a:hover .t {
+    color: var(--text);
+  }
+</style>

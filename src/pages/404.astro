@@ -2,7 +2,6 @@
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
-import LinkButton from "@/components/LinkButton.astro";
 import { getRelativeLocaleUrl } from "astro:i18n";
 import { useTranslations } from "@/i18n";
 import config from "@/config";
@@ -14,22 +13,54 @@ const t = useTranslations(locale);
 <Layout title={`${t.notFound.title} | ${config.site.title}`}>
   <Header />
 
-  <main
-    id="main-content"
-    class="app-layout flex flex-1 items-center justify-center"
-  >
-    <div class="mb-14 flex flex-col items-center justify-center">
-      <h1 class="text-text font-display text-8xl" style="letter-spacing:0.06em">404</h1>
-      <span aria-hidden="true"> ¯\_(ツ)_/¯ </span>
-      <p class="mt-4 text-2xl sm:text-3xl">{t.notFound.message}</p>
-      <LinkButton
-        href={getRelativeLocaleUrl(locale, "")}
-        class="my-6 text-lg underline decoration-dashed underline-offset-8"
-      >
-        {t.notFound.goHome}
-      </LinkButton>
-    </div>
+  <main id="main-content" class="app-layout lost">
+    <p class="label label-wide">Hollowed</p>
+    <h1>404</h1>
+    <p class="msg">{t.notFound.message}</p>
+    <a href={getRelativeLocaleUrl(locale, "")} class="label home">
+      {t.notFound.goHome}
+    </a>
   </main>
 
   <Footer />
 </Layout>
+
+<style>
+  /* You have gone somewhere that no longer exists. Read once, then leave. */
+  .lost {
+    flex: 1;
+    padding-block: clamp(90px, 24vh, 220px) clamp(70px, 14vh, 150px);
+  }
+
+  .lost h1 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(64px, 16vw, 150px);
+    line-height: 1;
+    letter-spacing: 0.1em;
+    color: var(--text-3);
+    margin: clamp(24px, 4vh, 44px) 0 0;
+  }
+
+  .lost .msg {
+    margin: clamp(24px, 4vh, 40px) 0 0;
+    max-width: 40ch;
+    color: var(--text-3);
+    font-size: 17px;
+    line-height: 1.8;
+  }
+
+  .lost .home {
+    display: inline-block;
+    margin-top: clamp(32px, 5vh, 56px);
+    color: var(--text-3);
+    text-decoration: none;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 4px;
+  }
+
+  .lost .home:hover {
+    color: var(--torch);
+    border-bottom-color: var(--torch-dim);
+  }
+</style>
