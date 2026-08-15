@@ -16,7 +16,7 @@ import {
   transformerNotationWordHighlight,
 } from "@shikijs/transformers";
 import { transformerFileName } from "./src/utils/transformers/fileName";
-import config from "./astro-paper.config";
+import config from "./torchlight.config";
 import tokensJson from "./docs/theme/tokens.json";
 
 /**

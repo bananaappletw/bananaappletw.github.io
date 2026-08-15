@@ -69,10 +69,10 @@ describe("generated stylesheet", () => {
 });
 
 describe("no hardcoded color", () => {
-  // unskip once AstroPaper styles and OG templates are converted (Task 13)
-  it.skip("finds no hex literal in src, outside the generated stylesheet", () => {
+  it("finds no hex literal in src, outside the generated stylesheet", () => {
     const hits = execSync(
-      "grep -rInE '#[0-9a-fA-F]{3,8}\\b' src --include=*.astro --include=*.css --include=*.ts " +
+      // (?<!&) so HTML entities such as &#9670; are not mistaken for colours
+      "grep -rInPo '(?<![&\\w])#[0-9a-fA-F]{3,8}\\b' src --include=*.astro --include=*.css --include=*.ts " +
         "| grep -v 'src/styles/tokens.css' || true"
     )
       .toString()

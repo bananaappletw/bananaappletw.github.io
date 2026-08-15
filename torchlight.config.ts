@@ -1,6 +1,6 @@
-import { defineAstroPaperConfig } from "./src/types/config";
+import { defineTorchlightConfig } from "./src/types/config";
 
-export default defineAstroPaperConfig({
+export default defineTorchlightConfig({
   site: {
     url: "https://bananaappletw.github.io/",
     title: "Weibo's Home",
@@ -24,7 +24,7 @@ export default defineAstroPaperConfig({
     showBackButton: true,
     editPost: {
       enabled: true,
-      url: "https://github.com/satnaing/astro-paper/edit/main/",
+      url: "https://github.com/bananaappletw/bananaappletw.github.io/edit/main/",
     },
     search: "pagefind",
   },
