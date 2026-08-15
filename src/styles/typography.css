@@ -182,6 +182,20 @@
     }
   }
 
+  /* Shiki emits both worlds' colours as custom properties; these pick one.
+     Bare :root is hollowed, so that is the default branch. */
+  .app-prose pre,
+  .app-prose pre span {
+    color: var(--shiki-dark);
+  }
+
+  :root[data-theme="kindled"] .app-prose pre,
+  :root[data-theme="kindled"] .app-prose pre span,
+  :root[data-theme="light"] .app-prose pre,
+  :root[data-theme="light"] .app-prose pre span {
+    color: var(--shiki-light);
+  }
+
   .app-prose > p:first-of-type {
     color: var(--text);
     font-size: 19px;

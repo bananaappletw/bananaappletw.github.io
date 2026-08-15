@@ -17,6 +17,34 @@ import {
 } from "@shikijs/transformers";
 import { transformerFileName } from "./src/utils/transformers/fileName";
 import config from "./astro-paper.config";
+import tokensJson from "./docs/theme/tokens.json";
+
+/**
+ * Shiki themes built from docs/theme/tokens.json so code cannot drift from
+ * the rest of the palette. Three hues plus two neutrals — in a world this
+ * muted, every colour has to mean something.
+ */
+const shikiTheme = (world: "hollowed" | "kindled") => {
+  const s = tokensJson.syntax[world];
+  return {
+    name: `torchlight-${world}`,
+    type: (world === "hollowed" ? "dark" : "light") as "dark" | "light",
+    bg: s.bg,
+    fg: s.plain,
+    settings: [
+      { scope: ["comment", "punctuation.definition.comment"],
+        settings: { foreground: s.comment, fontStyle: "italic" } },
+      { scope: ["string", "constant.other.symbol", "string.quoted"],
+        settings: { foreground: s.string } },
+      { scope: ["constant.numeric", "constant.language", "constant.character"],
+        settings: { foreground: s.constant } },
+      { scope: ["keyword", "storage.type", "storage.modifier", "keyword.control"],
+        settings: { foreground: s.keyword } },
+      { scope: ["variable", "entity.name.function", "support.function", "entity.name.type"],
+        settings: { foreground: s.plain } },
+    ],
+  };
+};
 
 export default defineConfig({
   site: config.site.url,
@@ -42,7 +70,10 @@ export default defineConfig({
       ],
     }),
     shikiConfig: {
-      themes: { light: "min-light", dark: "night-owl" },
+      themes: {
+        light: shikiTheme("kindled"),
+        dark: shikiTheme("hollowed"),
+      },
       defaultColor: false,
       wrap: false,
       transformers: [
