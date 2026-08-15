@@ -1,6 +1,5 @@
 ---
 import type { CollectionEntry } from "astro:content";
-import IconEdit from "@/assets/icons/IconEdit.svg";
 import { useTranslations } from "@/i18n";
 import config from "@/config";
 
@@ -30,7 +29,6 @@ const t = useTranslations(Astro.currentLocale);
         className,
       ]}
     >
-      <IconEdit class="inline-block" />
       <span>{t.post.editPage}</span>
     </a>
   )

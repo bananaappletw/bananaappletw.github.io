@@ -197,38 +197,8 @@ const ogImage = ogImageUrl
 </style>
 
 <script is:inline data-astro-rerun>
-  function createProgressBar() {
-    const progressContainer = document.createElement("div");
-    progressContainer.className =
-      "progress-container fixed top-0 z-30 h-px w-full";
-
-    const progressBar = document.createElement("div");
-    progressBar.className = "progress-bar h-px w-0";
-    progressBar.style.background = "var(--torch)";
-    progressBar.id = "myBar";
-
-    progressContainer.appendChild(progressBar);
-    document.body.appendChild(progressContainer);
-  }
-  createProgressBar();
-
-  function updateScrollProgress() {
-    document.addEventListener("scroll", () => {
-      const winScroll =
-        document.body.scrollTop || document.documentElement.scrollTop;
-      const height =
-        document.documentElement.scrollHeight -
-        document.documentElement.clientHeight;
-      const scrolled = (winScroll / height) * 100;
-      if (document) {
-        const myBar = document.getElementById("myBar");
-        if (myBar) {
-          myBar.style.width = scrolled + "%";
-        }
-      }
-    });
-  }
-  updateScrollProgress();
+  // Scroll progress lives on the bonfire's ring (BackToTopButton). A second
+  // indicator across the top of the page was showing the same number twice.
 
   function addHeadingLinks() {
     const headings = Array.from(

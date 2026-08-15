@@ -54,9 +54,9 @@
     h4 {
       font-family: var(--font-display);
       font-weight: 600;
-      font-size: 13px;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
+      font-size: 15px;
+      letter-spacing: 0.05em;
+      font-variant-caps: small-caps;
       color: var(--text-3);
       margin-block: 36px 10px;
     }
@@ -156,7 +156,7 @@
       font-family: var(--font-display);
       font-weight: 600;
       font-size: 10px;
-      letter-spacing: 0.22em;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
       color: var(--text-4);
     }

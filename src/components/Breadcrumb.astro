@@ -64,7 +64,7 @@ if (breadcrumbList[0] === "tags" && !isNaN(Number(breadcrumbList[2]))) {
       <a href={getRelativeLocaleUrl(locale, "")} class="crumb">
         {t.nav.home}
       </a>
-      <span aria-hidden="true" class="crumb">&middot;</span>
+      <span aria-hidden="true" class="sep">&middot;</span>
     </li>
     {
       breadcrumbList.map((breadcrumb, index) =>

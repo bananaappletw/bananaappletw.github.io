@@ -1,87 +1,164 @@
 ---
-import IconArrowLeft from "@/assets/icons/IconArrowLeft.svg";
-import IconArrowNarrowUp from "@/assets/icons/IconArrowNarrowUp.svg";
 import { useTranslations } from "@/i18n";
 
 const t = useTranslations(Astro.currentLocale);
 ---
 
-<div
-  id="btt-btn-container"
-  class:list={[
-    "fixed inset-e-4 bottom-8 z-50",
-    "md:sticky md:inset-e-auto md:float-end md:me-1",
-    "translate-y-14 opacity-0 transition duration-500",
-  ]}
+{
+  /*
+  The bonfire. A Souls bonfire is where you rest and return, which is exactly
+  what a back-to-top control does — so it is drawn as one rather than as an
+  arrow. It sits bottom-right, kindles as you descend through the post (the
+  ring is scroll progress), and carries one of the page's rare gold moments.
+*/
+}
+<button
+  id="bonfire"
+  type="button"
+  aria-label={t.post.backToTop}
+  title={t.post.backToTop}
 >
-  <button
-    data-button="back-to-top"
-    class:list={[
-      "group relative px-2 py-1",
-      "size-14 rounded-full shadow-xl",
-      "md:h-8 md:w-fit md:rounded-md md:shadow-none md:focus-visible:rounded-none",
-      "",
-    ]}
-  >
-    <span
-      id="progress-indicator"
-      class="absolute inset-0 -z-10 block size-14 scale-110 rounded-full bg-transparent md:hidden md:h-8 md:rounded-md"
-    ></span>
-    <IconArrowLeft class="inline-block rotate-90 md:hidden" />
-    <span class="group-hover:text-text sr-only text-sm md:not-sr-only">
-      <IconArrowNarrowUp class="inline-block size-4" />
-      {t.post.backToTop}
-    </span>
-  </button>
-</div>
+  <span class="ring" aria-hidden="true"></span>
+  <span class="flame" aria-hidden="true">&#9670;</span>
+  <span class="sr-only">{t.post.backToTop}</span>
+</button>
+
+<style>
+  #bonfire {
+    position: fixed;
+    inset-inline-end: clamp(16px, 4vw, 34px);
+    inset-block-end: clamp(16px, 4vw, 34px);
+    z-index: 40;
+
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    padding: 0;
+    border: 0;
+    background: none;
+
+    opacity: 0;
+    transform: translateY(10px);
+    pointer-events: none;
+    transition:
+      opacity 0.4s ease-out,
+      transform 0.4s ease-out;
+  }
+
+  #bonfire.lit {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  /* Scroll progress, drawn as the ring of ash around the fire. The gradient
+     is set from script; the mask turns the disc into a hairline ring. */
+  .ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background-image: conic-gradient(
+      var(--torch-dim),
+      var(--torch-dim) 0%,
+      transparent 0%
+    );
+    /* A mask reads alpha, not hue, so `black` here is structural rather than
+       a palette colour — it is what turns the disc into a hairline ring. */
+    -webkit-mask: radial-gradient(
+      farthest-side,
+      transparent calc(100% - 2px),
+      black calc(100% - 2px)
+    );
+    mask: radial-gradient(
+      farthest-side,
+      transparent calc(100% - 2px),
+      black calc(100% - 2px)
+    );
+    opacity: 0.85;
+  }
+
+  .flame {
+    font-size: 15px;
+    line-height: 1;
+    color: var(--torch);
+    transition: transform 0.18s ease-out;
+  }
+
+  #bonfire:hover .flame {
+    transform: scale(1.15);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    #bonfire.lit .flame {
+      animation: bonfire-flicker 4.2s ease-in-out infinite;
+    }
+
+    @keyframes bonfire-flicker {
+      0%,
+      100% {
+        opacity: 1;
+      }
+      38% {
+        opacity: 0.68;
+      }
+      64% {
+        opacity: 0.92;
+      }
+    }
+  }
+</style>
 
 <script is:inline data-astro-rerun>
-  function backToTop() {
-    const rootElement = document.documentElement;
-    const btnContainer = document.querySelector("#btt-btn-container");
-    const backToTopBtn = document.querySelector("[data-button='back-to-top']");
-    const progressIndicator = document.querySelector("#progress-indicator");
+  function setupBonfire() {
+    const root = document.documentElement;
+    const bonfire = document.querySelector("#bonfire");
+    const ring = bonfire?.querySelector(".ring");
+    if (!bonfire || !ring) return;
 
-    if (!rootElement || !btnContainer || !backToTopBtn || !progressIndicator)
-      return;
-
-    backToTopBtn.addEventListener("click", () => {
-      document.body.scrollTop = 0;
-      document.documentElement.scrollTop = 0;
+    bonfire.addEventListener("click", () => {
+      const reduced = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
     });
 
-    let lastVisible = null;
-    function handleScroll() {
-      const scrollTotal = rootElement.scrollHeight - rootElement.clientHeight;
-      const scrollTop = rootElement.scrollTop;
-      const scrollPercent = Math.floor((scrollTop / scrollTotal) * 100);
+    let wasLit = null;
 
-      progressIndicator.style.setProperty(
+    function onScroll() {
+      const total = root.scrollHeight - root.clientHeight;
+      if (total <= 0) return;
+
+      const progress = Math.min(
+        100,
+        Math.round((root.scrollTop / total) * 100),
+      );
+      ring.style.setProperty(
         "background-image",
-        `conic-gradient(var(--torch), var(--torch) ${scrollPercent}%, transparent ${scrollPercent}%)`,
+        `conic-gradient(var(--torch-dim), var(--torch-dim) ${progress}%, transparent ${progress}%)`,
       );
 
-      const isVisible = scrollTop / scrollTotal > 0.3;
-
-      if (isVisible !== lastVisible) {
-        btnContainer.classList.toggle("opacity-100", isVisible);
-        btnContainer.classList.toggle("translate-y-0", isVisible);
-        btnContainer.classList.toggle("opacity-0", !isVisible);
-        btnContainer.classList.toggle("translate-y-14", !isVisible);
-        lastVisible = isVisible;
+      // The fire only becomes visible once you have gone some way down.
+      const lit = root.scrollTop / total > 0.12;
+      if (lit !== wasLit) {
+        bonfire.classList.toggle("lit", lit);
+        wasLit = lit;
       }
     }
 
     let ticking = false;
     document.addEventListener("scroll", () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          handleScroll();
-          ticking = false;
-        });
-        ticking = true;
-      }
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(() => {
+        onScroll();
+        ticking = false;
+      });
     });
+
+    onScroll();
   }
-  backToTop();
+
+  setupBonfire();
+  document.addEventListener("astro:after-swap", setupBonfire);
 </script>
