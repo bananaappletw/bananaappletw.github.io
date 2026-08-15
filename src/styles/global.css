@@ -64,31 +64,6 @@
 }
 
 @layer components {
-  /* Atmosphere. One light source above the content, haze at three depths,
-     then vignette. Fixed, so the world does not scroll with the text. */
-  .air {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    background:
-      radial-gradient(46% 42% at 50% -6%, var(--shaft), transparent 72%),
-      radial-gradient(110% 52% at 50% 4%, var(--haze), transparent 70%),
-      radial-gradient(140% 60% at 50% 108%, var(--haze), transparent 68%),
-      radial-gradient(130% 100% at 50% 40%, transparent 32%, var(--vignette) 100%);
-  }
-
-  /* Film grain. Without it a dark page reads as clean vector art rather
-     than as a photographed room. Static — animated grain is nauseating. */
-  .grain {
-    position: fixed;
-    inset: 0;
-    z-index: 2;
-    pointer-events: none;
-    opacity: var(--grain);
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  }
-
   /* Souls menus sit over the world rather than replacing it: translucent,
      blurred, framed by a dark rule with a faint lighter line inside it.
      The light is above, so each panel catches its top edge and drops
@@ -96,8 +71,8 @@
   .panel {
     background: var(--panel);
     border: 1px solid var(--border);
-    backdrop-filter: blur(var(--blur));
     -webkit-backdrop-filter: blur(var(--blur));
+    backdrop-filter: blur(var(--blur));
     box-shadow:
       inset 0 1px 0 0 var(--edge),
       var(--shadow);
@@ -139,6 +114,29 @@
       100% { opacity: 0; }
     }
   }
+}
+
+/* Atmosphere. One light source above the content, haze at three depths,
+   then vignette. Fixed, so the world does not scroll with the text. */
+.air {
+  /* position:fixed and inset:0 are applied as utilities in Layout.astro —
+     Tailwind hoists those two declarations out of hand-written rules. */
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(46% 42% at 50% -6%, var(--shaft), transparent 72%),
+    radial-gradient(110% 52% at 50% 4%, var(--haze), transparent 70%),
+    radial-gradient(140% 60% at 50% 108%, var(--haze), transparent 68%),
+    radial-gradient(130% 100% at 50% 40%, transparent 32%, var(--vignette) 100%);
+}
+
+/* Film grain. Without it a dark page reads as clean vector art rather
+   than as a photographed room. Static — animated grain is nauseating. */
+.grain {
+  z-index: 2;
+  pointer-events: none;
+  opacity: var(--grain);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 @utility app-layout {

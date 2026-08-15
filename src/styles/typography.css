@@ -118,8 +118,8 @@
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: 1px;
-      backdrop-filter: blur(var(--blur));
       -webkit-backdrop-filter: blur(var(--blur));
+      backdrop-filter: blur(var(--blur));
       box-shadow:
         inset 0 1px 0 0 var(--edge),
         var(--shadow);
