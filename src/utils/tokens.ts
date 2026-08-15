@@ -16,7 +16,7 @@ type Tokens = {
 
 const stripMeta = (o: Record<string, unknown>): Palette =>
   Object.fromEntries(
-    Object.entries(o).filter(([k]) => !k.startsWith("_"))
+    Object.entries(o).filter(([k]) => !k.startsWith("_")),
   ) as Palette;
 
 export const tokens = {

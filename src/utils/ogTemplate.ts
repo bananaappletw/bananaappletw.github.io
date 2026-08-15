@@ -17,7 +17,7 @@ type Child = Record<string, unknown>;
 
 const text = (
   content: string,
-  style: Record<string, string | number>
+  style: Record<string, string | number>,
 ): Child => ({
   type: "div",
   props: { style: { display: "flex", ...style }, children: content },
@@ -27,7 +27,7 @@ export async function renderOgImage(
   title: string,
   subtitle: string,
   hostname: string,
-  url: URL
+  url: URL,
 ): Promise<Response> {
   const displayPath = getFontPathByWeight(fontData["--font-display"], 600);
   const bodyPath = getFontPathByWeight(fontData["--font-body"], 400);
@@ -39,9 +39,9 @@ export async function renderOgImage(
   const [displayData, bodyData] = await Promise.all(
     [displayPath, bodyPath].map(path =>
       fetch(experimental_getFontFileURL(path, url)).then(res =>
-        res.arrayBuffer()
-      )
-    )
+        res.arrayBuffer(),
+      ),
+    ),
   );
 
   const svg = await satori(
@@ -129,7 +129,7 @@ export async function renderOgImage(
         { name: "Cinzel", data: displayData, weight: 600, style: "normal" },
         { name: "Spectral", data: bodyData, weight: 400, style: "normal" },
       ],
-    }
+    },
   );
 
   const png = await sharp(Buffer.from(svg)).png().toBuffer();

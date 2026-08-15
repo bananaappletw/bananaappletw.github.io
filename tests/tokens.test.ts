@@ -6,7 +6,7 @@ import { tokens, contrastRatio, WORLDS } from "../src/utils/tokens";
 describe("token completeness", () => {
   it("defines the same token names in both worlds", () => {
     expect(Object.keys(tokens.kindled).sort()).toEqual(
-      Object.keys(tokens.hollowed).sort()
+      Object.keys(tokens.hollowed).sort(),
     );
   });
 
@@ -18,7 +18,7 @@ describe("token completeness", () => {
 
   it("defines the same syntax slots in both worlds", () => {
     expect(Object.keys(tokens.syntax.kindled).sort()).toEqual(
-      Object.keys(tokens.syntax.hollowed).sort()
+      Object.keys(tokens.syntax.hollowed).sort(),
     );
   });
 });
@@ -29,7 +29,7 @@ describe("contrast floors (design.md section 11)", () => {
 
     it(`${world}: --text meets 7:1 on --ground`, () => {
       expect(
-        contrastRatio(tokens[world]["--text"], ground)
+        contrastRatio(tokens[world]["--text"], ground),
       ).toBeGreaterThanOrEqual(7);
     });
 
@@ -40,14 +40,14 @@ describe("contrast floors (design.md section 11)", () => {
     for (const name of ["--text-2", "--text-3", "--torch", "--arcane"]) {
       it(`${world}: ${name} meets 4.5:1 on --ground`, () => {
         expect(
-          contrastRatio(tokens[world][name], ground)
+          contrastRatio(tokens[world][name], ground),
         ).toBeGreaterThanOrEqual(4.5);
       });
     }
 
     it(`${world}: --blood meets 4.5:1 on --blood-tint`, () => {
       expect(
-        contrastRatio(tokens[world]["--blood"], tokens[world]["--blood-tint"])
+        contrastRatio(tokens[world]["--blood"], tokens[world]["--blood-tint"]),
       ).toBeGreaterThanOrEqual(4.5);
     });
   }
@@ -73,7 +73,7 @@ describe("no hardcoded color", () => {
     const hits = execSync(
       // (?<!&) so HTML entities such as &#9670; are not mistaken for colours
       "grep -rInPo '(?<![&\\w])#[0-9a-fA-F]{3,8}\\b' src --include=*.astro --include=*.css --include=*.ts " +
-        "| grep -v 'src/styles/tokens.css' || true"
+        "| grep -v 'src/styles/tokens.css' || true",
     )
       .toString()
       .trim();
