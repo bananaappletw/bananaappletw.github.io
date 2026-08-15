@@ -8,8 +8,12 @@ const t = useTranslations(Astro.currentLocale);
   /*
   The bonfire. A Souls bonfire is where you rest and return, which is exactly
   what a back-to-top control does — so it is drawn as one rather than as an
-  arrow. It sits bottom-right, kindles as you descend through the post (the
-  ring is scroll progress), and carries one of the page's rare gold moments.
+  arrow: a coiled sword driven into a mound of ash, with the flame above it.
+
+  It sits bottom-right, its ring is scroll progress, and it carries one of the
+  page's rare gold moments. The sword and ash are drawn in the ornament
+  channel, so they go to bone when the world is hollowed; only the flame is
+  gold.
 */
 }
 <button
@@ -19,7 +23,28 @@ const t = useTranslations(Astro.currentLocale);
   title={t.post.backToTop}
 >
   <span class="ring" aria-hidden="true"></span>
-  <span class="flame" aria-hidden="true">&#9670;</span>
+
+  <svg
+    class="fire"
+    viewBox="0 0 24 24"
+    width="24"
+    height="24"
+    fill="none"
+    aria-hidden="true"
+  >
+    {/* flame */}
+    <path
+      class="flame"
+      d="M12 2.6c.9 2.4.3 3.6-.6 4.7-1 1.2-1.7 2.2-1.7 3.6a2.4 2.4 0 0 0 4.8 0c0-.8-.3-1.5-.8-2.2.9.5 1.6 1.5 1.9 2.6.5 2.2-.9 4.4-3.1 4.9-2.4.5-4.7-1.1-5.1-3.5-.5-2.7 1.2-4 2.4-5.6.9-1.2 1.4-2.6 1.2-4.5Z"
+    ></path>
+    {/* coiled sword, driven point-down into the ash */}
+    <path class="ash-line" d="M12 13.4v7.1"></path>
+    <path class="ash-line" d="M9.6 15.5h4.8"></path>
+    {/* the mound */}
+    <path class="ash-line" d="M6.6 20.6c1.4-1.1 3.3-1.7 5.4-1.7s4 .6 5.4 1.7"
+    ></path>
+  </svg>
+
   <span class="sr-only">{t.post.backToTop}</span>
 </button>
 
@@ -32,14 +57,14 @@ const t = useTranslations(Astro.currentLocale);
 
     display: grid;
     place-items: center;
-    width: 46px;
-    height: 46px;
+    width: 50px;
+    height: 50px;
     padding: 0;
     border: 0;
     background: none;
 
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
     pointer-events: none;
     transition:
       opacity 0.4s ease-out,
@@ -75,35 +100,50 @@ const t = useTranslations(Astro.currentLocale);
       transparent calc(100% - 2px),
       black calc(100% - 2px)
     );
-    opacity: 0.85;
+    opacity: 0.8;
   }
 
+  .fire {
+    position: relative;
+    overflow: visible;
+  }
+
+  /* Only the flame is gold. Sword and ash read from the ornament channel,
+     so they go to bone when the world is hollowed. */
   .flame {
-    font-size: 15px;
-    line-height: 1;
-    color: var(--torch);
-    transition: transform 0.18s ease-out;
+    fill: var(--torch);
+  }
+
+  .ash-line {
+    stroke: var(--ornament);
+    stroke-width: 1.3;
+    stroke-linecap: round;
   }
 
   #bonfire:hover .flame {
-    transform: scale(1.15);
+    fill: var(--torch);
+    filter: brightness(1.15);
   }
 
   @media (prefers-reduced-motion: no-preference) {
     #bonfire.lit .flame {
-      animation: bonfire-flicker 4.2s ease-in-out infinite;
+      transform-origin: 12px 14px;
+      animation: bonfire-flicker 3.8s ease-in-out infinite;
     }
 
     @keyframes bonfire-flicker {
       0%,
       100% {
         opacity: 1;
+        transform: scaleY(1);
       }
-      38% {
-        opacity: 0.68;
+      37% {
+        opacity: 0.72;
+        transform: scaleY(0.94);
       }
-      64% {
-        opacity: 0.92;
+      62% {
+        opacity: 0.94;
+        transform: scaleY(1.03);
       }
     }
   }
@@ -127,7 +167,14 @@ const t = useTranslations(Astro.currentLocale);
 
     function onScroll() {
       const total = root.scrollHeight - root.clientHeight;
-      if (total <= 0) return;
+
+      // On a page too short to scroll there is nothing to return to, so the
+      // fire stays out rather than sitting there doing nothing.
+      if (total <= 40) {
+        bonfire.classList.remove("lit");
+        wasLit = false;
+        return;
+      }
 
       const progress = Math.min(
         100,
@@ -138,8 +185,7 @@ const t = useTranslations(Astro.currentLocale);
         `conic-gradient(var(--torch-dim), var(--torch-dim) ${progress}%, transparent ${progress}%)`,
       );
 
-      // The fire only becomes visible once you have gone some way down.
-      const lit = root.scrollTop / total > 0.12;
+      const lit = root.scrollTop > 120;
       if (lit !== wasLit) {
         bonfire.classList.toggle("lit", lit);
         wasLit = lit;
@@ -156,6 +202,7 @@ const t = useTranslations(Astro.currentLocale);
       });
     });
 
+    window.addEventListener("resize", onScroll);
     onScroll();
   }
 

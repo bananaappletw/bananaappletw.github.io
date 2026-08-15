@@ -38,6 +38,13 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  /* .air and .grain are positioned, so they paint above any content that is
+     not itself positioned. Everything in the page body must sit above them. */
+  body > *:not(.air):not(.grain) {
+    position: relative;
+    z-index: 1;
+  }
+
   ::selection {
     background: var(--torch-tint);
     color: var(--torch);
@@ -141,7 +148,8 @@
 /* Film grain. Without it a dark page reads as clean vector art rather
    than as a photographed room. Static — animated grain is nauseating. */
 .grain {
-  z-index: 2;
+  /* Behind the content, with .air. Over the top it smudges every glyph. */
+  z-index: 0;
   pointer-events: none;
   opacity: var(--grain);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
