@@ -1,37 +1,155 @@
 @import "tailwindcss";
-@import "./theme.css";
+@import "./tokens.css";
 @import "./typography.css";
+@import "./ornament.css";
 
-@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+@theme inline {
+  --color-ground: var(--ground);
+  --color-panel: var(--panel);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-text-2: var(--text-2);
+  --color-text-3: var(--text-3);
+  --color-text-4: var(--text-4);
+  --color-torch: var(--torch);
+  --color-torch-dim: var(--torch-dim);
+  --color-arcane: var(--arcane);
+  --color-blood: var(--blood);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-google-sans-code);
+}
+
+@custom-variant hollowed (&:where([data-theme=hollowed], [data-theme=dark], [data-theme=hollowed] *, [data-theme=dark] *));
 
 @layer base {
-  * {
-    @apply border-border outline-accent/75;
-    scrollbar-width: auto;
-    scrollbar-color: var(--color-muted) transparent;
+  html {
+    background: var(--ground);
   }
-  a,
-  button {
-    @apply outline-accent outline-offset-1 focus-visible:no-underline focus-visible:outline-2 focus-visible:outline-dashed;
+
+  body {
+    background: var(--ground);
+    /* Body copy sits a step down from --text. You are reading in low light;
+       --text is reserved for the lead and for emphasis. */
+    color: var(--text-2);
+    font-family: var(--font-body);
+    font-size: 16.5px;
+    line-height: 1.85;
+    -webkit-font-smoothing: antialiased;
   }
+
+  ::selection {
+    background: var(--torch-tint);
+    color: var(--torch);
+  }
+
+  :focus-visible {
+    outline: 1px solid var(--torch);
+    outline-offset: 4px;
+  }
+
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
+
+  a,
+  button {
+    transition: color 0.18s ease-out;
+  }
+
+  :target {
+    scroll-margin-block: 2rem;
+  }
 }
 
-@utility max-w-app {
-  @apply max-w-3xl;
+@layer components {
+  /* Atmosphere. One light source above the content, haze at three depths,
+     then vignette. Fixed, so the world does not scroll with the text. */
+  .air {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(46% 42% at 50% -6%, var(--shaft), transparent 72%),
+      radial-gradient(110% 52% at 50% 4%, var(--haze), transparent 70%),
+      radial-gradient(140% 60% at 50% 108%, var(--haze), transparent 68%),
+      radial-gradient(130% 100% at 50% 40%, transparent 32%, var(--vignette) 100%);
+  }
+
+  /* Film grain. Without it a dark page reads as clean vector art rather
+     than as a photographed room. Static — animated grain is nauseating. */
+  .grain {
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    opacity: var(--grain);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Souls menus sit over the world rather than replacing it: translucent,
+     blurred, framed by a dark rule with a faint lighter line inside it.
+     The light is above, so each panel catches its top edge and drops
+     its shadow downward. */
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(var(--blur));
+    -webkit-backdrop-filter: blur(var(--blur));
+    box-shadow:
+      inset 0 1px 0 0 var(--edge),
+      var(--shadow);
+  }
+}
+
+@layer components {
+  /* The world flip. The theme's one flourish, spent on its central idea. */
+  #veil {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: var(--ground);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 60;
+  }
+
+  #veil span {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(26px, 7vw, 58px);
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    padding-left: 0.4em;
+    color: var(--blood);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    #veil.run {
+      animation: veil 1400ms ease-in-out;
+    }
+
+    @keyframes veil {
+      0% { opacity: 0; }
+      20% { opacity: 1; }
+      66% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+  }
 }
 
 @utility app-layout {
-  @apply max-w-app mx-auto w-full px-4;
+  position: relative;
+  z-index: 1;
+  margin-inline: auto;
+  width: 100%;
+  max-width: 46rem;
+  padding-inline: clamp(22px, 6vw, 40px);
 }
 
-@utility active-nav {
-  @apply underline decoration-wavy decoration-2 underline-offset-8;
-}
-
-:target {
-  scroll-margin-block: 1rem;
+@utility measure {
+  max-width: 60ch;
 }
