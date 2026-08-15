@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This is an Astro-based personal blog and knowledge base built with [AstroPaper](https://astro-paper.pages.dev/) theme. The site is hosted on GitHub Pages at `https://bananaappletw.github.io/`.
 
 **Recent migration**: Project was migrated from Docusaurus to Astro in June 2026. Content structure is simpler now:
+
 - Blog posts in `src/content/blog/`
 - Archive posts in `src/content/archives/`
 - Markdown files use frontmatter for metadata (title, author, pubDate, tags, etc.)
@@ -42,7 +43,7 @@ Traps discovered while building it, both recorded in the spec's anti-patterns:
 
 - **Framework**: Astro v6 with TypeScript
 - **Styling**: Tailwind CSS v4 with @tailwindcss/typography plugin
-- **Markdown Processing**: 
+- **Markdown Processing**:
   - MDX support via @astrojs/mdx
   - Remark plugins: remark-toc, remark-collapse, remark-mermaid
   - Syntax highlighting via Shiki with transformers (diffs, highlights, word highlights, file names)

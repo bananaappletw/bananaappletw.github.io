@@ -2,12 +2,12 @@
 title: symbolic exection introduction
 pubDatetime: 2026-06-02T20:18:23.004407Z
 description: symbolic exection introduction
-tags: ['archive']
+tags: ["archive"]
 ---
 
 # Symbolic execution
 
-***
+---
 
 # Defenition
 
@@ -22,6 +22,7 @@ It thus arrives at expressions in terms of those symbols for expressions and var
 ```
 int f() {
 ```
+
 ```
   ...
   y = read();
@@ -32,6 +33,7 @@ int f() {
     printf("OK");
   }
 ```
+
 ```
 }
 ```
@@ -40,7 +42,7 @@ During "concrete" execution, the program would read a concrete input value (e.g.
 
 During symbolic execution, the program reads a symbolic value (e.g., λ) and assigns it to y.
 
-The program would then proceed with the multiplication and assign λ * 2 to z. When reaching the if statement, it would evaluate λ * 2 == 12.
+The program would then proceed with the multiplication and assign λ _ 2 to z. When reaching the if statement, it would evaluate λ _ 2 == 12.
 
 At this point of the program, λ could take any value, and symbolic execution can therefore proceed along both branches, by "forking" two paths.
 
@@ -68,6 +70,7 @@ Consistency problems may arise when execution reaches components that are not un
 ```
 int main()
 ```
+
 ```
  {
    FILE *fp = fopen("doc.txt");
@@ -92,14 +95,14 @@ Forking the entire system state. Symbolic execution tools based on virtual machi
 
 # Tools
 
-| Tool | It can analyze Arch/Lang | url |
-| --- | --- | --- |
-| KLEE | LLVM | http://klee.github.io/ |
-| S2E | x86, x86-64, ARM / User and kernel-mode binaries | http://s2e.epfl.ch |
-| Triton | x86 and x86-64 | http://triton.quarkslab.com |
-| angr | libVEX based | http://angr.io/ |
+| Tool   | It can analyze Arch/Lang                         | url                         |
+| ------ | ------------------------------------------------ | --------------------------- |
+| KLEE   | LLVM                                             | http://klee.github.io/      |
+| S2E    | x86, x86-64, ARM / User and kernel-mode binaries | http://s2e.epfl.ch          |
+| Triton | x86 and x86-64                                   | http://triton.quarkslab.com |
+| angr   | libVEX based                                     | http://angr.io/             |
 
 # Reference
 
-* https://en.wikipedia.org/wiki/Symbolic_execution
-* http://www.tutorialspoint.com/software_testing_dictionary/symbolic_execution.htm
+- https://en.wikipedia.org/wiki/Symbolic_execution
+- http://www.tutorialspoint.com/software_testing_dictionary/symbolic_execution.htm

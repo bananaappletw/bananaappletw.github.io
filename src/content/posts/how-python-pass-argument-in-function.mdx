@@ -2,7 +2,7 @@
 title: how python pass argument in function
 pubDatetime: 2026-06-02T20:18:23.003458Z
 description: how python pass argument in function
-tags: ['python', 'archive']
+tags: ["python", "archive"]
 ---
 
 網路上看到蠻多說法的像是
@@ -22,9 +22,11 @@ a 就是一個 reference 指向數值為 1 的 PyIntObject
 ```
 def fun(a):
 ```
+
 ```
     print id(a)
 ```
+
 ```
 a = 1
 print id(a)
@@ -48,9 +50,11 @@ builtin_id(PyModuleDef *self, PyObject *v)
 /*[clinic end generated code: output=0aa640785f697f65 input=5a534136419631f4]*/
 {
 ```
+
 ```
     return PyLong_FromVoidPtr(v);
 ```
+
 ```
 }
 ```
@@ -60,11 +64,13 @@ builtin_id(PyModuleDef *self, PyObject *v)
 ```
 def fun(a):
 ```
+
 ```
     print id(a)
     a += 1
     print id(a)
 ```
+
 ```
 a = 1
 print id(a)
@@ -91,10 +97,12 @@ print id(a)
 ```
 def fun(a):
 ```
+
 ```
     print id(a)
     a.append(1)
 ```
+
 ```
 a = []
 print id(a)
@@ -118,10 +126,12 @@ print id(a)
 ```
 def fun(a):
 ```
+
 ```
     print id(a)
     a.append(1)
 ```
+
 ```
 a = []
 print id(a)
@@ -144,5 +154,5 @@ print id(a)
 
 Reference:
 
-* [call by assignment](https://docs.python.org/2/faq/programming.html#how-do-i-write-a-function-with-output-parameters-call-by-reference)
-* [cpython](https://github.com/python/cpython/blob/master/Python%2Fbltinmodule.c#L1092)
+- [call by assignment](https://docs.python.org/2/faq/programming.html#how-do-i-write-a-function-with-output-parameters-call-by-reference)
+- [cpython](https://github.com/python/cpython/blob/master/Python%2Fbltinmodule.c#L1092)

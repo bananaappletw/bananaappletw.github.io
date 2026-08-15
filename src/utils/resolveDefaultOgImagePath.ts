@@ -19,7 +19,7 @@ function existsInPublic(filename: string): boolean {
  * - When disabled, requires `public/{site.ogImage}` to exist.
  */
 export function resolveDefaultOgImagePath(
-  config: ResolvedTorchlightConfig
+  config: ResolvedTorchlightConfig,
 ): string {
   const filename = config.site.ogImage;
   if (
@@ -28,7 +28,7 @@ export function resolveDefaultOgImagePath(
     filename.includes("\\")
   ) {
     throw new Error(
-      `site.ogImage must be a single filename in public/ (e.g. "default-og.jpg"), got "${filename}"`
+      `site.ogImage must be a single filename in public/ (e.g. "default-og.jpg"), got "${filename}"`,
     );
   }
 
@@ -40,7 +40,7 @@ export function resolveDefaultOgImagePath(
 
   if (!existsInPublic(filename)) {
     throw new Error(
-      `Torchlight: missing public/${filename}. Add that file, or set site.ogImage to an existing file under public/, or enable features.dynamicOgImage to fall back to /og.png.`
+      `Torchlight: missing public/${filename}. Add that file, or set site.ogImage to an existing file under public/, or enable features.dynamicOgImage to fall back to /og.png.`,
     );
   }
 

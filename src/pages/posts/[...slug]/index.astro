@@ -83,7 +83,7 @@ if (typeof initOgImage === "string") {
 if (!ogImageUrl && config.features.dynamicOgImage) {
   const postUrl = getPostUrl(post.id, post.filePath, locale).replace(
     /\/+$/,
-    ""
+    "",
   );
   ogImageUrl = `${postUrl}/index.png`;
 }
@@ -106,12 +106,16 @@ const ogImage = ogImageUrl
   <main id="main-content" class="app-layout" data-pagefind-body>
     <BackButton />
 
-    {/* The gate. Tall, mostly empty — you take in the scale before you
-        descend into the text. */}
+    {
+      /* The gate. Tall, mostly empty — you take in the scale before you
+        descend into the text. */
+    }
     <section class="gate">
       {tags.length > 0 && <p class="label label-wide above">{tags[0]}</p>}
 
-      <h1 style={{ viewTransitionName: slugifyStr(title.replaceAll(".", "-")) }}>
+      <h1
+        style={{ viewTransitionName: slugifyStr(title.replaceAll(".", "-")) }}
+      >
         {title}
       </h1>
 
@@ -227,7 +231,7 @@ const ogImage = ogImageUrl
 
   function addHeadingLinks() {
     const headings = Array.from(
-      document.querySelectorAll("h2, h3, h4, h5, h6")
+      document.querySelectorAll("h2, h3, h4, h5, h6"),
     );
     for (const heading of headings) {
       heading.classList.add("group");
@@ -291,7 +295,7 @@ const ogImage = ogImageUrl
   attachCopyButtons();
 
   document.addEventListener("astro:after-swap", () =>
-    window.scrollTo({ left: 0, top: 0, behavior: "instant" })
+    window.scrollTo({ left: 0, top: 0, behavior: "instant" }),
   );
 </script>
 

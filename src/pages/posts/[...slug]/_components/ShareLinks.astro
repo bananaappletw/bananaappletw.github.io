@@ -25,7 +25,7 @@ const items = await Promise.all(
         ? t.post.sharePostViaEmail
         : tplStr(t.post.sharePostOn, { platform: platformLabel(name) }));
     return { url, title, Icon };
-  })
+  }),
 );
 ---
 

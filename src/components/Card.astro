@@ -15,10 +15,7 @@ const { title, description, ...props } = data;
 
 <li>
   <a href={getPostUrl(id, filePath, Astro.currentLocale)} class="entry">
-    <Heading
-      class="t"
-      transition:name={slugifyStr(title.replaceAll(".", "-"))}
-    >
+    <Heading class="t" transition:name={slugifyStr(title.replaceAll(".", "-"))}>
       {title}
     </Heading>
     <Datetime {...props} class="meta" />

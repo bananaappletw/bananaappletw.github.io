@@ -14,7 +14,7 @@ export function getFontPathByWeight(
   options?: {
     style?: "normal" | "italic";
     format?: string;
-  }
+  },
 ): string | undefined {
   const style = options?.style ?? "normal";
   const format = options?.format ?? "truetype";

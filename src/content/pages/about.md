@@ -27,6 +27,7 @@ My expertise spans the modern DevOps and infrastructure landscape:
 ## Education
 
 **National Yang-Ming Chiao Tung University** (formerly National Chiao Tung University)
+
 - Bachelor's: Computer Science (2012–2016) • GPA: 3.48/4.3
 - Master's: Computer Science (2016–2017) • GPA: 3.9/4.3
 - Thesis: [SymGDB](https://github.com/SQLab/symgdb) Symbolic execution integration for debugging
@@ -41,6 +42,7 @@ I've contributed to the open source community through speaking engagements at ma
 - **HITCON Community**: Shared knowledge on CTF for beginners
 
 Some projects I've worked on:
+
 - **SymGDB**: A plugin bringing symbolic execution capabilities to GDB
 - **Bamboofox CTF Training Platform**: Educational resources for CTF competitions
 

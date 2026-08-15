@@ -130,7 +130,7 @@ export interface ResolvedTorchlightConfig {
  * Provides full IntelliSense without any runtime overhead.
  */
 export function defineTorchlightConfig(
-  config: TorchlightConfig
+  config: TorchlightConfig,
 ): TorchlightConfig {
   return config;
 }

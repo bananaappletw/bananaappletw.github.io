@@ -54,7 +54,10 @@ const label = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
         {
           statuses.map(status => (
             <button
-              class:list={["filter status-filter", { active: status === "all" }]}
+              class:list={[
+                "filter status-filter",
+                { active: status === "all" },
+              ]}
               data-status={status}
               type="button"
             >
@@ -84,7 +87,9 @@ const label = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
               <span class="name">{item.name}</span>
             )}
 
-            <span class:list={["state", item.status]}>{label(item.status)}</span>
+            <span class:list={["state", item.status]}>
+              {label(item.status)}
+            </span>
 
             {item.date && <span class="when">{item.date}</span>}
           </li>

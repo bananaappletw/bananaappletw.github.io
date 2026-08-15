@@ -2,7 +2,14 @@
 title: Rubocop - Ruby static code analyzer
 pubDatetime: 2026-06-02T20:18:23.002609Z
 description: Rubocop - Ruby static code analyzer
-tags: ['ruby on rails', 'rubocop', 'ruby code formatter', 'computer science', 'archive']
+tags:
+  [
+    "ruby on rails",
+    "rubocop",
+    "ruby code formatter",
+    "computer science",
+    "archive",
+  ]
 ---
 
 Rubocop 是一個 Ruby static code analyzer
@@ -22,9 +29,9 @@ Config 可以參考 github 上的 [Config](https://github.com/bbatsov/rubocop/tr
 
 裡面有三個檔案
 
-* default.yml(主要的)
-* enabled.yml(預設開啟的)
-* disabled.yml(預設關掉的)
+- default.yml(主要的)
+- enabled.yml(預設開啟的)
+- disabled.yml(預設關掉的)
 
 改好後命名為 `.rubocop.yml` 放在 repo 裡，當你執行 `rubocop` 指令的時候就會讀取這個檔案的設定開始檢查語法
 
@@ -35,98 +42,113 @@ Config 可以參考 github 上的 [Config](https://github.com/bbatsov/rubocop/tr
 ```
 AllCops:
 ```
+
 ```
   Exclude:
     - 'db/migrate/*'
     - 'vendor/**/*'
 ```
+
 ```
 Rails:
 ```
+
 ```
   Enabled: true
 ```
-    
+
 ```
 Rails/HasAndBelongsToMany:
 ```
+
 ```
   Enabled: false
 ```
-    
+
 ```
 Bundler/OrderedGems:
 ```
+
 ```
   Enabled: false
 ```
-    
+
 ```
 Style/ClassAndModuleChildren:
 ```
+
 ```
   Enabled: false
 ```
-    
+
 ```
 Style/ConditionalAssignment:
 ```
+
 ```
   Enabled: false
 ```
-    
+
 ```
 Style/Documentation:
 ```
+
 ```
   Enabled: false
 ```
-    
+
 ```
 Style/FrozenStringLiteralComment:
 ```
+
 ```
   Enabled: false
 ```
-    
+
 ```
 Style/Next:
 ```
+
 ```
   Enabled: false
 ```
-    
+
 ```
 Style/GuardClause:
 ```
+
 ```
     Enabled: false
 ```
-    
+
 ```
 Metrics/LineLength:
 ```
+
 ```
   Enabled: false
 ```
-    
+
 ```
 Metrics/BlockLength:
 ```
+
 ```
   Enabled: false
 ```
-    
+
 ```
 Metrics/MethodLength:
 ```
+
 ```
   Enabled: false
 ```
-    
+
 ```
 Metrics/AbcSize:
 ```
+
 ```
     Enabled: false
 ```
@@ -154,14 +176,15 @@ rubocop --auto-correct --only StringLiterals
 ```
 begin
 ```
+
 ```
   require 'rubocop/rake_task'
 ```
-    
+
 ```
   RuboCop::RakeTask.new
 ```
-    
+
 ```
 rescue LoadError # rubocop:disable Lint/HandleExceptions
 end
@@ -172,7 +195,7 @@ end
 ```
 require_relative 'config/application'
 ```
-    
+
 ```
 Rails.application.load_tasks
 task default: [:rubocop]

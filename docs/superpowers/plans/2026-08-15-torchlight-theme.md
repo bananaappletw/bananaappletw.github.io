@@ -36,34 +36,34 @@
 
 **New files**
 
-| Path | Responsibility |
-|---|---|
-| `scripts/build-tokens.mjs` | Reads `docs/theme/tokens.json`, writes `src/styles/tokens.css`. The only thing allowed to emit hex into `src/`. |
-| `src/styles/tokens.css` | Generated. Custom properties for both worlds. Never hand-edited. |
-| `src/styles/ornament.css` | Carved rule, section mark, drop cap, carved frame, inscription. |
-| `src/scripts/world.ts` | World switching, persistence, first-visit default, flip wash. Replaces `theme.ts`. |
-| `src/components/WorldToggle.astro` | The kindle/hollow control. |
-| `src/components/Inscription.astro` | Souls item panel: name, flavor line, plain reading. |
-| `src/utils/tokens.ts` | Typed loader for `tokens.json`, used by Shiki, Mermaid and OG generation. |
-| `tests/tokens.test.ts` | Contrast floors, token completeness, no-hardcoded-hex scan. |
-| `torchlight.config.ts` | Renamed from `astro-paper.config.ts`. |
-| `vitest.config.ts` | Test runner config. |
+| Path                               | Responsibility                                                                                                  |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `scripts/build-tokens.mjs`         | Reads `docs/theme/tokens.json`, writes `src/styles/tokens.css`. The only thing allowed to emit hex into `src/`. |
+| `src/styles/tokens.css`            | Generated. Custom properties for both worlds. Never hand-edited.                                                |
+| `src/styles/ornament.css`          | Carved rule, section mark, drop cap, carved frame, inscription.                                                 |
+| `src/scripts/world.ts`             | World switching, persistence, first-visit default, flip wash. Replaces `theme.ts`.                              |
+| `src/components/WorldToggle.astro` | The kindle/hollow control.                                                                                      |
+| `src/components/Inscription.astro` | Souls item panel: name, flavor line, plain reading.                                                             |
+| `src/utils/tokens.ts`              | Typed loader for `tokens.json`, used by Shiki, Mermaid and OG generation.                                       |
+| `tests/tokens.test.ts`             | Contrast floors, token completeness, no-hardcoded-hex scan.                                                     |
+| `torchlight.config.ts`             | Renamed from `astro-paper.config.ts`.                                                                           |
+| `vitest.config.ts`                 | Test runner config.                                                                                             |
 
 **Modified**
 
-| Path | Change |
-|---|---|
-| `astro.config.ts` | Add Cinzel + Spectral fonts; replace Shiki themes with generated Torchlight themes. |
-| `src/styles/global.css` | Import generated tokens; rewrite base layer; add glow/vignette. |
-| `src/styles/theme.css` | Deleted — replaced by `tokens.css`. |
-| `src/styles/typography.css` | Rewritten to the Torchlight scale. |
-| `src/layouts/Layout.astro` | Font preloads, inline world-detection script, body classes. |
-| `src/layouts/PostLayout.astro` | Drop cap, section marks, prose container. |
-| `src/components/Header.astro`, `Footer.astro`, `Card.astro`, `Tag.astro`, `Pagination.astro`, `Datetime.astro`, `Mermaid.astro` | Restyled to tokens and ornament. |
-| `src/pages/og.png.ts`, `src/pages/posts/[...slug]/index.png.ts` | Torchlight OG template. |
-| `src/pages/search.astro` | Pagefind UI custom properties. |
-| `src/config.ts`, `src/types/config.ts` | Renamed config import and types. |
-| `package.json` | vitest, `test` script, `prebuild` token generation. |
+| Path                                                                                                                            | Change                                                                              |
+| ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `astro.config.ts`                                                                                                               | Add Cinzel + Spectral fonts; replace Shiki themes with generated Torchlight themes. |
+| `src/styles/global.css`                                                                                                         | Import generated tokens; rewrite base layer; add glow/vignette.                     |
+| `src/styles/theme.css`                                                                                                          | Deleted — replaced by `tokens.css`.                                                 |
+| `src/styles/typography.css`                                                                                                     | Rewritten to the Torchlight scale.                                                  |
+| `src/layouts/Layout.astro`                                                                                                      | Font preloads, inline world-detection script, body classes.                         |
+| `src/layouts/PostLayout.astro`                                                                                                  | Drop cap, section marks, prose container.                                           |
+| `src/components/Header.astro`, `Footer.astro`, `Card.astro`, `Tag.astro`, `Pagination.astro`, `Datetime.astro`, `Mermaid.astro` | Restyled to tokens and ornament.                                                    |
+| `src/pages/og.png.ts`, `src/pages/posts/[...slug]/index.png.ts`                                                                 | Torchlight OG template.                                                             |
+| `src/pages/search.astro`                                                                                                        | Pagefind UI custom properties.                                                      |
+| `src/config.ts`, `src/types/config.ts`                                                                                          | Renamed config import and types.                                                    |
+| `package.json`                                                                                                                  | vitest, `test` script, `prebuild` token generation.                                 |
 
 **Deleted**
 
@@ -76,14 +76,16 @@
 Makes `tokens.json` the executable source of truth before any component depends on it.
 
 **Files:**
+
 - Create: `scripts/build-tokens.mjs`
 - Create: `src/utils/tokens.ts`
 - Create: `tests/tokens.test.ts`
 - Create: `vitest.config.ts`
 - Modify: `package.json`
-- Generated (git-ignored is *not* wanted — commit it): `src/styles/tokens.css`
+- Generated (git-ignored is _not_ wanted — commit it): `src/styles/tokens.css`
 
 **Interfaces:**
+
 - Consumes: `docs/theme/tokens.json` (existing).
 - Produces: `src/styles/tokens.css` defining every token for both worlds; `src/utils/tokens.ts` exporting `tokens` (the parsed JSON), `type World = "hollowed" | "kindled"`, and `contrastRatio(hexA: string, hexB: string): number`.
 
@@ -151,28 +153,38 @@ describe("contrast floors (spec design.md section 11)", () => {
     const ground = tokens[world]["--ground"];
 
     it(`${world}: --text is at least 7:1 on --ground`, () => {
-      expect(contrastRatio(tokens[world]["--text"], ground)).toBeGreaterThanOrEqual(7);
+      expect(
+        contrastRatio(tokens[world]["--text"], ground),
+      ).toBeGreaterThanOrEqual(7);
     });
 
     it(`${world}: --text-2 is at least 4.5:1 on --ground`, () => {
-      expect(contrastRatio(tokens[world]["--text-2"], ground)).toBeGreaterThanOrEqual(4.5);
+      expect(
+        contrastRatio(tokens[world]["--text-2"], ground),
+      ).toBeGreaterThanOrEqual(4.5);
     });
 
     it(`${world}: --text-3 is at least 4.5:1 on --ground`, () => {
-      expect(contrastRatio(tokens[world]["--text-3"], ground)).toBeGreaterThanOrEqual(4.5);
+      expect(
+        contrastRatio(tokens[world]["--text-3"], ground),
+      ).toBeGreaterThanOrEqual(4.5);
     });
 
     it(`${world}: --torch is at least 4.5:1 on --ground`, () => {
-      expect(contrastRatio(tokens[world]["--torch"], ground)).toBeGreaterThanOrEqual(4.5);
+      expect(
+        contrastRatio(tokens[world]["--torch"], ground),
+      ).toBeGreaterThanOrEqual(4.5);
     });
 
     it(`${world}: --arcane is at least 4.5:1 on --ground`, () => {
-      expect(contrastRatio(tokens[world]["--arcane"], ground)).toBeGreaterThanOrEqual(4.5);
+      expect(
+        contrastRatio(tokens[world]["--arcane"], ground),
+      ).toBeGreaterThanOrEqual(4.5);
     });
 
     it(`${world}: --blood is at least 4.5:1 on --blood-tint`, () => {
       expect(
-        contrastRatio(tokens[world]["--blood"], tokens[world]["--blood-tint"])
+        contrastRatio(tokens[world]["--blood"], tokens[world]["--blood-tint"]),
       ).toBeGreaterThanOrEqual(4.5);
     });
   }
@@ -191,7 +203,7 @@ describe("no hardcoded color", () => {
   it("finds no hex literal in src, outside the generated stylesheet", () => {
     const hits = execSync(
       "grep -rInE '#[0-9a-fA-F]{3,8}\\\\b' src --include=*.astro --include=*.css --include=*.ts " +
-        "| grep -v 'src/styles/tokens.css' || true"
+        "| grep -v 'src/styles/tokens.css' || true",
     )
       .toString()
       .trim();
@@ -323,10 +335,12 @@ git commit -m "feat: generate Torchlight tokens from spec and test contrast floo
 ### Task 2: Fonts
 
 **Files:**
+
 - Modify: `astro.config.ts`
 - Modify: `src/layouts/Layout.astro:44-48`
 
 **Interfaces:**
+
 - Produces: CSS variables `--font-display` (Cinzel 600) and `--font-body` (Spectral 400/600 + italic 400), alongside the existing `--font-google-sans-code` which stays for code.
 
 - [ ] **Step 1: Add the faces to astro.config.ts**
@@ -372,15 +386,15 @@ In `astro.config.ts`, replace the `fonts:` array with:
 In `src/layouts/Layout.astro`, replace the single `<Font>` tag with:
 
 ```astro
-    <Font
-      cssVariable="--font-display"
-      preload={[{ subset: "latin", weight: 600, style: "normal" }]}
-    />
-    <Font
-      cssVariable="--font-body"
-      preload={[{ subset: "latin", weight: 400, style: "normal" }]}
-    />
-    <Font cssVariable="--font-google-sans-code" />
+<Font
+  cssVariable="--font-display"
+  preload={[{ subset: "latin", weight: 600, style: "normal" }]}
+/>
+<Font
+  cssVariable="--font-body"
+  preload={[{ subset: "latin", weight: 400, style: "normal" }]}
+/>
+<Font cssVariable="--font-google-sans-code" />
 ```
 
 - [ ] **Step 3: Verify the fonts resolve**
@@ -399,6 +413,7 @@ git commit -m "feat: self-host Cinzel and Spectral for the Torchlight theme"
 ### Task 3: Base layer, glow and vignette
 
 **Files:**
+
 - Modify: `src/styles/global.css`
 - Delete: `src/styles/theme.css`
 
@@ -455,7 +470,11 @@ Replace the whole file with:
     pointer-events: none;
     background:
       radial-gradient(100% 62% at 50% -4%, var(--glow), transparent 62%),
-      radial-gradient(128% 96% at 50% 42%, transparent 38%, var(--vignette) 100%);
+      radial-gradient(
+        128% 96% at 50% 42%,
+        transparent 38%,
+        var(--vignette) 100%
+      );
   }
 
   body > * {
@@ -524,6 +543,7 @@ git commit -m "refactor: replace AstroPaper base layer with Torchlight ground, g
 ### Task 4: Typography scale
 
 **Files:**
+
 - Modify: `src/styles/typography.css` (full rewrite, currently 115 lines)
 
 - [ ] **Step 1: Rewrite typography.css**
@@ -698,12 +718,14 @@ git commit -m "refactor: apply the Torchlight type scale to prose"
 Replaces the light/dark toggle with the two-world control, including the flip wash and the first-visit default.
 
 **Files:**
+
 - Create: `src/scripts/world.ts`
 - Create: `src/components/WorldToggle.astro`
 - Delete: `src/scripts/theme.ts`
 - Modify: `src/layouts/Layout.astro` (inline script and the `<script>` import at the end of `<body>`)
 
 **Interfaces:**
+
 - Produces: `data-theme` on `<html>` is always one of `hollowed` | `kindled`. `localStorage` key `world`. The toggle element has `id="world-btn"` and a child `#world-label`.
 
 - [ ] **Step 1: Replace the inline FOUC script in Layout.astro**
@@ -711,17 +733,17 @@ Replaces the light/dark toggle with the two-world control, including the flip wa
 Swap the existing inline `<script is:inline>` block for:
 
 ```astro
-    <script is:inline>
-      (function () {
-        // First visit lands hollowed: the dark world is the true state of
-        // this site, not a night mode. A returning reader's choice wins.
-        const stored = localStorage.getItem("world");
-        const world =
-          stored === "kindled" || stored === "hollowed" ? stored : "hollowed";
-        document.firstElementChild?.setAttribute("data-theme", world);
-        window.__world = { value: world };
-      })();
-    </script>
+<script is:inline>
+  (function () {
+    // First visit lands hollowed: the dark world is the true state of
+    // this site, not a night mode. A returning reader's choice wins.
+    const stored = localStorage.getItem("world");
+    const world =
+      stored === "kindled" || stored === "hollowed" ? stored : "hollowed";
+    document.firstElementChild?.setAttribute("data-theme", world);
+    window.__world = { value: world };
+  })();
+</script>
 ```
 
 - [ ] **Step 2: Write world.ts**
@@ -782,11 +804,9 @@ function setup(): void {
     });
   });
 
-  document
-    .querySelector("#veil")
-    ?.addEventListener("animationend", event => {
-      (event.currentTarget as HTMLElement).classList.remove("run");
-    });
+  document.querySelector("#veil")?.addEventListener("animationend", event => {
+    (event.currentTarget as HTMLElement).classList.remove("run");
+  });
 }
 
 setup();
@@ -858,10 +878,18 @@ Create `src/components/WorldToggle.astro`:
     }
 
     @keyframes veil {
-      0% { opacity: 0; }
-      22% { opacity: 1; }
-      62% { opacity: 1; }
-      100% { opacity: 0; }
+      0% {
+        opacity: 0;
+      }
+      22% {
+        opacity: 1;
+      }
+      62% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+      }
     }
   }
 </style>
@@ -891,10 +919,12 @@ git commit -m "feat: switch between the hollowed and kindled worlds"
 ### Task 6: Ornament primitives
 
 **Files:**
+
 - Modify: `src/styles/ornament.css`
 - Create: `src/components/Inscription.astro`
 
 **Interfaces:**
+
 - Produces: classes `.carved-rule`, `.section-mark`, `.dropcap`, `.carved-frame`, `.rune-list`, `.arcane-rule`; component `Inscription` with props `{ name: string }` and a default slot plus a named `flavor` slot.
 
 - [ ] **Step 1: Write the ornament stylesheet**
@@ -1004,7 +1034,10 @@ type Props = { name: string };
 const { name } = Astro.props;
 ---
 
-<aside class="my-7 flex flex-col gap-2 border p-5" style="border-color: var(--border);">
+<aside
+  class="my-7 flex flex-col gap-2 border p-5"
+  style="border-color: var(--border);"
+>
   <span
     class="font-display text-[15px] font-semibold uppercase"
     style="letter-spacing: 0.18em; color: var(--torch);">{name}</span
@@ -1032,6 +1065,7 @@ git commit -m "feat: add Torchlight ornament primitives"
 ### Task 7: Header and footer
 
 **Files:**
+
 - Modify: `src/components/Header.astro`
 - Modify: `src/components/Footer.astro`
 
@@ -1058,8 +1092,13 @@ Add the flame flicker in the component's `<style>` block:
   }
 
   @keyframes flicker {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.85; }
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.85;
+    }
   }
 }
 ```
@@ -1084,6 +1123,7 @@ git commit -m "refactor: restyle header and footer for Torchlight"
 ### Task 8: Listing components
 
 **Files:**
+
 - Modify: `src/components/Card.astro`
 - Modify: `src/components/Tag.astro`
 - Modify: `src/components/Pagination.astro`
@@ -1094,9 +1134,16 @@ git commit -m "refactor: restyle header and footer for Torchlight"
 Post title uses `--text`, **not** gold (spec §3, the 8% budget). Structure:
 
 ```astro
-<li class="flex flex-col gap-1.5 py-5" style="border-bottom: 1px solid var(--border-soft);">
+<li
+  class="flex flex-col gap-1.5 py-5"
+  style="border-bottom: 1px solid var(--border-soft);"
+>
   <h3 class="display text-2xl">
-    <a href={href} class="no-underline hover:text-torch" style="color: var(--text);">
+    <a
+      href={href}
+      class="no-underline hover:text-torch"
+      style="color: var(--text);"
+    >
       {title}
     </a>
   </h3>
@@ -1111,8 +1158,8 @@ Post title uses `--text`, **not** gold (spec §3, the 8% budget). Structure:
 <a
   href={href}
   class="label rounded-sm px-2 py-0.5 no-underline"
-  style="background: var(--torch-tint); color: var(--torch);"
->{name}</a>
+  style="background: var(--torch-tint); color: var(--torch);">{name}</a
+>
 ```
 
 Solid `--torch-tint` background, never `rgba()` (spec §12).
@@ -1141,6 +1188,7 @@ git commit -m "refactor: restyle listing components for Torchlight"
 ### Task 9: Post layout
 
 **Files:**
+
 - Modify: `src/layouts/PostLayout.astro`
 
 - [ ] **Step 1: Apply the post structure**
@@ -1185,6 +1233,7 @@ git commit -m "refactor: apply Torchlight structure to the post layout"
 ### Task 10: Code and diagram theming
 
 **Files:**
+
 - Modify: `astro.config.ts` (Shiki config)
 - Modify: `src/components/Mermaid.astro`
 
@@ -1203,11 +1252,26 @@ const shikiTheme = (world: "hollowed" | "kindled") => {
     bg: s.bg,
     fg: s.plain,
     settings: [
-      { scope: ["comment"], settings: { foreground: s.comment, fontStyle: "italic" } },
-      { scope: ["string", "constant.other.symbol"], settings: { foreground: s.string } },
-      { scope: ["constant.numeric", "constant.language"], settings: { foreground: s.constant } },
-      { scope: ["keyword", "storage.type", "storage.modifier"], settings: { foreground: s.keyword } },
-      { scope: ["entity.name.function", "support.function"], settings: { foreground: s.plain } },
+      {
+        scope: ["comment"],
+        settings: { foreground: s.comment, fontStyle: "italic" },
+      },
+      {
+        scope: ["string", "constant.other.symbol"],
+        settings: { foreground: s.string },
+      },
+      {
+        scope: ["constant.numeric", "constant.language"],
+        settings: { foreground: s.constant },
+      },
+      {
+        scope: ["keyword", "storage.type", "storage.modifier"],
+        settings: { foreground: s.keyword },
+      },
+      {
+        scope: ["entity.name.function", "support.function"],
+        settings: { foreground: s.plain },
+      },
     ],
   };
 };
@@ -1263,6 +1327,7 @@ git commit -m "feat: derive Shiki and Mermaid themes from Torchlight tokens"
 ### Task 11: OG images
 
 **Files:**
+
 - Modify: `src/pages/og.png.ts`
 - Modify: `src/pages/posts/[...slug]/index.png.ts`
 
@@ -1312,6 +1377,7 @@ git commit -m "feat: render OG images in the Torchlight hollowed world"
 ### Task 12: Search
 
 **Files:**
+
 - Modify: `src/pages/search.astro`
 
 - [ ] **Step 1: Retokenize the Pagefind UI**
@@ -1361,6 +1427,7 @@ git commit -m "refactor: theme the Pagefind search UI with Torchlight tokens"
 ### Task 13: Purge AstroPaper and rename the config
 
 **Files:**
+
 - Rename: `astro-paper.config.ts` → `torchlight.config.ts`
 - Modify: `src/config.ts`, `src/types/config.ts`, `astro.config.ts`
 - Delete: AstroPaper branding images, `tailwind.config.ts`, `tailwind.config.js`
@@ -1459,7 +1526,6 @@ git commit -m "chore: verify Torchlight build, features and accessibility"
 **Known limitation, stated rather than hidden.** The "gold ≤ 8% of viewport" budget (§3) is not machine-checkable and is verified by eye in Tasks 9 and 14. The ornament-budget rule (§6 rule 1) is likewise a manual check.
 
 **Type consistency.** `World` is defined once in `src/utils/tokens.ts` and reused in `scripts/build-tokens.mjs` (as plain strings), `src/scripts/world.ts` and Task 10's `shikiTheme`. `data-theme` values are `hollowed`/`kindled` everywhere, with `dark`/`light` accepted only in the CSS selectors generated by Task 1 and the `@custom-variant` in Task 3.
-
 
 ---
 

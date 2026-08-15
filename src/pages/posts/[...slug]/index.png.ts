@@ -10,7 +10,7 @@ export async function getStaticPaths() {
   }
 
   const posts = await getCollection("posts").then(p =>
-    p.filter(({ data }) => !data.draft && !data.ogImage)
+    p.filter(({ data }) => !data.draft && !data.ogImage),
   );
 
   return posts.map(post => ({
@@ -28,6 +28,6 @@ export const GET: APIRoute = async ({ props, url }) => {
     props.data.title,
     props.data.description ?? config.site.description,
     new URL(config.site.url).hostname,
-    url
+    url,
   );
 };

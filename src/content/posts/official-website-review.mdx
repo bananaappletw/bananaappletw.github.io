@@ -2,7 +2,7 @@
 title: Official website review
 pubDatetime: 2026-06-02T20:18:23.003683Z
 description: Official website review
-tags: ['computer science', 'archive']
+tags: ["computer science", "archive"]
 ---
 
 # 釐清需求
@@ -19,12 +19,12 @@ tags: ['computer science', 'archive']
 
 當不知道要選什麼框架的時候可以從一些方向下手
 
-* 程式語言
-* 使用人數多寡,使用人數比較多的話也會比較多人遇到相同問題,這樣有解的機率也會比較高
+- 程式語言
+- 使用人數多寡,使用人數比較多的話也會比較多人遇到相同問題,這樣有解的機率也會比較高
 
 主要需求:
 
-* i18n
+- i18n
 
 `/zh/index.html`
 
@@ -34,19 +34,19 @@ tags: ['computer science', 'archive']
 
 顯示英文的頁面
 
-* 不同頁面呈現不同 category 的文章
+- 不同頁面呈現不同 category 的文章
 
 像是 `/blog`
 
 會顯示出 front matter 的 category 是 blog 的文章
 
-* 能夠照 i18n 顯示對應語系的文章
+- 能夠照 i18n 顯示對應語系的文章
 
 像是 `/zh/blog`
 
 顯示出 front matter 的 category 是 blog 而且 locale 是 zh 的文章
 
-* 各自 category 的文章照 tag 分類顯示
+- 各自 category 的文章照 tag 分類顯示
 
 像是 `/blog/life`
 
@@ -61,11 +61,13 @@ tags: ['computer science', 'archive']
 ```
 ---
 ```
+
 ```
     permalink: /
     i18n_prefix: index
     lang: en
 ```
+
 ```
 ---
 ```
@@ -95,6 +97,7 @@ lang: en
 ```
 index:
 ```
+
 ```
 	title: hello
 ```
@@ -104,6 +107,7 @@ index:
 ```
 index:
 ```
+
 ```
 	title: 你好
 ```
@@ -113,6 +117,7 @@ index:
 ```
 module Jekyll
 ```
+
 ```
   class I18nTag < Liquid::Tag
     def initialize(tag_name, text, tokens)
@@ -134,6 +139,7 @@ module Jekyll
     end
   end
 ```
+
 ```
 end
 ```
@@ -156,11 +162,13 @@ layout: index
 permalink: /
 pagination:
 ```
+
 ```
     per_page: 5
     enabled: true
     locale: en
 ```
+
 ```
 ---
 ```
@@ -173,6 +181,7 @@ layout: resource
 permalink: /
 pagination:
 ```
+
 ```
     categories:
     - resource
@@ -193,6 +202,7 @@ layout: resource-browse-by-tag-technical
 permalink: /
 pagination:
 ```
+
 ```
     categories:
     - resource
@@ -202,6 +212,7 @@ pagination:
     enabled: true
     locale: en
 ```
+
 ```
 ---
 ```
@@ -243,9 +254,11 @@ Jekyll 有個爛的點就是他的 plugin 都是要用猜的去寫
 ```
 <div class="logo">
 ```
+
 ```
 	<img src="...">
 ```
+
 ```
 </div>
 ```
@@ -255,12 +268,14 @@ Jekyll 有個爛的點就是他的 plugin 都是要用猜的去寫
 ```
 .logo{
 ```
+
 ```
 	width: 300px;
 	img{
     	width: 100%;
     }
 ```
+
 ```
 }
 ```
@@ -278,9 +293,11 @@ Jekyll 有個爛的點就是他的 plugin 都是要用猜的去寫
 ```
 <div class="ratio-box">
 ```
+
 ```
 	<img src="...">
 ```
+
 ```
 </div>
 ```
@@ -290,6 +307,7 @@ Jekyll 有個爛的點就是他的 plugin 都是要用猜的去寫
 ```
 .ratio-box{
 ```
+
 ```
     overflow: hidden;
     position: relative;
@@ -305,6 +323,7 @@ Jekyll 有個爛的點就是他的 plugin 都是要用猜的去寫
       width: 100%;
     }
 ```
+
 ```
 }
 ```
@@ -314,6 +333,7 @@ Jekyll 有個爛的點就是他的 plugin 都是要用猜的去寫
 ```
 .ratio-box{
 ```
+
 ```
     &::after {
       content: "";
@@ -326,6 +346,7 @@ Jekyll 有個爛的點就是他的 plugin 都是要用猜的去寫
       object-fit: cover;
     }
 ```
+
 ```
 }
 ```
@@ -339,11 +360,13 @@ Jekyll 有個爛的點就是他的 plugin 都是要用猜的去寫
 ```
 <a href="...">
 ```
+
 ```
   <a href="...">
 	...
   </a>
 ```
+
 ```
 </a>
 ```
@@ -408,11 +431,13 @@ Jekyll 有個爛的點就是他的 plugin 都是要用猜的去寫
 ```
 <ul class="nav">
 ```
+
 ```
   <li class="nav-item">
     <a class="nav-link active" href="#">Active</a>
   </li>
 ```
+
 ```
 </ul>
 ```
@@ -430,6 +455,7 @@ Jekyll 有個爛的點就是他的 plugin 都是要用猜的去寫
 ```
 <div class="block">
 ```
+
 ```
       ...
       <span class="block__elem"></span>
@@ -451,6 +477,7 @@ Jekyll 有個爛的點就是他的 plugin 都是要用猜的去寫
 ```
 <div class="block">
 ```
+
 ```
 	  ...
 	  <span class="block__elem"></span>
@@ -470,6 +497,7 @@ Jekyll 有個爛的點就是他的 plugin 都是要用猜的去寫
 ```
 .block .block__elem { color: #042; }
 ```
+
 ```
     div.block__elem { color: #042; }
 ```
@@ -495,6 +523,7 @@ Jekyll 有個爛的點就是他的 plugin 都是要用猜的去寫
 ```
 <div class="block block_mod">...</div>
 ```
+
 ```
     <div class="block block_size-big
         block_shadow_yes">...</div>
@@ -533,12 +562,14 @@ Jekyll 有個爛的點就是他的 plugin 都是要用猜的去寫
 ```
 <form class="form form_theme_xmas form_simple">
 ```
+
 ```
   <input class="form__input" type="text" />
   <input
     class="form__submit form__submit_disabled"
     type="submit" />
 ```
+
 ```
 </form>
 ```
@@ -557,11 +588,13 @@ Jekyll 有個爛的點就是他的 plugin 都是要用猜的去寫
 ### Youtube
 
 詳細可以參考這篇文章 [https://codeburst.io/understanding-css-bem-naming-convention-a8cca116d252](https://codeburst.io/understanding-css-bem-naming-convention-a8cca116d252 "https://codeburst.io/understanding-css-bem-naming-convention-a8cca116d252")
+
 #### HTML
 
 ```
 <header class="youtube-header">
 ```
+
 ```
   <img class="youtube-header__logo"/>
   <div class="youtube-header__search"></div>
@@ -570,6 +603,7 @@ Jekyll 有個爛的點就是他的 plugin 都是要用猜的去寫
     <li class="youtube-header__item></li>
  </ul>
 ```
+
 ```
 </header>
 ```
@@ -579,6 +613,7 @@ Jekyll 有個爛的點就是他的 plugin 都是要用猜的去寫
 ```
 .youtube-header {
 ```
+
 ```
   // rules
   &__logo {
@@ -594,6 +629,7 @@ Jekyll 有個爛的點就是他的 plugin 都是要用猜的去寫
     // rules
   }
 ```
+
 ```
 }
 ```
@@ -604,9 +640,9 @@ Jekyll 有個爛的點就是他的 plugin 都是要用猜的去寫
 
 要遵守三點:
 
-* Elements can be nested inside each other.
-* You can have any number of nesting levels.
-* An element is always part of a block, not another element. This means that element names can't define a hierarchy such as `block__elem1__elem2`.
+- Elements can be nested inside each other.
+- You can have any number of nesting levels.
+- An element is always part of a block, not another element. This means that element names can't define a hierarchy such as `block__elem1__elem2`.
 
 #### Example
 
@@ -629,6 +665,7 @@ elem1 和 elem2 相對於 block
 ```
 <form class="search-form">
 ```
+
 ```
     <div class="search-form__content">
         <input class="search-form__input">
@@ -638,6 +675,7 @@ elem1 和 elem2 相對於 block
         <button class="search-form__button">Search</button>
     </div>
 ```
+
 ```
 </form>
 ```
@@ -649,6 +687,7 @@ elem1 和 elem2 相對於 block
 ```
 <form class="search-form">
 ```
+
 ```
     <div class="search-form__content">
         <input class="search-form__content-input">
@@ -658,6 +697,7 @@ elem1 和 elem2 相對於 block
         <button class="search-form__content-button">Search</button>
     </div>
 ```
+
 ```
 </form>
 ```
@@ -671,12 +711,14 @@ elem1 和 elem2 相對於 block
 ```
 <div class="blocka">
 ```
+
 ```
 	<div class="blocka__blockb">
     	<div class="blocka__blockb__elementb>
         </div>
     </div>
 ```
+
 ```
 </div>
 ```
@@ -686,29 +728,33 @@ elem1 和 elem2 相對於 block
 ```
 <div class="blocka">
 ```
+
 ```
 	<div class="blocka__elementa blockb">
     	<div class="blockb__elementb>
         </div>
     </div>
 ```
+
 ```
 </div>
 ```
 
-以 blocka__elementa 來代表和 blocka 的關係
+以 blocka\_\_elementa 來代表和 blocka 的關係
 
 #### Alternative HTML(2)
 
 ```
 <div class="blocka">
 ```
+
 ```
 	<div class="blockb">
     	<div class="blockb__elementb>
         </div>
     </div>
 ```
+
 ```
 </div>
 ```
@@ -722,12 +768,14 @@ elem1 和 elem2 相對於 block
 ```
 <div class="product-container>
 ```
+
 ```
     <div class="product>
         <div class="product__content">
         </div>
     </div>
 ```
+
 ```
 </div>
 ```
@@ -737,29 +785,33 @@ elem1 和 elem2 相對於 block
 ```
 <div class="product>
 ```
+
 ```
     <div class="product__inner>
         <div class="product__content">
         </div>
     </div>
 ```
+
 ```
 </div>
 ```
 
-將 product 往上拉一層原本的用 product__inner 取代
+將 product 往上拉一層原本的用 product\_\_inner 取代
 
 #### Alternative HTML(2)
 
 ```
 <div class="product-container>
 ```
+
 ```
     <div class="product>
         <div class="product__content">
         </div>
     </div>
 ```
+
 ```
 </div>
 ```
@@ -778,17 +830,21 @@ elem1 和 elem2 相對於 block
 .button_hovered .button__text
 {
 ```
+
 ```
   text-decoration: underline;
 ```
+
 ```
 }
 .button_theme_islands .button__text
 {
 ```
+
 ```
   line-height: 1.5;
 ```
+
 ```
 }
 ```
@@ -802,11 +858,13 @@ elem1 和 elem2 相對於 block
 ```
 .block{
 ```
+
 ```
 	.block__element{
     	...
     }
 ```
+
 ```
 }
 ```
@@ -816,11 +874,13 @@ elem1 和 elem2 相對於 block
 ```
 .block{
 ```
+
 ```
 	@at-root #{&}__element{
     	...
     }
 ```
+
 ```
 }
 ```
@@ -830,16 +890,20 @@ elem1 和 elem2 相對於 block
 ```
 .block{
 ```
+
 ```
 	...
 ```
+
 ```
 }
 .block__element{
 ```
+
 ```
     ...
 ```
+
 ```
 }
 ```
@@ -866,6 +930,7 @@ elem1 和 elem2 相對於 block
 ```
 .button {
 ```
+
 ```
 	.button_active{
     	...
@@ -874,6 +939,7 @@ elem1 和 elem2 相對於 block
     	...
     }
 ```
+
 ```
 }
 ```
@@ -890,9 +956,11 @@ elem1 和 elem2 相對於 block
 ```
 .index-page-button{
 ```
+
 ```
 	...
 ```
+
 ```
 }
 ```
@@ -932,25 +1000,31 @@ elem1 和 elem2 相對於 block
 ```
 <div class="content">
 ```
+
 ```
   ... <!-- the user’s text -->
 ```
+
 ```
 </div>
 CSS rules:
 .content a {
 ```
+
 ```
   ...
 ```
+
 ```
 }
 .content p {
 ```
+
 ```
   font-family: Arial, sans-serif;
   text-align: center;
 ```
+
 ```
 }
 ```
@@ -962,11 +1036,13 @@ CSS rules:
 ```
 <header>
 ```
+
 ```
   <a href="/">
     <img src="img.logo.png" alt="Logo">
   </a>
 ```
+
 ```
 </header>
 ```
@@ -976,11 +1052,13 @@ CSS rules:
 ```
 header{
 ```
+
 ```
 	a{
     	...
     }
 ```
+
 ```
 }
 ```
@@ -1018,6 +1096,7 @@ HTML 雖然有 [semantic elements](https://www.w3schools.com/html/html5_semantic
 ```
 <header class="navber">
 ```
+
 ```
     <div class="navbar-menu">
         <div class="navbar-menu-item>
@@ -1028,6 +1107,7 @@ HTML 雖然有 [semantic elements](https://www.w3schools.com/html/html5_semantic
         </div>
     </div>
 ```
+
 ```
 </header>
 ```
@@ -1037,6 +1117,7 @@ HTML 雖然有 [semantic elements](https://www.w3schools.com/html/html5_semantic
 ```
 <header class="navber">
 ```
+
 ```
     <div class="navbar-menu">
         <div class="navbar-item>
@@ -1047,6 +1128,7 @@ HTML 雖然有 [semantic elements](https://www.w3schools.com/html/html5_semantic
         </div>
     </div>
 ```
+
 ```
 </header>
 ```
@@ -1079,23 +1161,23 @@ HTML 雖然有 [semantic elements](https://www.w3schools.com/html/html5_semantic
 
 # 一些下次可以改進的點
 
-* 可能需要跟設計師協調設計稿的 breakpoint，會是希望可以套框架的 convension 可以善用 utilities class 用 class 就組出簡單的 style
-  * xs
-  * sm(min-width: 576px)
-  * md(min-width: 768px)
-  * lg(min-width: 992px)
-  * xl(min-width: 1200px)
-* 一開始就將所有頁面看完再開始寫，先將可以共用的 style 刻出來，再依照各個頁面不同的要求稍作調整，我一開始寫是一個頁面一個頁面刻，每次刻完一個頁面才發覺到其他頁面可以共用這個 style，但是為了共用 style 又必須稍做調整
-* 使用 rem 和 em 取代 px，這個有溝通過只是在設計的時候就用了 px 了，來不及
+- 可能需要跟設計師協調設計稿的 breakpoint，會是希望可以套框架的 convension 可以善用 utilities class 用 class 就組出簡單的 style
+  - xs
+  - sm(min-width: 576px)
+  - md(min-width: 768px)
+  - lg(min-width: 992px)
+  - xl(min-width: 1200px)
+- 一開始就將所有頁面看完再開始寫，先將可以共用的 style 刻出來，再依照各個頁面不同的要求稍作調整，我一開始寫是一個頁面一個頁面刻，每次刻完一個頁面才發覺到其他頁面可以共用這個 style，但是為了共用 style 又必須稍做調整
+- 使用 rem 和 em 取代 px，這個有溝通過只是在設計的時候就用了 px 了，來不及
 
 # References
 
-* [https://cythilya.github.io/2018/06/05/css-methodologies/](https://cythilya.github.io/2018/06/05/css-methodologies/ "https://cythilya.github.io/2018/06/05/css-methodologies/")
-* [https://codeburst.io/understanding-css-bem-naming-convention-a8cca116d252](https://codeburst.io/understanding-css-bem-naming-convention-a8cca116d252 "https://codeburst.io/understanding-css-bem-naming-convention-a8cca116d252")
-* [https://css-tricks.com/lets-define-exactly-atomic-css/](https://css-tricks.com/lets-define-exactly-atomic-css/ "https://css-tricks.com/lets-define-exactly-atomic-css/")
-* [https://en.bem.info/methodology/quick-start/#guidelines-for-using-elements](https://en.bem.info/methodology/quick-start/#guidelines-for-using-elements "https://en.bem.info/methodology/quick-start/#guidelines-for-using-elements")
-* [https://www.smashingmagazine.com/2018/06/bem-for-beginners/](https://www.smashingmagazine.com/2018/06/bem-for-beginners/ "https://www.smashingmagazine.com/2018/06/bem-for-beginners/")
-* [https://medium.com/@yanglin_68397/%E5%A5%BD%E7%94%A8%E7%9A%84-bootstrap-4-utilities-class-79484fa4c506](https://medium.com/@yanglin_68397/%E5%A5%BD%E7%94%A8%E7%9A%84-bootstrap-4-utilities-class-79484fa4c506 "https://medium.com/@yanglin_68397/%E5%A5%BD%E7%94%A8%E7%9A%84-bootstrap-4-utilities-class-79484fa4c506")
-* [https://zellwk.com/blog/css-architecture-1/](https://zellwk.com/blog/css-architecture-1/ "https://zellwk.com/blog/css-architecture-1/")
-* [https://gist.github.com/Integralist/4960210](https://gist.github.com/Integralist/4960210 "https://gist.github.com/Integralist/4960210")
-* [https://css-tricks.com/css-modules-part-1-need/](https://css-tricks.com/css-modules-part-1-need/ "https://css-tricks.com/css-modules-part-1-need/")
+- [https://cythilya.github.io/2018/06/05/css-methodologies/](https://cythilya.github.io/2018/06/05/css-methodologies/ "https://cythilya.github.io/2018/06/05/css-methodologies/")
+- [https://codeburst.io/understanding-css-bem-naming-convention-a8cca116d252](https://codeburst.io/understanding-css-bem-naming-convention-a8cca116d252 "https://codeburst.io/understanding-css-bem-naming-convention-a8cca116d252")
+- [https://css-tricks.com/lets-define-exactly-atomic-css/](https://css-tricks.com/lets-define-exactly-atomic-css/ "https://css-tricks.com/lets-define-exactly-atomic-css/")
+- [https://en.bem.info/methodology/quick-start/#guidelines-for-using-elements](https://en.bem.info/methodology/quick-start/#guidelines-for-using-elements "https://en.bem.info/methodology/quick-start/#guidelines-for-using-elements")
+- [https://www.smashingmagazine.com/2018/06/bem-for-beginners/](https://www.smashingmagazine.com/2018/06/bem-for-beginners/ "https://www.smashingmagazine.com/2018/06/bem-for-beginners/")
+- [https://medium.com/@yanglin_68397/%E5%A5%BD%E7%94%A8%E7%9A%84-bootstrap-4-utilities-class-79484fa4c506](https://medium.com/@yanglin_68397/%E5%A5%BD%E7%94%A8%E7%9A%84-bootstrap-4-utilities-class-79484fa4c506 "https://medium.com/@yanglin_68397/%E5%A5%BD%E7%94%A8%E7%9A%84-bootstrap-4-utilities-class-79484fa4c506")
+- [https://zellwk.com/blog/css-architecture-1/](https://zellwk.com/blog/css-architecture-1/ "https://zellwk.com/blog/css-architecture-1/")
+- [https://gist.github.com/Integralist/4960210](https://gist.github.com/Integralist/4960210 "https://gist.github.com/Integralist/4960210")
+- [https://css-tricks.com/css-modules-part-1-need/](https://css-tricks.com/css-modules-part-1-need/ "https://css-tricks.com/css-modules-part-1-need/")

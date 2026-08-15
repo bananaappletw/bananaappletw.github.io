@@ -2,9 +2,8 @@
 title: KVM GPU passthrough Ubuntu 20.04
 pubDatetime: 2021-07-05T00:00:00Z
 description: KVM GPU passthrough Ubuntu 20.04
-tags: ['kvm', 'cloud-init', 'vfio', 'GPU']
+tags: ["kvm", "cloud-init", "vfio", "GPU"]
 ---
-
 
 ## Environment
 
@@ -66,9 +65,11 @@ If output is not expected, configure BIOS setting
 #### VT-d
 
 (Asus)
+
 - Advanced => System Agent Configuration => Intel VT for Directed I/O (VT-d)
 
 (Supermicro)
+
 - Advanced => CPU Configuration => Intel Virtualization Technology => [enable]
 - Advanced => Chipset Configuration => North Bridge => IIO Configuration => Intel VT fot Directed I/O (VT-d) => [enable]
 

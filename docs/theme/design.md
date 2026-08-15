@@ -6,7 +6,7 @@ A theme for a personal technical blog, built on FromSoftware's design language r
 
 Torchlight is a constraint system, not a component library. Where a rule and a whim disagree, the rule wins.
 
-**North star.** *Story through environment, not chrome. Space is the primary material. One light source, and falloff. Gold is rare relief.*
+**North star.** _Story through environment, not chrome. Space is the primary material. One light source, and falloff. Gold is rare relief._
 
 - Color lives in [`tokens.json`](./tokens.json) and nowhere else.
 - `scripts/build-tokens.mjs` generates `src/styles/tokens.css` from it; `tests/tokens.test.ts` enforces the rules below.
@@ -23,7 +23,7 @@ Taken from how FromSoftware actually builds, not from how Souls looks in a scree
 
 **3. One light source, and falloff.** Only the path ahead is lit. A single shaft enters above the content, haze fills three depths, and the vignette drains the edges. Film grain sits over all of it, because a dark page without grain reads as clean vector art rather than as a photographed room.
 
-**4. Gold is rare relief.** Lordran is muted brown and grey; Anor Londo's golden sunlight lands *because* it is scarce. Gold appears three times on a page — the flame, an inscription heading, and a link under the cursor. Listing titles, tags, nav items and section marks are all deliberately not gold. This is the rule most easily lost: distributing the accent turns relief into wallpaper.
+**4. Gold is rare relief.** Lordran is muted brown and grey; Anor Londo's golden sunlight lands _because_ it is scarce. Gold appears three times on a page — the flame, an inscription heading, and a link under the cursor. Listing titles, tags, nav items and section marks are all deliberately not gold. This is the rule most easily lost: distributing the accent turns relief into wallpaper.
 
 ---
 
@@ -32,7 +32,7 @@ Taken from how FromSoftware actually builds, not from how Souls looks in a scree
 1. Grounds are warm sepia `#1b1a17` (hollowed) and white `#ffffff` (kindled). Hollowed always carries the atmosphere layers of §3 — flat black reads as an empty page, not a dark room.
 2. **Gold appears at most three times in a viewport.** Not a percentage — a count (§4).
 3. Three hues total: gold, arcane, ember. A fourth is how a theme becomes a costume.
-4. All neutrals are warm in both worlds. Hollowed is *desaturated*, which is a different axis from *cold*: the world is dying, not refrigerated.
+4. All neutrals are warm in both worlds. Hollowed is _desaturated_, which is a different axis from _cold_: the world is dying, not refrigerated.
 5. Display type is engraved serif; body is a separate reading serif; mono appears only inside code.
 6. Body copy sits at `--text-2`, not `--text`. You are reading in low light; `--text` is reserved for leads and emphasis.
 7. Contrast has a ceiling as well as a floor: `--text` targets 8–13:1 and never exceeds 14:1 (§12).
@@ -46,19 +46,19 @@ Taken from how FromSoftware actually builds, not from how Souls looks in a scree
 
 ### What changes
 
-| | Kindled | Hollowed |
-|---|---|---|
-| Ground | White `#ffffff` | Warm sepia `#1b1a17` |
-| Ink | `#39352a` (12.2:1) | Parchment `#c4b8a0` (8.9:1) |
-| Neutrals | Warm ivory | Desaturated sepia |
-| Gold | Gold leaf `#96631a` | Biscuit `#c9a06a` |
-| Arcane register | Lapis ultramarine `#2f5296` | Dulled teal `#659091` |
-| `--ornament` | **equals gold** — ornament is gilded | **equals `--text-4`** — ornament has gone to bone |
-| Light layers | Warm shaft from above, parchment falloff | Warm glow at the centre, black falloff |
+|                 | Kindled                                  | Hollowed                                          |
+| --------------- | ---------------------------------------- | ------------------------------------------------- |
+| Ground          | White `#ffffff`                          | Warm sepia `#1b1a17`                              |
+| Ink             | `#39352a` (12.2:1)                       | Parchment `#c4b8a0` (8.9:1)                       |
+| Neutrals        | Warm ivory                               | Desaturated sepia                                 |
+| Gold            | Gold leaf `#96631a`                      | Biscuit `#c9a06a`                                 |
+| Arcane register | Lapis ultramarine `#2f5296`              | Dulled teal `#659091`                             |
+| `--ornament`    | **equals gold** — ornament is gilded     | **equals `--text-4`** — ornament has gone to bone |
+| Light layers    | Warm shaft from above, parchment falloff | Warm glow at the centre, black falloff            |
 
 ### The arcane register changes character
 
-This is the one token whose *meaning* shifts between worlds rather than just its value. Hollowed, `--arcane` is frost teal — cold, dulled, magic that has gone out with everything else. Kindled, it is lapis ultramarine `#24479a`: stained glass and the ultramarine of illuminated manuscripts, the most expensive pigment a medieval scriptorium owned and the one reserved for the sacred.
+This is the one token whose _meaning_ shifts between worlds rather than just its value. Hollowed, `--arcane` is frost teal — cold, dulled, magic that has gone out with everything else. Kindled, it is lapis ultramarine `#24479a`: stained glass and the ultramarine of illuminated manuscripts, the most expensive pigment a medieval scriptorium owned and the one reserved for the sacred.
 
 The register it marks is unchanged — code, diagrams, footnotes, asides, the sideways step out of the prose. What changes is whether that step reads as dead or as divine.
 
@@ -99,8 +99,12 @@ Kindled runs the same layers to the opposite end: the shaft is a clerestory wind
 Kindled, `--ornament` equals gold and marks are gilded. Hollowed, it equals `--text-4` and the same marks survive in bone. Nothing moves and nothing is removed; the world has simply been abandoned. `tests/tokens.test.ts` asserts both equalities.
 
 ```css
-.rune-list > li::before { background: var(--ornament); }
-.app-prose ul > li::before { background: var(--ornament); }
+.rune-list > li::before {
+  background: var(--ornament);
+}
+.app-prose ul > li::before {
+  background: var(--ornament);
+}
 ```
 
 ### The transition
@@ -114,12 +118,21 @@ This is the theme's one permitted flourish. It is spent here because the world c
 `scripts/build-tokens.mjs` emits this shape from `tokens.json`; it is never hand-written. The complete hollowed palette lands on bare `:root`, and only token values are redefined for kindled. Never define a color inside a media query or `[data-theme]` block with no bare-`:root` counterpart — that is how a page renders one world's text on the other world's ground.
 
 ```css
-:root { --ground:#1b1a17; --torch:#c9a06a; --ornament:#6d5f4c; /* …hollowed… */ }
+:root {
+  --ground: #1b1a17;
+  --torch: #c9a06a;
+  --ornament: #6d5f4c; /* …hollowed… */
+}
 
 @media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]):not([data-theme="hollowed"]) { /* …kindled… */ }
+  :root:not([data-theme="dark"]):not([data-theme="hollowed"]) {
+    /* …kindled… */
+  }
 }
-:root[data-theme="light"], :root[data-theme="kindled"] { /* …kindled… */ }
+:root[data-theme="light"],
+:root[data-theme="kindled"] {
+  /* …kindled… */
+}
 ```
 
 Host stamps map onto worlds: `dark` → hollowed, `light` → kindled. The explicit world names are accepted as aliases so the site's own control can set them directly.
@@ -132,11 +145,11 @@ Values are in [`tokens.json`](./tokens.json). This section covers how they are s
 
 ### The three hues
 
-| Hue | Token | Means | Never used for |
-|---|---|---|---|
-| Gold | `--torch` | Rare relief: the flame, an inscription heading, a link under the cursor | Listing titles, tags, nav, section marks, body text |
-| Arcane | `--arcane` | A sideways step: code, diagrams, footnotes, inline code. Dulled teal hollowed, lapis kindled | Primary navigation, buttons |
-| Ember | `--blood` | Danger, removed, deprecated, breaking | Any decorative use |
+| Hue    | Token      | Means                                                                                        | Never used for                                      |
+| ------ | ---------- | -------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| Gold   | `--torch`  | Rare relief: the flame, an inscription heading, a link under the cursor                      | Listing titles, tags, nav, section marks, body text |
+| Arcane | `--arcane` | A sideways step: code, diagrams, footnotes, inline code. Dulled teal hollowed, lapis kindled | Primary navigation, buttons                         |
+| Ember  | `--blood`  | Danger, removed, deprecated, breaking                                                        | Any decorative use                                  |
 
 Three hues is the ceiling. A fourth is how a fantasy theme becomes a costume.
 
@@ -158,31 +171,31 @@ Four levels per world. `--text-4` sits near 3.0:1 on ground and is legal for orn
 
 ### Faces
 
-| Role | Stack | Licence |
-|---|---|---|
-| Display | `Cinzel, Optima, Palatino, serif` | OFL |
-| Body | `Spectral, Charter, Georgia, serif` | OFL |
-| Mono | `Google Sans Code, ui-monospace, monospace` | — |
+| Role    | Stack                                       | Licence |
+| ------- | ------------------------------------------- | ------- |
+| Display | `Cinzel, Optima, Palatino, serif`           | OFL     |
+| Body    | `Spectral, Charter, Georgia, serif`         | OFL     |
+| Mono    | `Google Sans Code, ui-monospace, monospace` | —       |
 
 Dark Souls uses **Optimus Princeps**, a serif built on 15th-century Italian inscriptional lettering. Cinzel is Roman inscriptional from the same lineage and is the closest open-licensed equivalent. All faces are self-hosted through Astro's font pipeline — no CDN, no runtime fetch, no silent fallback.
 
 ### Scale
 
-| Role | Size | Face | Tracking |
-|---|---|---|---|
-| Home title | clamp(32, 6.5vw, 60) | Display | +0.015em |
-| Post title | clamp(34, 7.5vw, 68) | Display | +0.015em |
-| Section title | clamp(30, 6vw, 52) | Display | +0.015em |
-| Lead paragraph | 19 | Body | 0 |
-| Body | 16.5 / 1.85 | Body | 0 |
-| H2 | 20 | Display | +0.2em, uppercase |
-| H3 | 17 | Body | +0.01em |
-| Listing title | 19 | Display | +0.06em |
-| Label / HUD | 11 | Display | +0.24em, uppercase |
-| Eyebrow | 11 | Display | +0.34em, uppercase |
-| Code | 14 / 1.75 | Mono | 0 |
+| Role           | Size                 | Face    | Tracking           |
+| -------------- | -------------------- | ------- | ------------------ |
+| Home title     | clamp(32, 6.5vw, 60) | Display | +0.015em           |
+| Post title     | clamp(34, 7.5vw, 68) | Display | +0.015em           |
+| Section title  | clamp(30, 6vw, 52)   | Display | +0.015em           |
+| Lead paragraph | 19                   | Body    | 0                  |
+| Body           | 16.5 / 1.85          | Body    | 0                  |
+| H2             | 20                   | Display | +0.2em, uppercase  |
+| H3             | 17                   | Body    | +0.01em            |
+| Listing title  | 19                   | Display | +0.06em            |
+| Label / HUD    | 11                   | Display | +0.24em, uppercase |
+| Eyebrow        | 11                   | Display | +0.34em, uppercase |
+| Code           | 14 / 1.75            | Mono    | 0                  |
 
-Body is **small** — 16.5px against a 60ch measure — because the point is a little text in a large dark space. Section headings are *smaller* than the body's lead and dimmer than its text: a marker you pass, not a banner. The clearance above them carries the hierarchy instead.
+Body is **small** — 16.5px against a 60ch measure — because the point is a little text in a large dark space. Section headings are _smaller_ than the body's lead and dimmer than its text: a marker you pass, not a banner. The clearance above them carries the hierarchy instead.
 
 Display weight is 600 only; body is 400 and 600. Faux bold is forbidden.
 
@@ -192,15 +205,15 @@ Display weight is 600 only; body is 400 and 600. Faux bold is forbidden.
 
 Base unit 4px, but the numbers that matter here are the large ones. Space is the primary material (§1).
 
-| Region | Clearance |
-|---|---|
-| Home gate | `clamp(90px, 24vh, 230px)` above, `clamp(70px, 13vh, 140px)` below |
-| Post gate | `clamp(70px, 18vh, 180px)` / `clamp(56px, 11vh, 120px)` |
-| Section gate | `clamp(56px, 14vh, 140px)` / `clamp(44px, 8vh, 90px)` |
-| Above an H2 | `clamp(72px, 11vh, 128px)` |
-| Between page regions | `clamp(50px, 9vh, 110px)` |
+| Region               | Clearance                                                          |
+| -------------------- | ------------------------------------------------------------------ |
+| Home gate            | `clamp(90px, 24vh, 230px)` above, `clamp(70px, 13vh, 140px)` below |
+| Post gate            | `clamp(70px, 18vh, 180px)` / `clamp(56px, 11vh, 120px)`            |
+| Section gate         | `clamp(56px, 14vh, 140px)` / `clamp(44px, 8vh, 90px)`              |
+| Above an H2          | `clamp(72px, 11vh, 128px)`                                         |
+| Between page regions | `clamp(50px, 9vh, 110px)`                                          |
 
-Viewport-relative units are deliberate: on a tall screen the gate should grow, because the emptiness *is* the design.
+Viewport-relative units are deliberate: on a tall screen the gate should grow, because the emptiness _is_ the design.
 
 **The proximity law.** The gap below a heading is at most half the gap above it. An H2 takes 128px above and 26px below.
 
@@ -214,13 +227,13 @@ Ornament is scarce here. Souls tells its story through environment, so most of t
 
 ### Vocabulary
 
-| Ornament | Form | Means | Legal on | Illegal on |
-|---|---|---|---|---|
-| **Eroded rule** | 1px line fading to transparent at both ends | A boundary crossed | Between page regions, footer edge | Inside a panel, between list items |
-| **Rune bullet** | 5px square rotated 45°, `--ornament` | An item in a set | Unordered lists | Ordered lists, navigation |
-| **Flame** | `◆` in `--torch`, flickering on a 5.5s cycle | The fire, and the site's identity | The HUD, once | Anywhere else |
-| **Label** | Display 11px, `0.24em` tracking, uppercase, `--text-4` | The HUD voice | Metadata, eyebrows, breadcrumbs, footers | Body copy, headings |
-| **Inscription** | Panel; name in `--torch` at `0.28em`, hairline, plain reading, hairline, italic flavour last | A thing named and described | Defining a term the post turns on | General callouts |
+| Ornament        | Form                                                                                         | Means                             | Legal on                                 | Illegal on                         |
+| --------------- | -------------------------------------------------------------------------------------------- | --------------------------------- | ---------------------------------------- | ---------------------------------- |
+| **Eroded rule** | 1px line fading to transparent at both ends                                                  | A boundary crossed                | Between page regions, footer edge        | Inside a panel, between list items |
+| **Rune bullet** | 5px square rotated 45°, `--ornament`                                                         | An item in a set                  | Unordered lists                          | Ordered lists, navigation          |
+| **Flame**       | `◆` in `--torch`, flickering on a 5.5s cycle                                                 | The fire, and the site's identity | The HUD, once                            | Anywhere else                      |
+| **Label**       | Display 11px, `0.24em` tracking, uppercase, `--text-4`                                       | The HUD voice                     | Metadata, eyebrows, breadcrumbs, footers | Body copy, headings                |
+| **Inscription** | Panel; name in `--torch` at `0.28em`, hairline, plain reading, hairline, italic flavour last | A thing named and described       | Defining a term the post turns on        | General callouts                   |
 
 Rules fade at both ends because nothing in Lordran is intact. It is the one decorative liberty in the system, and it encodes decay rather than taste.
 
@@ -265,6 +278,7 @@ Drop caps, section marks on headings, corner-bracketed frames, parchment texture
 **Diagrams** — Mermaid built from `tokens.json → diagram`, redrawn from source on a world flip so stale SVG cannot accumulate.
 
 ### Preserved behaviour
+
 RSS, sitemap, dynamic OG images, Pagefind search, tags, archives and pagination all survive the theme swap. OG cards render in the hollowed world — a dark card stands out in a timeline of light ones.
 
 ---
@@ -286,21 +300,23 @@ Depth follows from the lighting, not from decoration. `--glow` (§2) establishes
 ```css
 /* The panel recipe — Souls menus sit over the world, not on top of it */
 .panel {
-  background: var(--panel);              /* translucent hollowed, solid kindled */
-  border: 1px solid var(--border);       /* dark outer rule */
+  background: var(--panel); /* translucent hollowed, solid kindled */
+  border: 1px solid var(--border); /* dark outer rule */
   box-shadow:
-    inset 0 1px 0 0 var(--edge),         /* light catching the top edge */
-    var(--shadow);                       /* and falling downward */
+    inset 0 1px 0 0 var(--edge),
+    /* light catching the top edge */ var(--shadow); /* and falling downward */
 }
 
 /* Raised: for the one element on a page that sits above the rest */
-box-shadow: inset 0 1px 0 0 var(--edge), var(--shadow-lift);
+box-shadow:
+  inset 0 1px 0 0 var(--edge),
+  var(--shadow-lift);
 
 /* Ring: focus and active states only */
 box-shadow: 0 0 0 2px var(--torch);
 
 /* Recess: set into the page rather than on it */
-background: var(--surface);              /* table headers — no border, no shadow */
+background: var(--surface); /* table headers — no border, no shadow */
 ```
 
 **The rules that keep this from becoming generic card design:**
@@ -331,15 +347,15 @@ The glow and vignette remain the one exception to "no gradients": they are the r
 - **Contrast floors.** Body ≥ 7:1 against its ground. Secondary text and links ≥ 4.5:1. `--text-4` is ~3.0:1 and is therefore restricted to ornament and disabled states.
 - **Verified pairs**, measured against each world's flat `--ground`:
 
-  | Token | Hollowed | Kindled | Floor |
-  |---|---|---|---|
-  | `--text` | 8.88:1 | 12.23:1 | 7:1 |
-  | `--text-2` | 6.37:1 | 8.54:1 | 4.5:1 |
-  | `--text-3` | 5.03:1 | 5.79:1 | 4.5:1 |
-  | `--text-4` | 2.81:1 | 3.31:1 | ornament only |
-  | `--torch` | 7.23:1 | 5.13:1 | 4.5:1 |
-  | `--arcane` | 4.93:1 | 7.59:1 | 4.5:1 |
-  | `--blood` on `--blood-tint` | 4.60:1 | 5.60:1 | 4.5:1 |
+  | Token                       | Hollowed | Kindled | Floor         |
+  | --------------------------- | -------- | ------- | ------------- |
+  | `--text`                    | 8.88:1   | 12.23:1 | 7:1           |
+  | `--text-2`                  | 6.37:1   | 8.54:1  | 4.5:1         |
+  | `--text-3`                  | 5.03:1   | 5.79:1  | 4.5:1         |
+  | `--text-4`                  | 2.81:1   | 3.31:1  | ornament only |
+  | `--torch`                   | 7.23:1   | 5.13:1  | 4.5:1         |
+  | `--arcane`                  | 4.93:1   | 7.59:1  | 4.5:1         |
+  | `--blood` on `--blood-tint` | 4.60:1   | 5.60:1  | 4.5:1         |
 
   Re-verify any token you change, in both worlds. An earlier hollowed `--blood` sat at 2.99:1 on its own tint — a danger callout nobody could read — which is the concrete reason these floors are a test rather than a note.
 
@@ -348,6 +364,7 @@ The glow and vignette remain the one exception to "no gradients": they are the r
 Body text is held **near 9:1 hollowed and 12:1 kindled, not at the maximum the palette allows.** An earlier revision ran bone `#f4efde` at 15.1:1 and near-black `#14130e` at 18.6:1; both were legible and both were wrong. Maximum-contrast text detaches from the page — it reads as glowing rather than as printed, and every hard edge in the layout starts to buzz.
 
 The rule that follows: **`--text` targets 8–13:1, never above 14:1.** Borders are held deliberately low against the ground (around 1.3:1) for the same reason — a hairline at high contrast reads as harshly as glaring type. Nothing here relaxes a floor; the floors are unchanged and still met with margin.
+
 - The hollowed glow raises effective background luminance under the content by roughly 0.01 and the vignette lowers it at the edges. Both shifts move ratios in the safe direction against a light foreground; measure against the flat `--ground` value and treat the result as the floor.
 - **Never color alone.** Callouts carry a label word; diffs carry `+`/`-`. Semantic hue is reinforcement, never the sole signal.
 - **Focus always visible:** 2px gold ring at 2px offset. Never `outline: none` without a replacement.
@@ -360,21 +377,21 @@ The rule that follows: **`--text` targets 8–13:1, never above 14:1.** Borders 
 
 Listed so they can be caught in review. Several were committed during this theme's own construction.
 
-| Anti-pattern | Why it breaks |
-|---|---|
-| Gold on links, tags, nav or listing titles | Turns relief into wallpaper; §4 |
-| A fourth hue | Three hues is what keeps this a system rather than a costume |
-| Cool grey anywhere | Souls is desaturated *brown*; cool grey reads as a rendering bug |
-| Flat black hollowed ground | Reads as an empty page rather than a lit room |
-| Pushing `--text` to maximum contrast | Above ~14:1 text detaches and glows instead of sitting in the page |
-| High-contrast borders | A hard hairline buzzes exactly as much as glaring type |
-| Ornament reading `--torch` | Leaves ornament lit in a dead world, killing the central idea |
-| A dark page with no grain | Reads as clean vector art, not a photographed room |
-| `position: fixed` in a hand-written rule | Tailwind hoists it into a utility and strips it — the atmosphere ships unpositioned |
-| Unprefixed `backdrop-filter` written first | Minification keeps the last declaration; panels blur only in WebKit |
-| Category colours (movie / anime / manga) | Four decorative hues, and colour as the only signal |
-| Drop caps and section marks | Cut: with two ornaments per viewport, space and light do it better |
-| A second ambient animation | §11 permits exactly one, and it is the flame |
+| Anti-pattern                               | Why it breaks                                                                       |
+| ------------------------------------------ | ----------------------------------------------------------------------------------- |
+| Gold on links, tags, nav or listing titles | Turns relief into wallpaper; §4                                                     |
+| A fourth hue                               | Three hues is what keeps this a system rather than a costume                        |
+| Cool grey anywhere                         | Souls is desaturated _brown_; cool grey reads as a rendering bug                    |
+| Flat black hollowed ground                 | Reads as an empty page rather than a lit room                                       |
+| Pushing `--text` to maximum contrast       | Above ~14:1 text detaches and glows instead of sitting in the page                  |
+| High-contrast borders                      | A hard hairline buzzes exactly as much as glaring type                              |
+| Ornament reading `--torch`                 | Leaves ornament lit in a dead world, killing the central idea                       |
+| A dark page with no grain                  | Reads as clean vector art, not a photographed room                                  |
+| `position: fixed` in a hand-written rule   | Tailwind hoists it into a utility and strips it — the atmosphere ships unpositioned |
+| Unprefixed `backdrop-filter` written first | Minification keeps the last declaration; panels blur only in WebKit                 |
+| Category colours (movie / anime / manga)   | Four decorative hues, and colour as the only signal                                 |
+| Drop caps and section marks                | Cut: with two ornaments per viewport, space and light do it better                  |
+| A second ambient animation                 | §11 permits exactly one, and it is the flame                                        |
 
 ---
 
@@ -382,7 +399,7 @@ Listed so they can be caught in review. Several were committed during this theme
 
 **The roguelike layer stays out.** An earlier direction framed the site as a terminal dungeon crawl: mono chrome for all metadata and navigation, plus an ASCII glyph vocabulary (`>` stairs down, `#` corridor wall, `[ ]` inventory, `@` you are here). It was considered again after the Souls direction landed and declined.
 
-The two share a root — carrying a light through a dark place — and that shared root is already expressed here: torch as the only light source, the dark world as the true state, and ornament that dims when the light goes. What the roguelike layer adds on top is the *terminal* framing, not the *dungeon* one. Adding it would put two costumes on one page and would spend an ornament budget (§6) that has room for one.
+The two share a root — carrying a light through a dark place — and that shared root is already expressed here: torch as the only light source, the dark world as the true state, and ornament that dims when the light goes. What the roguelike layer adds on top is the _terminal_ framing, not the _dungeon_ one. Adding it would put two costumes on one page and would spend an ornament budget (§6) that has room for one.
 
 If it ever returns, the smallest honest version is a single glyph: `>` before "read more" and older-post links, meaning stairs down. Nothing else from that vocabulary earns its place.
 

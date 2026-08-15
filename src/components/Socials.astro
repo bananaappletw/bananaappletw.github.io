@@ -18,7 +18,7 @@ const items = await Promise.all(
         ? `Send an email to ${site.title}`
         : `${site.title} on ${name.charAt(0).toUpperCase() + name.slice(1)}`);
     return { url, title, Icon };
-  })
+  }),
 );
 ---
 
@@ -30,7 +30,7 @@ const items = await Promise.all(
           <Icon class="inline-block size-5 fill-transparent stroke-current stroke-2" />
           <span class="sr-only">{title}</span>
         </LinkButton>
-      ) : null
+      ) : null,
     )
   }
 </div>

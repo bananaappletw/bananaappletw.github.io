@@ -58,7 +58,7 @@ const t = useTranslations(Astro.currentLocale);
 
       progressIndicator.style.setProperty(
         "background-image",
-        `conic-gradient(var(--torch), var(--torch) ${scrollPercent}%, transparent ${scrollPercent}%)`
+        `conic-gradient(var(--torch), var(--torch) ${scrollPercent}%, transparent ${scrollPercent}%)`,
       );
 
       const isVisible = scrollTop / scrollTotal > 0.3;

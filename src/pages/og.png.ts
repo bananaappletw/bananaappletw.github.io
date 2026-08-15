@@ -7,5 +7,5 @@ export const GET: APIRoute = async context =>
     config.site.title,
     config.site.description,
     new URL(config.site.url).hostname,
-    context.url
+    context.url,
   );

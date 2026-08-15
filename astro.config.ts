@@ -32,16 +32,36 @@ const shikiTheme = (world: "hollowed" | "kindled") => {
     bg: s.bg,
     fg: s.plain,
     settings: [
-      { scope: ["comment", "punctuation.definition.comment"],
-        settings: { foreground: s.comment, fontStyle: "italic" } },
-      { scope: ["string", "constant.other.symbol", "string.quoted"],
-        settings: { foreground: s.string } },
-      { scope: ["constant.numeric", "constant.language", "constant.character"],
-        settings: { foreground: s.constant } },
-      { scope: ["keyword", "storage.type", "storage.modifier", "keyword.control"],
-        settings: { foreground: s.keyword } },
-      { scope: ["variable", "entity.name.function", "support.function", "entity.name.type"],
-        settings: { foreground: s.plain } },
+      {
+        scope: ["comment", "punctuation.definition.comment"],
+        settings: { foreground: s.comment, fontStyle: "italic" },
+      },
+      {
+        scope: ["string", "constant.other.symbol", "string.quoted"],
+        settings: { foreground: s.string },
+      },
+      {
+        scope: ["constant.numeric", "constant.language", "constant.character"],
+        settings: { foreground: s.constant },
+      },
+      {
+        scope: [
+          "keyword",
+          "storage.type",
+          "storage.modifier",
+          "keyword.control",
+        ],
+        settings: { foreground: s.keyword },
+      },
+      {
+        scope: [
+          "variable",
+          "entity.name.function",
+          "support.function",
+          "entity.name.type",
+        ],
+        settings: { foreground: s.plain },
+      },
     ],
   };
 };
