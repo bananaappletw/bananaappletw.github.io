@@ -1,0 +1,49 @@
+---
+/**
+ * The Souls item panel. Game order, not blog order: name, hairline, the
+ * plain reading, hairline, then the italic flavour last — flavour is the
+ * payoff and the eye lands at the bottom.
+ *
+ * Rationed to one per post (design.md §7). It works because it is rare,
+ * and it carries one of the three gold moments a page is allowed.
+ *
+ * Usage in an .mdx post:
+ *   <Inscription name="Path Constraint" flavor="A record of every turn taken.">
+ *     Accumulated conjunction of branch conditions along one path.
+ *   </Inscription>
+ */
+type Props = {
+  name: string;
+  flavor?: string;
+};
+
+const { name, flavor } = Astro.props;
+---
+
+<aside class="inscription panel">
+  <span class="name">{name}</span>
+  <hr class="hair" />
+  <p class="plain"><slot /></p>
+  {
+    flavor && (
+      <>
+        <hr class="hair" />
+        <p class="flavor">{flavor}</p>
+      </>
+    )
+  }
+</aside>
+
+<style>
+  .plain {
+    margin: 0;
+    font-size: 15.5px;
+    line-height: 1.8;
+    color: var(--text-2);
+  }
+
+  .flavor {
+    font-size: 15.5px;
+    line-height: 1.8;
+  }
+</style>
