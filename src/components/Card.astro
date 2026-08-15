@@ -13,19 +13,53 @@ const { variant: Heading = "h2", id, data, filePath } = Astro.props;
 const { title, description, ...props } = data;
 ---
 
-<li class="my-6">
-  <a
-    href={getPostUrl(id, filePath, Astro.currentLocale)}
-    class:list={[
-      "text-accent inline-block text-lg font-medium",
-      "decoration-dashed underline-offset-4 hover:underline",
-      "focus-visible:no-underline focus-visible:underline-offset-0",
-    ]}
-  >
-    <Heading transition:name={slugifyStr(title.replaceAll(".", "-"))}>
+<li>
+  <a href={getPostUrl(id, filePath, Astro.currentLocale)} class="entry">
+    <Heading
+      class="t"
+      transition:name={slugifyStr(title.replaceAll(".", "-"))}
+    >
       {title}
     </Heading>
+    <Datetime {...props} class="meta" />
+    {description && <span class="d">{description}</span>}
   </a>
-  <Datetime {...props} />
-  <p>{description}</p>
 </li>
+
+<style>
+  .entry {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 26px 0;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+  }
+
+  /* Listing titles are NOT gold. A list of gold titles is wallpaper;
+     gold has to stay rare to read as relief. */
+  .t {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 19px;
+    letter-spacing: 0.06em;
+    line-height: 1.35;
+    color: var(--text-3);
+    margin: 0;
+    transition: color 0.18s ease-out;
+  }
+
+  .entry:hover .t {
+    color: var(--text);
+  }
+
+  .d {
+    font-size: 14.5px;
+    line-height: 1.7;
+    color: var(--text-4);
+  }
+
+  .meta :global(time) {
+    color: var(--text-4);
+  }
+</style>
