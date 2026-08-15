@@ -11,6 +11,13 @@ type Props = {
 const { variant: Heading = "h2", id, data, filePath } = Astro.props;
 
 const { title, description, ...props } = data;
+
+// Every post in this collection currently carries description === title, so
+// rendering both prints the same line twice. Show the description only when
+// it actually says something new.
+const norm = (value: string) => value.trim().toLowerCase();
+const showDescription =
+  Boolean(description) && norm(description!) !== norm(title);
 ---
 
 <li>
@@ -19,7 +26,7 @@ const { title, description, ...props } = data;
       {title}
     </Heading>
     <Datetime {...props} class="meta" />
-    {description && <span class="d">{description}</span>}
+    {showDescription && <span class="d">{description}</span>}
   </a>
 </li>
 
