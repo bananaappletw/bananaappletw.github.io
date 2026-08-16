@@ -8,9 +8,9 @@ usable. Read [`design.md`](./design.md) for the system the scenes have to live
 inside; §0 (Ash), §4 (gold budget) and §11 (motion) all constrain what follows.
 
 **Status: deferred to v2.** The briefs below are complete and the decisions in
-§4 and §5 are still open. Nothing here blocks the first release — see
-[`STATUS.md`](./STATUS.md) §7. Programmatic renders were attempted
-(`scripts/paint-scenes.mjs`) and rejected; see §7 below for why.
+§4 and §5 are still open. Nothing here blocks the release — see
+[`STATUS.md`](./STATUS.md) §7. Painting these programmatically was attempted
+and rejected; §7 records why.
 
 ---
 
@@ -269,22 +269,27 @@ A delivered scene is done when all of these pass:
 
 ---
 
-## 7. Why the programmatic renders were rejected
+## 7. Why painting these programmatically was rejected
 
-`scripts/paint-scenes.mjs` composes each scene as volumes into a value field and
-repaints it as ~145,000 tapered brush strokes, with rim lighting from the
+A painting program was written and then deleted. It is recorded here because
+the finding is worth more than the code was, and because the idea is an
+appealing one to have again.
+
+It composed each scene as volumes into a value field, then threw the field away
+and repainted it as ~145,000 tapered brush strokes: rim lighting taken from the
 gradient of blurred coverage, atmospheric perspective from a depth channel, and
-a separate hue ramp for firelight. It runs in about seven seconds and is
-deterministic.
+a separate hue ramp for firelight, since hue shift rather than brightness is
+what the eye reads as heat. Four scenes in about seven seconds, deterministic.
 
-It produced usable **architecture** — Drowned and Approach both read — and
-unusable **figuration**: Rest came out as a boulder beside a cross, through
-three iterations. Stacking ellipses does not produce a seated human, and the
-gap is not one more iteration wide.
-
-The script is kept because it is genuinely better than a painting at one thing:
-assets that must be deterministic, re-runnable, and coloured straight out of
-`tokens.json`. It is not the tool for these five.
+**It produced usable architecture and unusable figuration.** Drowned and
+Approach both read as pictures. Rest came out as a boulder beside a cross,
+through three iterations — and the gap was not one more iteration wide.
+Stacking ellipses does not produce a seated human; a figure needs anatomy, and
+that is exactly where a painting _program_ hits its ceiling.
 
 **Claude Design is included in the Pro plan and is the tool for this work.** The
 briefs in §3 are written to be handed to it directly.
+
+If something like the painter is ever wanted again, the case for it is narrow
+and specific: assets that must be deterministic, re-runnable, and coloured
+straight out of `tokens.json` — backgrounds and atmosphere, not subjects.
