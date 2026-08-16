@@ -2,7 +2,7 @@
 title: Rails on Ubuntu
 pubDatetime: 2026-06-02T20:18:23.002393Z
 description: Rails on Ubuntu
-tags: ['ruby on rails', 'computer science', 'archive']
+tags: ["ruby on rails", "computer science", "archive"]
 ---
 
 # Introduction
@@ -11,10 +11,10 @@ tags: ['ruby on rails', 'computer science', 'archive']
 這裡用的是最新版的 Ubuntu 17.04 server 版
 這篇會教你設定
 
-* nginx
-* passenger
-* Let's Encrypt(https)
-* postfix(mail server)
+- nginx
+- passenger
+- Let's Encrypt(https)
+- postfix(mail server)
 
 因為要設定 Let's Encrypt 和 postfix，所以要有一個 DNS 的 A Record 指向你的 ip 位置
 
@@ -54,13 +54,13 @@ passenger 和 apache 整合
 sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 561F9B9CAC40B2F7
 sudo apt-get install -y apt-transport-https ca-certificates
 ```
-    
+
 ```
 # Add our APT repository
 sudo sh -c 'echo deb https://oss-binaries.phusionpassenger.com/apt/passenger zesty main > /etc/apt/sources.list.d/passenger.list'
 sudo apt-get update
 ```
-    
+
 ```
 # Install Passenger + Nginx
 sudo apt-get install -y nginx-extras passenger
@@ -135,7 +135,7 @@ mynetworks = 127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128
 修改成
 
 ```
-mynetworks = 127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128 140.113.209.18 
+mynetworks = 127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128 140.113.209.18
 ```
 
 這邊很重要因為之後用 `devise` 寄信的時候會有 `certification` 的問題
@@ -191,6 +191,7 @@ passenger-config about ruby-command
 ```
 passenger-config was invoked through the following Ruby interpreter:
 ```
+
 ```
   Command: /home/deploy/.rvm/gems/ruby-2.4.0/wrappers/ruby
   Version: ruby 2.4.0p0 (2016-12-24 revision 57164) [x86_64-linux]
@@ -233,6 +234,7 @@ rails new myapp --webpack=react
 ```
 production:
 ```
+
 ```
   secret_key_base: d7913c3e87fadd4312ee1c5c1b13320caeecc72548f20b9122e2a1bf9ccdf0e9ecb86675168e578b5b3e960a81daa967c0081f69b082eb0c0e5df4b5810d71a9
 ```
@@ -242,7 +244,7 @@ production:
 ```
 server {
 ```
-    
+
 ```
         # SSL configuration
         #
@@ -251,16 +253,17 @@ server {
         include snippets/ssl-bamboofox.nctucs.net.conf;
         include snippets/ssl-params.conf;
 ```
-    		
+
 ```
         # Add these three lines
 ```
-            
+
 ```
         passenger_enabled on;
         server_name bamboofox.nctucs.net;
         root /home/deploy/myapp/public;
 ```
+
 ```
 }
 ```

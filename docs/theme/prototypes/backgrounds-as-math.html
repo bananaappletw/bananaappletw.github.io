@@ -1,0 +1,785 @@
+<title>Backgrounds as Math</title>
+<style>
+  /*FONTS*/
+
+  /* ============================================================
+   BACKGROUNDS AS MATH
+
+   The question was whether a background can be *computed* rather
+   than painted or photographed. It can, and the useful vocabulary
+   is smaller than it first looks:
+
+     gradients      scalar fields   ‖p−c‖, p·n, atan2(p)
+     blend modes    pointwise operators on those fields
+     feColorMatrix  a 5×4 linear map on the RGBA vector
+     feConvolveMatrix   a kernel, K ∗ f
+     feDisplacementMap  a vector field on coordinates, p ↦ p + s·F(p)
+     feTurbulence   a Perlin basis to feed the two above
+
+   The last one matters most here. The user's constraint is
+   "irregular, but not busy, and it must survive the light world".
+   Noise fails that constraint by construction: it adds
+   high-frequency energy, which is exactly what reads as busy and
+   exactly what a white ground shows first.
+
+   Displacement adds none. Warping a smooth gradient by a
+   low-frequency vector field gives a field that is differentiable
+   everywhere and irregular in shape. That is the recommendation at
+   the bottom of this page.
+
+   What CSS cannot do: loop, or run per-pixel code. calc() has
+   sin/cos/pow/sqrt/hypot (Baseline 2023) but no iteration, so a
+   sum over N terms has to be written out N times. Real per-pixel
+   programs need the Houdini Paint API, which is Chromium-only.
+   ============================================================ */
+
+  :root {
+    --display: Cinzel, Optima, "Palatino Linotype", Palatino, serif;
+    --body: Spectral, Charter, Georgia, serif;
+    --mono: GSCode, ui-monospace, Menlo, monospace;
+
+    --ui-bg: #121110;
+    --ui-fg: #cfc7b6;
+    --ui-dim: #7d7365;
+    --ui-line: #2e2a24;
+    --ui-mark: #d7ae72;
+
+    --ground: #100f0d;
+    --ink: #c6bca8;
+    --ink-2: #a99e8a;
+    --ink-3: #7e7361;
+    --gold: #cda76b;
+    --rule: #33302a;
+    --pre-bg: rgba(0, 0, 0, 0.34);
+    --arcane: #7ea3a1;
+    --under: #4e483d;
+
+    /* the field ink: what the maths is drawn IN */
+    --field: 0, 0, 0;
+    --field-max: 0.5;
+  }
+
+  body[data-world="kindled"] {
+    --ui-bg: #f4f2ec;
+    --ui-fg: #2b2924;
+    --ui-dim: #6f6b60;
+    --ui-line: #ddd9cf;
+    --ui-mark: #8a5f18;
+
+    --ground: #ffffff;
+    --ink: #39352a;
+    --ink-2: #4d4739;
+    --ink-3: #6c6553;
+    --gold: #96631a;
+    --rule: #e2dccb;
+    --pre-bg: #faf7ef;
+    --arcane: #2f5296;
+    --under: #c3bba5;
+
+    --field: 150, 132, 96;
+    --field-max: 0.34;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    background: var(--ui-bg);
+    color: var(--ui-fg);
+    font-family: var(--body);
+    margin: 0;
+  }
+
+  .bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--ui-bg);
+    border-bottom: 1px solid var(--ui-line);
+    padding: 13px clamp(14px, 3vw, 28px);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 20px;
+  }
+  .bar .who {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ui-dim);
+    margin-right: auto;
+  }
+  .btn {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: none;
+    border: 1px solid var(--ui-line);
+    padding: 6px 13px;
+    color: var(--ui-dim);
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+  .btn:hover {
+    color: var(--ui-fg);
+  }
+  .btn:focus-visible {
+    outline: 2px solid var(--ui-mark);
+    outline-offset: 3px;
+  }
+
+  .lede {
+    padding: 22px clamp(14px, 3vw, 28px) 0;
+    max-width: 78ch;
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--ui-dim);
+  }
+  .lede p {
+    margin: 0 0 14px;
+  }
+  .lede b {
+    color: var(--ui-fg);
+    font-weight: 600;
+  }
+  code {
+    font-family: var(--mono);
+    font-size: 0.87em;
+    color: var(--ui-fg);
+  }
+
+  /* ---------- the field wall ---------- */
+  .wall {
+    padding: 10px clamp(14px, 3vw, 28px) 34px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 16px;
+  }
+  .field {
+    border: 1px solid var(--ui-line);
+    background: var(--ground);
+    display: flex;
+    flex-direction: column;
+  }
+  .field .plate {
+    position: relative;
+    aspect-ratio: 3 / 2;
+    overflow: hidden;
+    background: var(--ground);
+  }
+  .field .plate > div {
+    position: absolute;
+    inset: -25%;
+  }
+  .field .cap {
+    padding: 11px 13px 13px;
+    border-top: 1px solid var(--ui-line);
+  }
+  .field .fx {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--ui-fg);
+    display: block;
+    margin-bottom: 5px;
+  }
+  .field .what {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--ui-dim);
+    display: block;
+  }
+  .field .cost {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ui-dim);
+    display: block;
+    margin-top: 8px;
+  }
+  .field .cost b {
+    color: var(--gold);
+    font-weight: 600;
+  }
+
+  /* ---- 1. norm: radial-gradient is ‖p − c‖ ---- */
+  .f1 {
+    background: radial-gradient(
+      circle at 50% 45%,
+      rgba(var(--field), 0) 0%,
+      rgba(var(--field), var(--field-max)) 100%
+    );
+  }
+
+  /* ---- 2. projection: linear-gradient is p · n ---- */
+  .f2 {
+    background: linear-gradient(
+      197deg,
+      rgba(var(--field), 0) 0%,
+      rgba(var(--field), var(--field-max)) 100%
+    );
+  }
+
+  /* ---- 3. angle: conic-gradient is atan2(p − c) ---- */
+  .f3 {
+    background: conic-gradient(
+      from 200deg at 52% 44%,
+      rgba(var(--field), var(--field-max)),
+      rgba(var(--field), 0) 30%,
+      rgba(var(--field), var(--field-max)) 62%,
+      rgba(var(--field), 0) 88%,
+      rgba(var(--field), var(--field-max))
+    );
+  }
+
+  /* ---- 4. superposition: three plane waves, combined by |a−b| ----
+     Three repeating-linear-gradients are three sampled sine-ish waves
+     at different angles and periods. difference() subtracts them, so
+     what you see is interference — the same construction as a moiré
+     pattern, and the same reason it is too busy to use. */
+  .f4 {
+    background-image:
+      repeating-linear-gradient(
+        14deg,
+        rgba(var(--field), var(--field-max)) 0 11px,
+        rgba(var(--field), 0) 11px 26px
+      ),
+      repeating-linear-gradient(
+        79deg,
+        rgba(var(--field), var(--field-max)) 0 13px,
+        rgba(var(--field), 0) 13px 31px
+      ),
+      repeating-linear-gradient(
+        142deg,
+        rgba(var(--field), var(--field-max)) 0 17px,
+        rgba(var(--field), 0) 17px 23px
+      );
+    background-blend-mode: difference, difference;
+  }
+
+  /* ---- 5. a linear map: feColorMatrix ---- */
+  .f5 {
+    background: radial-gradient(
+      circle at 40% 40%,
+      rgba(var(--field), var(--field-max)) 0%,
+      rgba(var(--field), 0) 70%
+    );
+    filter: url(#chan);
+  }
+
+  /* ---- 6. a kernel: feConvolveMatrix ---- */
+  .f6 {
+    background:
+      radial-gradient(
+        60% 50% at 30% 30%,
+        rgba(var(--field), var(--field-max)),
+        rgba(var(--field), 0) 70%
+      ),
+      radial-gradient(
+        50% 60% at 72% 66%,
+        rgba(var(--field), var(--field-max)),
+        rgba(var(--field), 0) 68%
+      );
+    filter: url(#carve);
+  }
+
+  /* ---- 7. a vector field on coordinates: feDisplacementMap ----
+     THE ONE. A perfectly smooth gradient, warped. No high-frequency
+     energy is added, so it cannot read as busy — but the iso-lines
+     are irregular, which is what you wanted. */
+  .f7 {
+    background: radial-gradient(
+      120% 90% at 50% 22%,
+      rgba(var(--field), 0) 22%,
+      rgba(var(--field), var(--field-max)) 100%
+    );
+    filter: url(#warp);
+  }
+
+  /* ---- 8. noise, for contrast ---- */
+  .f8 {
+    background: rgba(var(--field), 0.001);
+    filter: url(#noisy);
+  }
+
+  /* ---------- the recommendation, full width ---------- */
+  .room {
+    position: relative;
+    background-color: var(--ground);
+    padding: clamp(44px, 8vh, 92px) clamp(20px, 5vw, 40px) 110px;
+    overflow: hidden;
+  }
+  .room > .warp {
+    position: absolute;
+    inset: -20%;
+    z-index: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      110% 80% at 50% 16%,
+      rgba(var(--field), 0) 26%,
+      rgba(var(--field), calc(var(--field-max) * 0.62)) 100%
+    );
+    filter: url(#warp);
+  }
+  .room > .col {
+    position: relative;
+    z-index: 1;
+  }
+
+  .col {
+    max-width: 34rem;
+    margin: 0 auto;
+  }
+  .mark {
+    color: var(--gold);
+    font-size: 13px;
+    letter-spacing: 0.2em;
+  }
+  .kicker {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10.5px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 26px 0 18px;
+  }
+  .room h1 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(27px, 4vw, 38px);
+    line-height: 1.25;
+    letter-spacing: 0.04em;
+    font-variant-caps: small-caps;
+    color: var(--ink);
+    margin: 0 0 26px;
+    max-width: 20ch;
+  }
+  .stats {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 54px;
+  }
+  .room p {
+    color: var(--ink-2);
+    font-size: 17.5px;
+    line-height: 1.9;
+    margin: 0 0 26px;
+  }
+  .room .lead {
+    color: var(--ink);
+    font-size: 19px;
+  }
+  .room h2 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 19px;
+    letter-spacing: 0.06em;
+    font-variant-caps: small-caps;
+    color: var(--ink-3);
+    margin: 62px 0 16px;
+  }
+  .room pre {
+    background: var(--pre-bg);
+    border-left: 1px solid var(--rule);
+    padding: 16px 0 16px 20px;
+    overflow-x: auto;
+    margin: 0 0 26px;
+    font-family: var(--mono);
+    font-size: 13.5px;
+    line-height: 1.75;
+    color: var(--ink-2);
+  }
+  .room :not(pre) > code {
+    font-family: var(--mono);
+    color: var(--arcane);
+    font-size: 0.85em;
+  }
+  .room a {
+    color: var(--ink);
+    text-decoration: underline;
+    text-decoration-color: var(--under);
+    text-underline-offset: 4px;
+  }
+  .room a:hover {
+    color: var(--gold);
+    text-decoration-color: var(--gold);
+  }
+
+  .after {
+    padding: 26px clamp(14px, 3vw, 28px) 60px;
+    max-width: 82ch;
+    font-size: 14.5px;
+    line-height: 1.75;
+    color: var(--ui-dim);
+    position: relative;
+    z-index: 1;
+  }
+  .after h3 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ui-dim);
+    margin: 0 0 12px;
+  }
+  .after p {
+    margin: 0 0 14px;
+  }
+  .after b {
+    color: var(--ui-fg);
+    font-weight: 600;
+  }
+  .after pre {
+    margin: 0 0 18px;
+    padding: 15px 17px;
+    border-left: 1px solid var(--ui-line);
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.72;
+    color: var(--ui-dim);
+    white-space: pre;
+  }
+
+  .lede,
+  .wall,
+  .bar {
+    position: relative;
+    z-index: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      transition: none !important;
+    }
+  }
+</style>
+
+<!-- The filters. These are the actual linear algebra; everything
+     above just feeds them a field to operate on. -->
+<svg
+  width="0"
+  height="0"
+  aria-hidden="true"
+  focusable="false"
+  style="position: absolute"
+>
+  <!-- a 5×4 matrix acting on the RGBA vector: this one routes the
+       alpha channel into blue and halves the result -->
+  <filter id="chan" color-interpolation-filters="sRGB">
+    <feColorMatrix
+      type="matrix"
+      values="1 0 0 0.35 0
+              0 1 0 0.15 0
+              0 0 1 0.55 0
+              0 0 0 0.60 0"
+    />
+  </filter>
+
+  <!-- K ∗ f — a 3×3 kernel. Sum of weights is 0, so flat regions go
+       to zero and only the rate of change survives: an edge detector,
+       which on a soft gradient reads as carved relief -->
+  <filter id="carve" color-interpolation-filters="sRGB">
+    <feConvolveMatrix
+      order="3"
+      kernelMatrix="1  1  0
+                    1  0 -1
+                    0 -1 -1"
+      divisor="1"
+      bias="0"
+      preserveAlpha="false"
+    />
+  </filter>
+
+  <!-- p ↦ p + s·F(p). F is two octaves of Perlin at very low
+       frequency, read out of the R and G channels as a 2-vector.
+       The SOURCE is a smooth gradient, so the OUTPUT is smooth too —
+       displacement moves samples, it does not add detail. -->
+  <filter id="warp" color-interpolation-filters="sRGB">
+    <feTurbulence
+      type="fractalNoise"
+      baseFrequency="0.0022"
+      numOctaves="2"
+      seed="11"
+      result="F"
+    />
+    <feDisplacementMap
+      in="SourceGraphic"
+      in2="F"
+      scale="420"
+      xChannelSelector="R"
+      yChannelSelector="G"
+    />
+  </filter>
+
+  <!-- the same Perlin basis used directly, for comparison -->
+  <filter id="noisy" color-interpolation-filters="sRGB">
+    <feTurbulence
+      type="fractalNoise"
+      baseFrequency="0.012"
+      numOctaves="4"
+      seed="3"
+    />
+    <feColorMatrix
+      type="matrix"
+      values="0 0 0 0 0
+              0 0 0 0 0
+              0 0 0 0 0
+              1 0 0 0 -0.28"
+    />
+    <feComponentTransfer>
+      <feFuncA type="gamma" amplitude="1.4" exponent="2.4" />
+    </feComponentTransfer>
+  </filter>
+</svg>
+
+<div class="bar">
+  <span class="who">Backgrounds as math</span>
+  <button class="btn" id="world" type="button">Hollowed</button>
+</div>
+
+<div class="lede">
+  <p>
+    <b>Yes — and gradients already are the linear algebra.</b> A
+    <code>radial-gradient</code> evaluates the norm <code>‖p − c‖</code> at
+    every pixel; <code>linear-gradient</code> evaluates the projection
+    <code>p · n</code>; <code>conic-gradient</code> evaluates
+    <code>atan2(p − c)</code>. Blend modes are the operators that combine those
+    fields: <code>multiply</code> is <code>a·b</code>,
+    <code>difference</code> is <code>|a − b|</code>. SVG filters add the rest —
+    a matrix on colour, a convolution kernel, and a vector field on coordinates.
+  </p>
+  <p>
+    <b>The one that solves your problem is the last.</b> Noise makes a page busy
+    because it adds high-frequency energy, and a white ground shows that energy
+    first — which is exactly what you saw. Displacement adds none: it moves
+    samples of a field that was already smooth. So a warped gradient is
+    differentiable everywhere and irregular in shape at the same time. Compare
+    <b>7</b> against <b>8</b> below, then flip to Kindled and compare them
+    again.
+  </p>
+</div>
+
+<div class="wall">
+  <div class="field">
+    <div class="plate"><div class="f1"></div></div>
+    <div class="cap">
+      <span class="fx">‖p − c‖</span>
+      <span class="what"
+        >A distance field. <code>radial-gradient</code> is the L2 norm from a
+        point, mapped through the colour stops.</span
+      >
+      <span class="cost">Cost <b>nil</b> &middot; both worlds fine</span>
+    </div>
+  </div>
+
+  <div class="field">
+    <div class="plate"><div class="f2"></div></div>
+    <div class="cap">
+      <span class="fx">p &middot; n</span>
+      <span class="what"
+        >A projection onto a normal. <code>linear-gradient</code> is a dot
+        product, which is why its iso-lines are always parallel and always
+        straight.</span
+      >
+      <span class="cost">Cost <b>nil</b> &middot; reads as lighting</span>
+    </div>
+  </div>
+
+  <div class="field">
+    <div class="plate"><div class="f3"></div></div>
+    <div class="cap">
+      <span class="fx">atan2(p − c)</span>
+      <span class="what"
+        >An angle field. <code>conic-gradient</code> sweeps the argument, so it
+        makes rays rather than rings — useful for a shaft, wrong for dirt.</span
+      >
+      <span class="cost">Cost <b>nil</b> &middot; too directional</span>
+    </div>
+  </div>
+
+  <div class="field">
+    <div class="plate"><div class="f4"></div></div>
+    <div class="cap">
+      <span class="fx">|f₁ − f₂| − f₃</span>
+      <span class="what"
+        >Superposition. Three plane waves at unrelated angles and periods,
+        subtracted by <code>background-blend-mode: difference</code>. Real
+        interference, and a textbook moiré.</span
+      >
+      <span class="cost">Cost <b>nil</b> &middot; far too busy</span>
+    </div>
+  </div>
+
+  <div class="field">
+    <div class="plate"><div class="f5"></div></div>
+    <div class="cap">
+      <span class="fx">M &middot; rgba</span>
+      <span class="what"
+        ><code>feColorMatrix</code> is a literal 5×4 linear map on the colour
+        vector. Here it routes alpha into the colour channels, which is how the
+        stain filter turns luminance into opacity.</span
+      >
+      <span class="cost">Cost <b>low</b> &middot; a tool, not a texture</span>
+    </div>
+  </div>
+
+  <div class="field">
+    <div class="plate"><div class="f6"></div></div>
+    <div class="cap">
+      <span class="fx">K ∗ f</span>
+      <span class="what"
+        ><code>feConvolveMatrix</code>, a 3×3 kernel whose weights sum to zero.
+        Flat areas cancel and only the gradient survives, so a soft blob comes
+        out looking carved.</span
+      >
+      <span class="cost">Cost <b>medium</b> &middot; stone, not soot</span>
+    </div>
+  </div>
+
+  <div class="field">
+    <div class="plate"><div class="f7"></div></div>
+    <div class="cap">
+      <span class="fx">p ↦ p + s&middot;F(p)</span>
+      <span class="what"
+        ><b>The recommendation.</b> A smooth radial gradient displaced by a
+        low-frequency vector field. Irregular iso-lines, zero added
+        high-frequency energy, no tile and therefore no seam.</span
+      >
+      <span class="cost">Cost <b>medium</b> &middot; calm in both worlds</span>
+    </div>
+  </div>
+
+  <div class="field">
+    <div class="plate"><div class="f8"></div></div>
+    <div class="cap">
+      <span class="fx">F(p)</span>
+      <span class="what"
+        >The same Perlin basis used directly instead of as a displacement. This
+        is the busy one, and it is busiest on white.</span
+      >
+      <span class="cost"
+        >Cost <b>medium</b> &middot; the thing you rejected</span
+      >
+    </div>
+  </div>
+</div>
+
+<div class="room">
+  <div class="warp"></div>
+  <div class="col">
+    <span class="mark">&#9670;</span>
+    <p class="kicker">Program Analysis</p>
+    <h1>Symbolic Execution</h1>
+    <div class="stats">02 June 2026 &middot; Nine minutes</div>
+
+    <p class="lead">
+      Symbolic execution is a means of analyzing a program to determine what
+      inputs cause each part of it to execute. Instead of running the code on
+      real values, an interpreter walks it while holding every input as a
+      symbol.
+    </p>
+    <p>
+      It arrives at expressions written in terms of those symbols, and at
+      constraints for the outcome of each conditional branch. Where concrete
+      execution answers what a program does with 5, symbolic execution answers
+      what it would take to reach a place at all.
+    </p>
+
+    <h2>A worked example</h2>
+    <pre>
+int f() {
+  y = read();
+  z = y * 2;
+  if (z == 12) fail();
+  else printf("OK");
+}</pre
+    >
+    <p>
+      During symbolic execution the program reads a symbol,
+      <code>&lambda;</code>, and the branch condition becomes the constraint
+      <code>&lambda; * 2 == 12</code>. Execution forks, and a solver later
+      returns <code>6</code> to reach <code>fail()</code>.
+    </p>
+
+    <h2>Limitations</h2>
+    <p>
+      Merge states that differ only in irrelevant ways and you accept weaker
+      constraints. Bound the loops and you accept incompleteness past the bound.
+      Prioritize paths heuristically and the interesting one may be starved.
+    </p>
+    <p>
+      Engines worth reading next: <a href="#">KLEE</a> and <a href="#">angr</a>.
+    </p>
+  </div>
+</div>
+
+<div class="after">
+  <h3>What it costs to ship</h3>
+  <pre>
+&lt;!-- once, anywhere in the document --&gt;
+&lt;filter id="warp" color-interpolation-filters="sRGB"&gt;
+  &lt;feTurbulence type="fractalNoise" baseFrequency="0.0022"
+                numOctaves="2" seed="11" result="F"/&gt;
+  &lt;feDisplacementMap in="SourceGraphic" in2="F" scale="420"
+                     xChannelSelector="R" yChannelSelector="G"/&gt;
+&lt;/filter&gt;
+
+/* the layer. inset is negative so the warp cannot pull
+   transparent pixels in from outside the element. */
+.air {
+  position: fixed;
+  inset: -20%;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(110% 80% at 50% 16%,
+                transparent 26%, var(--vignette) 100%);
+  filter: url(#warp);
+}</pre
+  >
+  <p>
+    <b>Three honest caveats.</b> The filter rasterizes once per resize, so
+    <code>inset: -20%</code> on a full-window layer is real work on a phone —
+    measure before shipping it. <code>scale</code> is in pixels, so it does not
+    respond to viewport size; the warp looks stronger on a small screen. And
+    Safari has historically been the weakest at
+    <code>feDisplacementMap</code> on large surfaces, so this is the one
+    technique on the page worth testing on a real device rather than trusting.
+  </p>
+  <p>
+    <b>What CSS still cannot do.</b> There is no loop, so a sum over N terms has
+    to be written out N times — variation 4 above is three lines because three
+    was as far as it was worth going by hand. <code>calc()</code> has
+    <code>sin()</code>, <code>cos()</code>, <code>pow()</code>,
+    <code>sqrt()</code> and <code>hypot()</code> since 2023, but they compute
+    lengths and angles for properties, not values per pixel. Genuine per-pixel
+    programs need the Houdini Paint API, which after seven years is still
+    Chromium-only — so it is a progressive enhancement at best, never the thing
+    the page depends on.
+  </p>
+</div>
+
+<script>
+  (function () {
+    var btn = document.getElementById("world");
+    var world = "hollowed";
+    document.body.dataset.world = world;
+    btn.addEventListener("click", function () {
+      world = world === "hollowed" ? "kindled" : "hollowed";
+      document.body.dataset.world = world;
+      btn.textContent = world === "hollowed" ? "Hollowed" : "Kindled";
+    });
+  })();
+</script>

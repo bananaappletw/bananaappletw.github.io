@@ -1,0 +1,1557 @@
+<title>Five Torchlights</title>
+<style>
+  /*FONTS*/
+
+  /* ============================================================
+   FIVE PROTOTYPES — same post, same fonts, two worlds each.
+   A, B and C carry over from three-directions.html unchanged in
+   character; D and E are new. Every direction now defines BOTH
+   worlds: hollowed (dark) and kindled (light). The chrome follows
+   the selected world so the page reads as one thing.
+
+   Colour here is prototype-local on purpose. Nothing in this file
+   feeds the build; once a letter is chosen its palette moves into
+   docs/theme/tokens.json and the generator owns it from there.
+   ============================================================ */
+
+  :root {
+    --display: Cinzel, Optima, "Palatino Linotype", Palatino, serif;
+    --body: Spectral, Charter, Georgia, serif;
+    --mono: GSCode, ui-monospace, Menlo, monospace;
+
+    /* chrome, hollowed */
+    --ui-bg: #121110;
+    --ui-fg: #cfc7b6;
+    --ui-dim: #7d7365;
+    --ui-line: #2e2a24;
+    --ui-mark: #d7ae72;
+  }
+
+  body[data-world="kindled"] {
+    --ui-bg: #f4f2ec;
+    --ui-fg: #2b2924;
+    --ui-dim: #6f6b60;
+    --ui-line: #ddd9cf;
+    --ui-mark: #8a5f18;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background: var(--ui-bg);
+    color: var(--ui-fg);
+    font-family: var(--body);
+    margin: 0;
+    transition:
+      background-color 0.25s linear,
+      color 0.25s linear;
+  }
+
+  /* ---------- chooser ---------- */
+  .chooser {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--ui-bg);
+    border-bottom: 1px solid var(--ui-line);
+    padding: 14px clamp(16px, 4vw, 32px);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 10px 22px;
+  }
+  .chooser .who {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ui-dim);
+    margin-right: auto;
+  }
+  .tab,
+  .world {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: none;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    padding: 4px 0;
+    color: var(--ui-dim);
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+  .tab:hover,
+  .world:hover {
+    color: var(--ui-fg);
+  }
+  .tab[aria-selected="true"] {
+    color: var(--ui-mark);
+    border-bottom-color: var(--ui-mark);
+  }
+  .tab:focus-visible,
+  .world:focus-visible {
+    outline: 2px solid var(--ui-mark);
+    outline-offset: 3px;
+  }
+  .world {
+    border: 1px solid var(--ui-line);
+    padding: 5px 12px;
+    margin-left: 4px;
+  }
+
+  .note {
+    padding: 18px clamp(16px, 4vw, 32px) 0;
+    max-width: 74ch;
+    font-size: 14.5px;
+    line-height: 1.75;
+    color: var(--ui-dim);
+    margin: 0 0 18px;
+  }
+  .note b {
+    color: var(--ui-fg);
+    font-weight: 600;
+  }
+
+  .stage > section {
+    display: none;
+  }
+  .stage > section.on {
+    display: block;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    body {
+      transition: none;
+    }
+  }
+
+  /* ============================================================
+   A — ITEM DESCRIPTION
+   The page is a Souls menu panel: you are reading an item entry.
+   Framed, translucent, hairline-ruled, flavour text last.
+   ============================================================ */
+  .vA {
+    --ground: #15130f;
+    --panel: rgba(8, 7, 6, 0.62);
+    --line: #3a3429;
+    --edge: rgba(214, 198, 168, 0.08);
+    --ink: #cabda2;
+    --ink-2: #a9997c;
+    --ink-3: #85765c;
+    --gold: #d7ae72;
+    --arcane: #7fa3a2;
+    --pre: rgba(0, 0, 0, 0.4);
+    --lit: rgba(215, 174, 114, 0.09);
+    --falloff: rgba(0, 0, 0, 0.5);
+    --drop: 0 18px 60px rgba(0, 0, 0, 0.5);
+  }
+  [data-world="kindled"] .vA {
+    --ground: #e9e3d4;
+    --panel: #fffdf7;
+    --line: #d5cbb3;
+    --edge: rgba(255, 255, 255, 0.9);
+    --ink: #39352a;
+    --ink-2: #524c3d;
+    --ink-3: #6c6553;
+    --gold: #8a5c14;
+    --arcane: #2f5296;
+    --pre: #f4efe2;
+    --lit: rgba(255, 244, 214, 0.75);
+    --falloff: rgba(160, 145, 110, 0.16);
+    --drop: 0 14px 44px rgba(122, 102, 62, 0.14);
+  }
+  .vA {
+    background: var(--ground);
+    padding: clamp(28px, 6vw, 64px) clamp(16px, 4vw, 40px) 90px;
+    position: relative;
+  }
+  .vA::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(60% 45% at 50% 0%, var(--lit), transparent 70%),
+      radial-gradient(120% 90% at 50% 45%, transparent 40%, var(--falloff) 100%);
+  }
+  .vA .frame {
+    position: relative;
+    max-width: 46rem;
+    margin: 0 auto;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    box-shadow:
+      inset 0 1px 0 0 var(--edge),
+      var(--drop);
+    padding: clamp(26px, 4vw, 48px);
+  }
+  .vA .frame::before,
+  .vA .frame::after {
+    content: "";
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-style: solid;
+    border-color: var(--gold);
+    opacity: 0.55;
+  }
+  .vA .frame::before {
+    top: -1px;
+    left: -1px;
+    border-width: 2px 0 0 2px;
+  }
+  .vA .frame::after {
+    bottom: -1px;
+    right: -1px;
+    border-width: 0 2px 2px 0;
+  }
+
+  .vA .kicker {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10.5px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 14px;
+  }
+  .vA h1 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(24px, 3.4vw, 34px);
+    letter-spacing: 0.06em;
+    font-variant-caps: small-caps;
+    color: var(--gold);
+    margin: 0 0 16px;
+    line-height: 1.2;
+  }
+  .vA .stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 26px;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    padding-bottom: 16px;
+  }
+  .vA hr {
+    border: 0;
+    height: 1px;
+    background: var(--line);
+    margin: 0 0 22px;
+  }
+  .vA p {
+    color: var(--ink-2);
+    font-size: 16px;
+    line-height: 1.8;
+    margin: 0 0 20px;
+  }
+  .vA .lead {
+    color: var(--ink);
+    font-size: 17.5px;
+  }
+  .vA h2 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 34px 0 12px;
+  }
+  .vA ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 20px;
+  }
+  .vA li {
+    position: relative;
+    padding-left: 20px;
+    color: var(--ink-2);
+    font-size: 16px;
+    line-height: 1.8;
+  }
+  .vA li::before {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: 0.8em;
+    width: 4px;
+    height: 4px;
+    background: var(--ink-3);
+    transform: rotate(45deg);
+  }
+  .vA pre {
+    background: var(--pre);
+    border: 1px solid var(--line);
+    padding: 16px 18px;
+    overflow-x: auto;
+    margin: 0 0 22px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--ink-2);
+  }
+  .vA code {
+    font-family: var(--mono);
+    color: var(--arcane);
+    font-size: 0.85em;
+  }
+  .vA .flavour {
+    border-top: 1px solid var(--line);
+    margin-top: 26px;
+    padding-top: 18px;
+    font-style: italic;
+    color: var(--ink-3);
+    font-size: 15.5px;
+    line-height: 1.8;
+  }
+  .vA a {
+    color: var(--ink);
+    text-decoration: underline;
+    text-decoration-color: var(--ink-3);
+    text-underline-offset: 4px;
+  }
+  .vA a:hover {
+    color: var(--gold);
+  }
+
+  /* ============================================================
+   B — ASH
+   Almost nothing. No panels, no borders, no chrome. A column of
+   text in a dark room, lit from above. Reading by firelight.
+   ============================================================ */
+  .vB {
+    --ground: #100f0d;
+    --ink: #c6bca8;
+    --ink-2: #a99e8a;
+    --ink-3: #7e7361;
+    --gold: #cda76b;
+    --rule: #33302a;
+    --pre: rgba(0, 0, 0, 0.34);
+    --arcane: #7ea3a1;
+    --under: #4e483d;
+    --lit: rgba(205, 167, 107, 0.1);
+    --falloff: rgba(0, 0, 0, 0.42);
+  }
+  [data-world="kindled"] .vB {
+    --ground: #ffffff;
+    --ink: #39352a;
+    --ink-2: #4d4739;
+    --ink-3: #6c6553;
+    --gold: #96631a;
+    --rule: #e2dccb;
+    --pre: #faf7ef;
+    --arcane: #2f5296;
+    --under: #c3bba5;
+    --lit: rgba(255, 239, 205, 0.6);
+    --falloff: rgba(190, 172, 130, 0.14);
+  }
+  .vB {
+    background: var(--ground);
+    padding: clamp(56px, 12vh, 130px) clamp(20px, 5vw, 40px) 120px;
+    position: relative;
+  }
+  .vB::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(42% 34% at 50% -4%, var(--lit), transparent 72%),
+      radial-gradient(130% 95% at 50% 42%, transparent 36%, var(--falloff) 100%);
+  }
+  .vB .col {
+    position: relative;
+    max-width: 34rem;
+    margin: 0 auto;
+  }
+  .vB .mark {
+    color: var(--gold);
+    font-size: 13px;
+    letter-spacing: 0.2em;
+  }
+  .vB .kicker {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10.5px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 26px 0 18px;
+  }
+  .vB h1 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(27px, 4vw, 38px);
+    line-height: 1.25;
+    letter-spacing: 0.04em;
+    font-variant-caps: small-caps;
+    color: var(--ink);
+    margin: 0 0 26px;
+    max-width: 20ch;
+  }
+  .vB .stats {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 54px;
+  }
+  .vB p {
+    color: var(--ink-2);
+    font-size: 17.5px;
+    line-height: 1.9;
+    margin: 0 0 26px;
+  }
+  .vB .lead {
+    color: var(--ink);
+    font-size: 19px;
+  }
+  .vB h2 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 19px;
+    letter-spacing: 0.06em;
+    font-variant-caps: small-caps;
+    color: var(--ink-3);
+    margin: 62px 0 16px;
+  }
+  .vB ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 26px;
+  }
+  .vB li {
+    position: relative;
+    padding-left: 22px;
+    color: var(--ink-2);
+    font-size: 17px;
+    line-height: 1.9;
+  }
+  .vB li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.85em;
+    width: 4px;
+    height: 4px;
+    background: var(--ink-3);
+    transform: rotate(45deg);
+  }
+  .vB pre {
+    background: var(--pre);
+    border: 0;
+    border-left: 1px solid var(--rule);
+    padding: 16px 0 16px 20px;
+    overflow-x: auto;
+    margin: 0 0 26px;
+    font-family: var(--mono);
+    font-size: 13.5px;
+    line-height: 1.75;
+    color: var(--ink-2);
+  }
+  .vB code {
+    font-family: var(--mono);
+    color: var(--arcane);
+    font-size: 0.85em;
+  }
+  .vB blockquote {
+    margin: 0 0 26px;
+    padding-left: 22px;
+    border-left: 1px solid var(--rule);
+    font-style: italic;
+    color: var(--ink-3);
+    font-size: 16.5px;
+    line-height: 1.85;
+  }
+  .vB a {
+    color: var(--ink);
+    text-decoration: underline;
+    text-decoration-color: var(--under);
+    text-underline-offset: 4px;
+  }
+  .vB a:hover {
+    color: var(--gold);
+    text-decoration-color: var(--gold);
+  }
+
+  /* ============================================================
+   C — ILLUMINATED
+   The manuscript. Warmer ground, gold rules, a drop cap, denser
+   setting. A book copied by hand rather than a game menu.
+   ============================================================ */
+  .vC {
+    --ground: #1c1813;
+    --ink: #ddd0b4;
+    --ink-2: #bfae8f;
+    --ink-3: #948468;
+    --gold: #cfa758;
+    --rule: #3d3527;
+    --pre: rgba(0, 0, 0, 0.3);
+    --arcane: #86a6a0;
+    --quote: rgba(0, 0, 0, 0.2);
+    --lit: rgba(207, 167, 88, 0.07);
+    --hair: rgba(207, 167, 88, 0.4);
+  }
+  [data-world="kindled"] .vC {
+    --ground: #f6efdd;
+    --ink: #33301f;
+    --ink-2: #4e4732;
+    --ink-3: #7a7157;
+    --gold: #8a5c14;
+    --rule: #ddd0ae;
+    --pre: #efe6cd;
+    --arcane: #2f5296;
+    --quote: rgba(138, 92, 20, 0.07);
+    --lit: rgba(255, 246, 219, 0.85);
+    --hair: rgba(138, 92, 20, 0.35);
+  }
+  .vC {
+    background: var(--ground);
+    padding: clamp(34px, 6vw, 70px) clamp(18px, 4vw, 40px) 100px;
+    position: relative;
+  }
+  .vC::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      120% 80% at 50% 0%,
+      var(--lit),
+      transparent 65%
+    );
+  }
+  .vC .page {
+    position: relative;
+    max-width: 40rem;
+    margin: 0 auto;
+  }
+  .vC .band {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .vC .band .r {
+    flex: 1;
+    height: 1px;
+    background: var(--rule);
+  }
+  .vC .band .d {
+    color: var(--gold);
+    font-size: 11px;
+  }
+  .vC .kicker {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10.5px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--gold);
+    text-align: center;
+    margin: 0 0 12px;
+  }
+  .vC h1 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(26px, 3.8vw, 38px);
+    line-height: 1.22;
+    letter-spacing: 0.05em;
+    font-variant-caps: small-caps;
+    color: var(--ink);
+    text-align: center;
+    margin: 0 0 14px;
+  }
+  .vC .stats {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    text-align: center;
+    margin: 0 0 30px;
+  }
+  .vC .drop::first-letter {
+    font-family: var(--display);
+    font-weight: 600;
+    color: var(--gold);
+    float: left;
+    font-size: 3.4em;
+    line-height: 0.82;
+    padding: 6px 12px 0 0;
+  }
+  .vC p {
+    color: var(--ink-2);
+    font-size: 16.5px;
+    line-height: 1.78;
+    margin: 0 0 18px;
+  }
+  .vC .lead {
+    color: var(--ink);
+  }
+  .vC h2 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin: 40px 0 6px;
+  }
+  .vC h2 + .hr {
+    height: 1px;
+    background: linear-gradient(
+      to right,
+      var(--gold),
+      var(--rule) 40%,
+      transparent
+    );
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+  .vC ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 18px;
+  }
+  .vC li {
+    position: relative;
+    padding-left: 22px;
+    color: var(--ink-2);
+    font-size: 16.5px;
+    line-height: 1.78;
+  }
+  .vC li::before {
+    content: "\2767";
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--gold);
+    font-size: 12px;
+    opacity: 0.8;
+  }
+  .vC pre {
+    background: var(--pre);
+    border: 1px solid var(--rule);
+    padding: 15px 18px;
+    overflow-x: auto;
+    margin: 0 0 20px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--ink-2);
+  }
+  .vC code {
+    font-family: var(--mono);
+    color: var(--arcane);
+    font-size: 0.85em;
+  }
+  .vC blockquote {
+    margin: 0 0 20px;
+    padding: 14px 20px;
+    border-left: 2px solid var(--gold);
+    background: var(--quote);
+    font-style: italic;
+    color: var(--ink-3);
+    font-size: 16px;
+    line-height: 1.8;
+  }
+  .vC a {
+    color: var(--gold);
+    text-decoration: underline;
+    text-decoration-color: var(--hair);
+    text-underline-offset: 4px;
+  }
+  .vC a:hover {
+    text-decoration-color: var(--gold);
+  }
+  .vC .colophon {
+    margin-top: 34px;
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+    text-align: center;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  /* ============================================================
+   D — DATASHEET
+   Not the game, the game's official site: darksouls.jp. A record
+   card. Full-width hairlines, a label/value spec block, metadata
+   in a left rail, tabular figures, no ornament anywhere. Gold is
+   spent once, on the rule under the title, and nowhere else.
+   ============================================================ */
+  .vD {
+    --ground: #0f0f0e;
+    --ink: #cdc6b7;
+    --ink-2: #ada593;
+    --ink-3: #7d7669;
+    --rule: #292724;
+    --rule-2: #1c1b19;
+    --gold: #c9a06a;
+    --arcane: #6f9694;
+    --pre: #141312;
+  }
+  [data-world="kindled"] .vD {
+    --ground: #f2f1ec;
+    --ink: #23221e;
+    --ink-2: #45423a;
+    --ink-3: #6f6b60;
+    --rule: #d4d2c9;
+    --rule-2: #e4e2db;
+    --gold: #8a5f18;
+    --arcane: #2f5296;
+    --pre: #e9e8e1;
+  }
+  .vD {
+    background: var(--ground);
+    padding: clamp(30px, 5vw, 56px) clamp(16px, 4vw, 40px) 110px;
+  }
+  .vD .sheet {
+    max-width: 52rem;
+    margin: 0 auto;
+  }
+  .vD .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 8px;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .vD h1 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(25px, 3.6vw, 36px);
+    letter-spacing: 0.05em;
+    font-variant-caps: small-caps;
+    color: var(--ink);
+    margin: 22px 0 14px;
+    line-height: 1.18;
+  }
+  .vD .goldrule {
+    height: 2px;
+    background: var(--gold);
+    width: 44px;
+    margin-bottom: 26px;
+  }
+  .vD .spec {
+    display: grid;
+    grid-template-columns: 9.5rem 1fr;
+    border-top: 1px solid var(--rule);
+    margin-bottom: 40px;
+    font-variant-numeric: tabular-nums;
+  }
+  .vD .spec dt {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    padding: 11px 0;
+    border-bottom: 1px solid var(--rule-2);
+  }
+  .vD .spec dd {
+    margin: 0;
+    padding: 10px 0;
+    font-size: 14.5px;
+    color: var(--ink-2);
+    border-bottom: 1px solid var(--rule-2);
+  }
+  .vD .body {
+    display: grid;
+    grid-template-columns: 9.5rem minmax(0, 1fr);
+  }
+  .vD .body > * {
+    border-top: 1px solid var(--rule);
+    margin-top: 34px;
+    padding-top: 18px;
+  }
+  .vD .body > *:nth-child(-n + 2) {
+    border-top: 0;
+    margin-top: 0;
+    padding-top: 0;
+  }
+  .vD .body > .rail {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    padding-right: 20px;
+  }
+  .vD .body > .flow {
+    min-width: 0;
+  }
+  .vD .flow > *:last-child {
+    margin-bottom: 0;
+  }
+  .vD p {
+    color: var(--ink-2);
+    font-size: 16px;
+    line-height: 1.82;
+    margin: 0 0 18px;
+    max-width: 60ch;
+  }
+  .vD .lead {
+    color: var(--ink);
+    font-size: 17px;
+  }
+  .vD h2 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink);
+    margin: 0 0 14px;
+  }
+  .vD ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 18px;
+    max-width: 60ch;
+  }
+  .vD li {
+    display: grid;
+    grid-template-columns: 2.4rem 1fr;
+    gap: 0 4px;
+    color: var(--ink-2);
+    font-size: 16px;
+    line-height: 1.82;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--rule-2);
+  }
+  .vD li > .n {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-3);
+    padding-top: 0.35em;
+    font-variant-numeric: tabular-nums;
+  }
+  .vD pre {
+    background: var(--pre);
+    border: 0;
+    border-left: 2px solid var(--rule);
+    padding: 15px 18px;
+    overflow-x: auto;
+    margin: 0 0 20px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--ink-2);
+  }
+  .vD code {
+    font-family: var(--mono);
+    color: var(--arcane);
+    font-size: 0.85em;
+  }
+  .vD blockquote {
+    margin: 0 0 20px;
+    padding: 0;
+    font-size: 16px;
+    line-height: 1.8;
+    color: var(--ink-3);
+    max-width: 60ch;
+  }
+  .vD blockquote::before {
+    content: "";
+    display: block;
+    width: 44px;
+    height: 1px;
+    background: var(--rule);
+    margin-bottom: 12px;
+  }
+  .vD a {
+    color: var(--ink);
+    text-decoration: underline;
+    text-decoration-color: var(--rule);
+    text-underline-offset: 4px;
+  }
+  .vD a:hover {
+    color: var(--gold);
+    text-decoration-color: var(--gold);
+  }
+  @media (max-width: 620px) {
+    .vD .spec,
+    .vD .body {
+      grid-template-columns: 1fr;
+    }
+    .vD .spec dt {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+    .vD .body > .rail {
+      padding: 18px 0 8px;
+    }
+    .vD .body > .flow {
+      border-top: 0;
+      margin-top: 0;
+      padding-top: 0;
+    }
+  }
+
+  /* ============================================================
+   E — STAINED GLASS
+   Anor Londo. One shaft of light falls down the page and the
+   column sits inside it; the panel is arched, not boxed. The
+   arcane register (teal hollowed, lapis kindled) does the second
+   voice, so gold stays reserved for the heading alone.
+   ============================================================ */
+  .vE {
+    --ground: #17150f;
+    --panel: rgba(10, 10, 8, 0.5);
+    --ink: #ccc1a8;
+    --ink-2: #ab9f87;
+    --ink-3: #837868;
+    --gold: #d0a86a;
+    --arcane: #7ba6a5;
+    --rule: #302b23;
+    --pre: rgba(0, 0, 0, 0.34);
+    --shaft: rgba(228, 205, 152, 0.09);
+    --shaft-2: rgba(123, 166, 165, 0.05);
+    --falloff: rgba(0, 0, 0, 0.46);
+  }
+  [data-world="kindled"] .vE {
+    --ground: #fbf8f0;
+    --panel: #ffffff;
+    --ink: #34302a;
+    --ink-2: #4f4a3f;
+    --ink-3: #6d6759;
+    --gold: #96631a;
+    --arcane: #2f5296;
+    --rule: #e4dfd0;
+    --pre: #f5f1e6;
+    --shaft: rgba(255, 234, 178, 0.5);
+    --shaft-2: rgba(47, 82, 150, 0.05);
+    --falloff: rgba(180, 166, 130, 0.14);
+  }
+  .vE {
+    background: var(--ground);
+    padding: clamp(40px, 8vw, 96px) clamp(16px, 4vw, 40px) 120px;
+    position: relative;
+    overflow: hidden;
+  }
+  .vE::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(
+        168deg,
+        var(--shaft) 0%,
+        transparent 42%,
+        transparent 100%
+      ),
+      linear-gradient(
+        192deg,
+        var(--shaft-2) 0%,
+        transparent 38%,
+        transparent 100%
+      ),
+      radial-gradient(120% 90% at 50% 30%, transparent 45%, var(--falloff) 100%);
+  }
+  .vE .nave {
+    position: relative;
+    max-width: 38rem;
+    margin: 0 auto;
+  }
+  .vE .arch {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-bottom: 0;
+    border-radius: 19rem 19rem 0 0 / 11rem 11rem 0 0;
+    padding: clamp(48px, 9vw, 88px) clamp(24px, 5vw, 54px) 30px;
+    text-align: center;
+  }
+  .vE .kicker {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: var(--arcane);
+    margin: 0 0 14px;
+  }
+  .vE h1 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(24px, 3.6vw, 34px);
+    line-height: 1.24;
+    letter-spacing: 0.05em;
+    font-variant-caps: small-caps;
+    color: var(--gold);
+    margin: 0 0 14px;
+  }
+  .vE .stats {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0;
+  }
+  .vE .floor {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-top: 0;
+    padding: 30px clamp(24px, 5vw, 54px) clamp(34px, 5vw, 54px);
+  }
+  .vE p {
+    color: var(--ink-2);
+    font-size: 16.5px;
+    line-height: 1.85;
+    margin: 0 0 22px;
+  }
+  .vE .lead {
+    color: var(--ink);
+    font-size: 18px;
+  }
+  .vE h2 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--arcane);
+    margin: 40px 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .vE h2::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--rule);
+  }
+  .vE ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 22px;
+  }
+  .vE li {
+    position: relative;
+    padding-left: 24px;
+    color: var(--ink-2);
+    font-size: 16.5px;
+    line-height: 1.85;
+  }
+  .vE li::before {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 0.78em;
+    width: 6px;
+    height: 10px;
+    border-radius: 3px 3px 0 0;
+    background: var(--arcane);
+    opacity: 0.65;
+  }
+  .vE pre {
+    background: var(--pre);
+    border-left: 2px solid var(--arcane);
+    padding: 15px 18px;
+    overflow-x: auto;
+    margin: 0 0 22px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--ink-2);
+  }
+  .vE code {
+    font-family: var(--mono);
+    color: var(--arcane);
+    font-size: 0.85em;
+  }
+  .vE blockquote {
+    margin: 0 0 22px;
+    padding: 0 0 0 22px;
+    border-left: 1px solid var(--rule);
+    font-style: italic;
+    color: var(--ink-3);
+    font-size: 16px;
+    line-height: 1.85;
+  }
+  .vE a {
+    color: var(--ink);
+    text-decoration: underline;
+    text-decoration-color: var(--arcane);
+    text-underline-offset: 4px;
+  }
+  .vE a:hover {
+    color: var(--arcane);
+  }
+</style>
+
+<div class="chooser">
+  <span class="who">Torchlight &middot; five directions</span>
+  <button class="tab" data-v="A" aria-selected="true">
+    A &mdash; Item Description
+  </button>
+  <button class="tab" data-v="B" aria-selected="false">B &mdash; Ash</button>
+  <button class="tab" data-v="C" aria-selected="false">
+    C &mdash; Illuminated
+  </button>
+  <button class="tab" data-v="D" aria-selected="false">
+    D &mdash; Datasheet
+  </button>
+  <button class="tab" data-v="E" aria-selected="false">
+    E &mdash; Stained Glass
+  </button>
+  <button class="world" id="world" type="button">Hollowed</button>
+</div>
+
+<p class="note" id="note"></p>
+
+<div class="stage">
+  <!-- ============ A ============ -->
+  <section class="vA on" data-v="A">
+    <div class="frame">
+      <p class="kicker">Program Analysis</p>
+      <h1>Symbolic Execution</h1>
+      <div class="stats">
+        <span>02 June 2026</span><span>Nine minutes</span><span>Archive</span>
+      </div>
+      <hr />
+
+      <p class="lead">
+        Symbolic execution is a means of analyzing a program to determine what
+        inputs cause each part of it to execute. Instead of running the code on
+        real values, an interpreter walks it while holding every input as a
+        symbol.
+      </p>
+
+      <p>
+        It arrives at expressions written in terms of those symbols, and at
+        constraints for the outcome of each conditional branch. Where concrete
+        execution answers what a program does with 5, symbolic execution answers
+        what it would take to reach a place at all.
+      </p>
+
+      <h2>A worked example</h2>
+      <pre>
+int f() {
+  y = read();
+  z = y * 2;
+  if (z == 12) fail();
+  else printf("OK");
+}</pre
+      >
+      <p>
+        During symbolic execution the program reads a symbol,
+        <code>&lambda;</code>, and the branch condition becomes the constraint
+        <code>&lambda; * 2 == 12</code>. Execution <strong>forks</strong>, and a
+        solver later returns <code>6</code> to reach <code>fail()</code>.
+      </p>
+
+      <h2>Limitations</h2>
+      <ul>
+        <li>
+          Merge states that differ only in irrelevant ways, and accept weaker
+          constraints.
+        </li>
+        <li>
+          Bound loop iterations, and accept incompleteness past the bound.
+        </li>
+        <li>
+          Prioritize paths heuristically, and accept that the interesting one
+          may be starved.
+        </li>
+      </ul>
+      <p>
+        Engines worth reading next: <a href="#">KLEE</a> and
+        <a href="#">angr</a>.
+      </p>
+
+      <p class="flavour">
+        A record of every turn taken, kept in case the way back is ever needed.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ B ============ -->
+  <section class="vB" data-v="B">
+    <div class="col">
+      <span class="mark">&#9670;</span>
+      <p class="kicker">Program Analysis</p>
+      <h1>Symbolic Execution</h1>
+      <div class="stats">02 June 2026 &middot; Nine minutes</div>
+
+      <p class="lead">
+        Symbolic execution is a means of analyzing a program to determine what
+        inputs cause each part of it to execute. Instead of running the code on
+        real values, an interpreter walks it while holding every input as a
+        symbol.
+      </p>
+
+      <p>
+        It arrives at expressions written in terms of those symbols, and at
+        constraints for the outcome of each conditional branch. Where concrete
+        execution answers what a program does with 5, symbolic execution answers
+        what it would take to reach a place at all.
+      </p>
+
+      <h2>A worked example</h2>
+      <pre>
+int f() {
+  y = read();
+  z = y * 2;
+  if (z == 12) fail();
+  else printf("OK");
+}</pre
+      >
+      <p>
+        During symbolic execution the program reads a symbol,
+        <code>&lambda;</code>, and the branch condition becomes the constraint
+        <code>&lambda; * 2 == 12</code>. Execution forks, and a solver later
+        returns <code>6</code> to reach <code>fail()</code>.
+      </p>
+
+      <h2>Limitations</h2>
+      <ul>
+        <li>
+          Merge states that differ only in irrelevant ways, and accept weaker
+          constraints.
+        </li>
+        <li>
+          Bound loop iterations, and accept incompleteness past the bound.
+        </li>
+        <li>
+          Prioritize paths heuristically, and accept that the interesting one
+          may be starved.
+        </li>
+      </ul>
+
+      <blockquote>
+        Program testing can be used to show the presence of bugs, but never to
+        show their absence.
+      </blockquote>
+
+      <p>
+        Engines worth reading next: <a href="#">KLEE</a> and
+        <a href="#">angr</a>.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ C ============ -->
+  <section class="vC" data-v="C">
+    <div class="page">
+      <div class="band">
+        <span class="r"></span><span class="d">&#10087;</span
+        ><span class="r"></span>
+      </div>
+      <p class="kicker">Program Analysis</p>
+      <h1>Symbolic Execution</h1>
+      <div class="stats">02 June 2026 &middot; Nine minutes</div>
+
+      <p class="lead drop">
+        Symbolic execution is a means of analyzing a program to determine what
+        inputs cause each part of it to execute. Instead of running the code on
+        real values, an interpreter walks it while holding every input as a
+        symbol.
+      </p>
+
+      <p>
+        It arrives at expressions written in terms of those symbols, and at
+        constraints for the outcome of each conditional branch. Where concrete
+        execution answers what a program does with 5, symbolic execution answers
+        what it would take to reach a place at all.
+      </p>
+
+      <h2>A worked example</h2>
+      <div class="hr"></div>
+      <pre>
+int f() {
+  y = read();
+  z = y * 2;
+  if (z == 12) fail();
+  else printf("OK");
+}</pre
+      >
+      <p>
+        During symbolic execution the program reads a symbol,
+        <code>&lambda;</code>, and the branch condition becomes the constraint
+        <code>&lambda; * 2 == 12</code>. Execution forks, and a solver later
+        returns <code>6</code> to reach <code>fail()</code>.
+      </p>
+
+      <h2>Limitations</h2>
+      <div class="hr"></div>
+      <ul>
+        <li>
+          Merge states that differ only in irrelevant ways, and accept weaker
+          constraints.
+        </li>
+        <li>
+          Bound loop iterations, and accept incompleteness past the bound.
+        </li>
+        <li>
+          Prioritize paths heuristically, and accept that the interesting one
+          may be starved.
+        </li>
+      </ul>
+
+      <blockquote>
+        Program testing can be used to show the presence of bugs, but never to
+        show their absence.
+      </blockquote>
+
+      <p>
+        Engines worth reading next: <a href="#">KLEE</a> and
+        <a href="#">angr</a>.
+      </p>
+
+      <p class="colophon">Weibo&rsquo;s Home</p>
+    </div>
+  </section>
+
+  <!-- ============ D ============ -->
+  <section class="vD" data-v="D">
+    <div class="sheet">
+      <div class="top">
+        <span>Weibo&rsquo;s Home</span><span>Archive &mdash; 025</span>
+      </div>
+
+      <h1>Symbolic Execution</h1>
+      <div class="goldrule"></div>
+
+      <dl class="spec">
+        <dt>Filed under</dt>
+        <dd>Program Analysis</dd>
+        <dt>Published</dt>
+        <dd>02 June 2026</dd>
+        <dt>Length</dt>
+        <dd>1,840 words &mdash; nine minutes</dd>
+        <dt>Tags</dt>
+        <dd>analysis, verification, solvers</dd>
+      </dl>
+
+      <div class="body">
+        <div class="rail">Summary</div>
+        <div class="flow">
+          <p class="lead">
+            Symbolic execution is a means of analyzing a program to determine
+            what inputs cause each part of it to execute. Instead of running the
+            code on real values, an interpreter walks it while holding every
+            input as a symbol.
+          </p>
+          <p>
+            It arrives at expressions written in terms of those symbols, and at
+            constraints for the outcome of each conditional branch. Where
+            concrete execution answers what a program does with 5, symbolic
+            execution answers what it would take to reach a place at all.
+          </p>
+        </div>
+
+        <div class="rail">01 &nbsp;Example</div>
+        <div class="flow">
+          <h2>A worked example</h2>
+          <pre>
+int f() {
+  y = read();
+  z = y * 2;
+  if (z == 12) fail();
+  else printf("OK");
+}</pre
+          >
+          <p>
+            During symbolic execution the program reads a symbol,
+            <code>&lambda;</code>, and the branch condition becomes the
+            constraint <code>&lambda; * 2 == 12</code>. Execution forks, and a
+            solver later returns <code>6</code> to reach <code>fail()</code>.
+          </p>
+        </div>
+
+        <div class="rail">02 &nbsp;Limits</div>
+        <div class="flow">
+          <h2>Limitations</h2>
+          <ul>
+            <li>
+              <span class="n">i</span>
+              <span
+                >Merge states that differ only in irrelevant ways, and accept
+                weaker constraints.</span
+              >
+            </li>
+            <li>
+              <span class="n">ii</span>
+              <span
+                >Bound loop iterations, and accept incompleteness past the
+                bound.</span
+              >
+            </li>
+            <li>
+              <span class="n">iii</span>
+              <span
+                >Prioritize paths heuristically, and accept that the interesting
+                one may be starved.</span
+              >
+            </li>
+          </ul>
+          <blockquote>
+            Program testing can be used to show the presence of bugs, but never
+            to show their absence.
+          </blockquote>
+          <p>
+            Engines worth reading next: <a href="#">KLEE</a> and
+            <a href="#">angr</a>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ E ============ -->
+  <section class="vE" data-v="E">
+    <div class="nave">
+      <div class="arch">
+        <p class="kicker">Program Analysis</p>
+        <h1>Symbolic Execution</h1>
+        <div class="stats">02 June 2026 &middot; Nine minutes</div>
+      </div>
+      <div class="floor">
+        <p class="lead">
+          Symbolic execution is a means of analyzing a program to determine what
+          inputs cause each part of it to execute. Instead of running the code
+          on real values, an interpreter walks it while holding every input as a
+          symbol.
+        </p>
+
+        <p>
+          It arrives at expressions written in terms of those symbols, and at
+          constraints for the outcome of each conditional branch. Where concrete
+          execution answers what a program does with 5, symbolic execution
+          answers what it would take to reach a place at all.
+        </p>
+
+        <h2>A worked example</h2>
+        <pre>
+int f() {
+  y = read();
+  z = y * 2;
+  if (z == 12) fail();
+  else printf("OK");
+}</pre
+        >
+        <p>
+          During symbolic execution the program reads a symbol,
+          <code>&lambda;</code>, and the branch condition becomes the constraint
+          <code>&lambda; * 2 == 12</code>. Execution forks, and a solver later
+          returns <code>6</code> to reach <code>fail()</code>.
+        </p>
+
+        <h2>Limitations</h2>
+        <ul>
+          <li>
+            Merge states that differ only in irrelevant ways, and accept weaker
+            constraints.
+          </li>
+          <li>
+            Bound loop iterations, and accept incompleteness past the bound.
+          </li>
+          <li>
+            Prioritize paths heuristically, and accept that the interesting one
+            may be starved.
+          </li>
+        </ul>
+
+        <blockquote>
+          Program testing can be used to show the presence of bugs, but never to
+          show their absence.
+        </blockquote>
+
+        <p>
+          Engines worth reading next: <a href="#">KLEE</a> and
+          <a href="#">angr</a>.
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  (function () {
+    var notes = {
+      A: "<b>A — Item Description.</b> The page is a Souls menu panel: framed, translucent, floating over the world, with hairline rules and the flavour line last. Most literally Dark Souls. Strongest identity, and the frame costs horizontal room on every page. Kindled it becomes an ivory card on warm stone.",
+      B: "<b>B — Ash.</b> No panels, no borders, no chrome at all — a narrow column of text in a dark room, lit from above. Gold appears only under the cursor. Quietest and the easiest to read for long posts; the least obviously themed at a glance. Kindled it is plain white paper, which is either honest or forgettable.",
+      C: "<b>C — Illuminated.</b> The manuscript rather than the menu: warmer ground, gold rules under headings, a drop cap, centred title, denser setting. Closest to Anor Londo and to your fairy-tale note. Most decorated, so it dates fastest if the ornament is overdone. Kindled it goes to parchment rather than white.",
+      D: "<b>D — Datasheet.</b> Modelled on darksouls.jp itself rather than on the game: a record card. A label/value spec block at the top, section names in a left rail, full-width hairlines, roman numerals on list items, tabular figures. No ornament at all — gold is spent once, on the 44px rule under the title. Reads as an archive, and survives a light world with nothing lost. Weakest at a glance if you want atmosphere.",
+      E: "<b>E — Stained Glass.</b> Anor Londo: a shaft of light falls across the page and the column sits inside it, under an arched header rather than a box. The arcane register — dulled teal hollowed, lapis kindled — carries the second voice, so gold is left to the title alone. The arch is the risk: it is memorable and it is also the one thing here that could age badly.",
+    };
+    var tabs = document.querySelectorAll(".tab");
+    var stage = document.querySelectorAll(".stage > section");
+    var note = document.getElementById("note");
+    var worldBtn = document.getElementById("world");
+    var world = "hollowed";
+
+    function show(v) {
+      tabs.forEach(function (t) {
+        t.setAttribute("aria-selected", String(t.dataset.v === v));
+      });
+      stage.forEach(function (s) {
+        s.classList.toggle("on", s.dataset.v === v);
+      });
+      note.innerHTML = notes[v];
+      window.scrollTo({ top: 0 });
+    }
+
+    function setWorld(w) {
+      world = w;
+      document.body.dataset.world = w;
+      worldBtn.textContent = w === "hollowed" ? "Hollowed" : "Kindled";
+      worldBtn.setAttribute(
+        "aria-label",
+        "World: " + worldBtn.textContent + ". Click to switch.",
+      );
+    }
+
+    tabs.forEach(function (t) {
+      t.addEventListener("click", function () {
+        show(t.dataset.v);
+      });
+    });
+    worldBtn.addEventListener("click", function () {
+      setWorld(world === "hollowed" ? "kindled" : "hollowed");
+    });
+
+    setWorld("hollowed");
+    show("A");
+  })();
+</script>

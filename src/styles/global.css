@@ -1,37 +1,143 @@
 @import "tailwindcss";
-@import "./theme.css";
+@import "./tokens.css";
 @import "./typography.css";
+@import "./ornament.css";
 
-@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+@theme inline {
+  --color-ground: var(--ground);
+  --color-panel: var(--panel);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-text-2: var(--text-2);
+  --color-text-3: var(--text-3);
+  --color-text-4: var(--text-4);
+  --color-torch: var(--torch);
+  --color-torch-dim: var(--torch-dim);
+  --color-arcane: var(--arcane);
+  --color-blood: var(--blood);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-google-sans-code);
+}
+
+@custom-variant hollowed (&:where([data-theme=hollowed], [data-theme=dark], [data-theme=hollowed] *, [data-theme=dark] *));
 
 @layer base {
-  * {
-    @apply border-border outline-accent/75;
-    scrollbar-width: auto;
-    scrollbar-color: var(--color-muted) transparent;
+  :root {
+    /* Content width, and the width the atmosphere is built around —
+       `app-layout` and `.air` both read it so they cannot drift. The
+       reading measure does NOT follow it: see typography.css. */
+    --hall: 60rem;
   }
-  a,
-  button {
-    @apply outline-accent outline-offset-1 focus-visible:no-underline focus-visible:outline-2 focus-visible:outline-dashed;
+
+  html {
+    background: var(--ground);
   }
+
+  body {
+    background: var(--ground);
+    /* Body copy sits a step down from --text. You are reading in low light;
+       --text is reserved for the lead and for emphasis. */
+    color: var(--text-2);
+    font-family: var(--font-body);
+    font-size: 20px;
+    line-height: 1.8;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* .air and .grain are positioned, so they paint above any non-positioned
+     content. Each atmosphere layer must be excluded, or this rule overrides
+     its own positioning. */
+  body > *:not(.air):not(.grain) {
+    position: relative;
+    z-index: 1;
+  }
+
+  ::selection {
+    background: var(--torch-tint);
+    color: var(--torch);
+  }
+
+  :focus-visible {
+    outline: 1px solid var(--torch);
+    outline-offset: 4px;
+  }
+
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
+
+  a,
+  button {
+    transition: color 0.18s ease-out;
+  }
+
+  :target {
+    scroll-margin-block: 2rem;
+  }
 }
 
-@utility max-w-app {
-  @apply max-w-3xl;
+/* The world flip is instant: no veil, no wash, no fade. The rules that
+   used to live here are gone rather than disabled — see design.md §11. */
+
+/* Atmosphere: one light source above the content, haze at three depths,
+   then vignette. Fixed, so the world does not scroll with the text.
+
+   Radii are capped against --hall so the geometry tracks the column, not
+   the viewport — in plain percentages the lit area grew with the monitor
+   while the text did not, and the dark never closed in. Below ~1100px
+   min() picks the percentage and nothing changes. */
+.air {
+  /* position:fixed and inset:0 are applied as utilities in Layout.astro —
+     Tailwind hoists those two declarations out of hand-written rules. */
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      min(46%, calc(var(--hall) * 0.78)) 42% at 50% -6%,
+      var(--shaft),
+      transparent 72%
+    ),
+    radial-gradient(
+      min(110%, calc(var(--hall) * 1.32)) 52% at 50% 4%,
+      var(--haze),
+      transparent 70%
+    ),
+    radial-gradient(
+      min(140%, calc(var(--hall) * 1.6)) 60% at 50% 108%,
+      var(--haze),
+      transparent 68%
+    ),
+    radial-gradient(
+      min(130%, calc(var(--hall) * 1.55)) 100% at 50% 40%,
+      transparent 34%,
+      var(--vignette) 100%
+    );
+}
+
+/* Borderless: only the falloff in .air marks where the content ends.
+   Vertical rules at the hall's edges were tried and removed. */
+
+/* Film grain. Without it a dark page reads as clean vector art rather
+   than as a photographed room. Static — animated grain is nauseating. */
+.grain {
+  /* Behind the content, with .air. Over the top it smudges every glyph. */
+  z-index: 0;
+  pointer-events: none;
+  opacity: var(--grain);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 @utility app-layout {
-  @apply max-w-app mx-auto w-full px-4;
+  position: relative;
+  z-index: 1;
+  margin-inline: auto;
+  width: 100%;
+  max-width: var(--hall);
+  padding-inline: clamp(22px, 6vw, 40px);
 }
 
-@utility active-nav {
-  @apply underline decoration-wavy decoration-2 underline-offset-8;
-}
-
-:target {
-  scroll-margin-block: 1rem;
+@utility measure {
+  max-width: 60ch;
 }

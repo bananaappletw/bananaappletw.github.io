@@ -26,7 +26,7 @@ const {
 const socialImageURL = new URL(ogImage, Astro.site ?? Astro.url);
 const rssHref = getRelativeLocaleUrl(
   Astro.currentLocale ?? config.site.lang,
-  "rss.xml"
+  "rss.xml",
 );
 ---
 
@@ -44,11 +44,16 @@ const rssHref = getRelativeLocaleUrl(
     <link rel="canonical" href={canonicalURL} />
     <meta name="generator" content={Astro.generator} />
 
-    <!-- Font -->
+    <!-- Fonts -->
     <Font
-      cssVariable="--font-google-sans-code"
+      cssVariable="--font-display"
+      preload={[{ subset: "latin", weight: 600, style: "normal" }]}
+    />
+    <Font
+      cssVariable="--font-body"
       preload={[{ subset: "latin", weight: 400, style: "normal" }]}
     />
+    <Font cssVariable="--font-google-sans-code" />
 
     <!-- Primary meta -->
     <title>{title}</title>
@@ -96,30 +101,26 @@ const rssHref = getRelativeLocaleUrl(
     }
 
     <!--
-      Inline FOUC-prevention script: sets data-theme on <html> before
-      the browser paints. Runs synchronously, no defer/async.
+      First visit lands hollowed: the dark world is the true state of this
+      site, not a night mode. A returning reader's choice wins.
     -->
     <script is:inline>
       (function () {
-        const stored = localStorage.getItem("theme");
-        const prefersDark = window.matchMedia(
-          "(prefers-color-scheme: dark)"
-        ).matches;
-        const theme = stored ?? (prefersDark ? "dark" : "light");
-        document.firstElementChild?.setAttribute("data-theme", theme);
-        // Expose value so theme.ts can skip re-detection.
-        window.__theme = { value: theme };
+        const stored = localStorage.getItem("world");
+        const world =
+          stored === "kindled" || stored === "hollowed" ? stored : "hollowed";
+        document.firstElementChild?.setAttribute("data-theme", world);
       })();
     </script>
 
     <ClientRouter />
   </head>
-  <body
-    class="bg-background font-app text-foreground selection:bg-accent/75 selection:text-accent-foreground flex min-h-svh flex-col"
-  >
+  <body class="flex min-h-svh flex-col">
+    <div class="air fixed inset-0" aria-hidden="true"></div>
+    <div class="grain fixed inset-0" aria-hidden="true"></div>
     <slot />
     <script>
-      import "@/scripts/theme";
+      import "@/scripts/world";
     </script>
   </body>
 </html>

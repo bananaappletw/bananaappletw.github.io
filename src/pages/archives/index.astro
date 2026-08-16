@@ -32,23 +32,23 @@ const monthFormatter = new Intl.DateTimeFormat(locale, { month: "long" });
 
   <Breadcrumb />
 
-  <Main pageTitle={t.pages.archivesTitle} pageDesc={t.pages.archivesDesc}>
+  <Main pageTitle={t.pages.archivesTitle}>
     {
       Object.entries(
         getPostsByGroupCondition(filteredPosts, post =>
-          post.data.pubDatetime.getFullYear()
-        )
+          post.data.pubDatetime.getFullYear(),
+        ),
       )
         .sort(([yearA], [yearB]) => Number(yearB) - Number(yearA))
         .map(([year, yearGroup]) => (
           <div>
             <span class="text-2xl font-bold">{year}</span>
-            <sup class="text-muted-foreground text-sm">{yearGroup.length}</sup>
+            <sup class="text-text-4 text-sm">{yearGroup.length}</sup>
             {Object.entries(
               getPostsByGroupCondition(
                 yearGroup,
-                post => post.data.pubDatetime.getMonth() + 1
-              )
+                post => post.data.pubDatetime.getMonth() + 1,
+              ),
             )
               .sort(([monthA], [monthB]) => Number(monthB) - Number(monthA))
               .map(([month, monthGroup]) => (
@@ -56,23 +56,21 @@ const monthFormatter = new Intl.DateTimeFormat(locale, { month: "long" });
                   <div class="mt-6 min-w-36 text-lg sm:my-6">
                     <span class="font-bold">
                       {monthFormatter.format(
-                        new Date(2000, Number(month) - 1, 1)
+                        new Date(2000, Number(month) - 1, 1),
                       )}
                     </span>
-                    <sup class="text-muted-foreground text-xs">
-                      {monthGroup.length}
-                    </sup>
+                    <sup class="text-text-4 text-xs">{monthGroup.length}</sup>
                   </div>
                   <ul>
                     {monthGroup
                       .sort(
                         (a, b) =>
                           Math.floor(
-                            new Date(b.data.pubDatetime).getTime() / 1000
+                            new Date(b.data.pubDatetime).getTime() / 1000,
                           ) -
                           Math.floor(
-                            new Date(a.data.pubDatetime).getTime() / 1000
-                          )
+                            new Date(a.data.pubDatetime).getTime() / 1000,
+                          ),
                       )
                       .map(data => (
                         <Card {...data} />

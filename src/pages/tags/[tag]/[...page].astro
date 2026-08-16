@@ -20,7 +20,7 @@ export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
 
   return tags.flatMap(({ tag, tagName }) => {
     const tagPosts = getSortedPosts(
-      posts.filter(({ data }) => slugifyAll(data.tags).includes(tag))
+      posts.filter(({ data }) => slugifyAll(data.tags).includes(tag)),
     );
 
     return paginate(tagPosts, {
@@ -42,10 +42,7 @@ const t = useTranslations(locale);
 
   <Breadcrumb />
 
-  <Main
-    pageTitle={`${t.pages.tagTitle}: ${tagName}`}
-    pageDesc={`${t.pages.tagDesc} "${tagName}".`}
-  >
+  <Main pageTitle={`${t.pages.tagTitle}: ${tagName}`}>
     <ul>
       {page.data.map(data => <Card {...data} />)}
     </ul>

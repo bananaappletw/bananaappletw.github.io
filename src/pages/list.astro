@@ -22,136 +22,231 @@ const items = (rawItems as ListItem[]).sort((a, b) => {
   return b.date.localeCompare(a.date);
 });
 
-const typeColors: Record<string, string> = {
-  movie: "#3b82f6",
-  anime: "#a855f7",
-  manga: "#ec4899",
-  article: "#10b981",
-};
+const types = ["all", "movie", "anime", "manga", "article"] as const;
+const statuses = ["all", "todo", "done"] as const;
+
+const label = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
 ---
 
-<Layout title={`List | ${config.site.title}`} description="Movies, anime, manga, and articles to watch or read.">
+<Layout
+  title={`List | ${config.site.title}`}
+  description="Movies, anime, manga, and articles to watch or read."
+>
   <Header />
   <Breadcrumb />
-  <Main pageTitle="List" pageDesc="Movies, anime, manga, and articles.">
-    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-      <!-- Filter bar -->
-      <div style="display: flex; flex-direction: column; gap: 1rem;">
-        <!-- Type filters -->
-        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-          <button class="type-filter active" data-type="all" style="padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.875rem; font-weight: 500; background-color: var(--color-muted); color: var(--color-text);">
-            All
-          </button>
-          <button class="type-filter" data-type="movie" style="padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.875rem; font-weight: 500; background-color: var(--color-muted); color: var(--color-text);">
-            Movie
-          </button>
-          <button class="type-filter" data-type="anime" style="padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.875rem; font-weight: 500; background-color: var(--color-muted); color: var(--color-text);">
-            Anime
-          </button>
-          <button class="type-filter" data-type="manga" style="padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.875rem; font-weight: 500; background-color: var(--color-muted); color: var(--color-text);">
-            Manga
-          </button>
-          <button class="type-filter" data-type="article" style="padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.875rem; font-weight: 500; background-color: var(--color-muted); color: var(--color-text);">
-            Article
-          </button>
-        </div>
-
-        <!-- Status filters -->
-        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-          <button class="status-filter active" data-status="all" style="padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.875rem; font-weight: 500; background-color: var(--color-muted); color: var(--color-text);">
-            All
-          </button>
-          <button class="status-filter" data-status="todo" style="padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.875rem; font-weight: 500; background-color: var(--color-muted); color: var(--color-text);">
-            Todo
-          </button>
-          <button class="status-filter" data-status="done" style="padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.875rem; font-weight: 500; background-color: var(--color-muted); color: var(--color-text);">
-            Done
-          </button>
-        </div>
+  <Main pageTitle="List">
+    <div class="filters">
+      <div class="row" role="group" aria-label="Filter by type">
+        {
+          types.map(type => (
+            <button
+              class:list={["filter type-filter", { active: type === "all" }]}
+              data-type={type}
+              type="button"
+            >
+              {label(type)}
+            </button>
+          ))
+        }
       </div>
 
-      <!-- Items list -->
-      <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-        {items.map((item) => (
-          <div
-            class="list-item"
-            data-type={item.type}
-            data-status={item.status}
-            style="display: flex; align-items: flex-start; justify-content: space-between; padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--color-border);"
-          >
-            <div style="flex: 1;">
-              <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
-                <span style={`background-color: ${typeColors[item.type]}; color: white; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.5rem; border-radius: 0.25rem;`}>
-                  {item.type.charAt(0).toUpperCase() + item.type.slice(1)}
-                </span>
-                {item.link ? (
-                  <a href={item.link} target="_blank" rel="noopener noreferrer" style="color: var(--color-accent); font-weight: 500; text-decoration: none;">
-                    {item.name}
-                  </a>
-                ) : (
-                  <span style="font-weight: 500;">{item.name}</span>
-                )}
-                <span style={`font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 0.25rem; background-color: ${item.status === "done" ? "var(--color-muted)" : "var(--color-border)"}; color: var(--color-text);`}>
-                  {item.status === "done" ? "Done" : "Todo"}
-                </span>
-              </div>
-              {item.date && <p style="font-size: 0.75rem; color: var(--color-muted-foreground); margin-top: 0.5rem;">{item.date}</p>}
-            </div>
-          </div>
-        ))}
+      <div class="row" role="group" aria-label="Filter by status">
+        {
+          statuses.map(status => (
+            <button
+              class:list={[
+                "filter status-filter",
+                { active: status === "all" },
+              ]}
+              data-status={status}
+              type="button"
+            >
+              {label(status)}
+            </button>
+          ))
+        }
       </div>
     </div>
+
+    <ul class="items">
+      {
+        items.map(item => (
+          <li class="list-item" data-type={item.type} data-status={item.status}>
+            <span class="kind">{label(item.type)}</span>
+
+            {item.link ? (
+              <a
+                class="name"
+                href={item.link}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {item.name}
+              </a>
+            ) : (
+              <span class="name">{item.name}</span>
+            )}
+
+            <span class:list={["state", item.status]}>
+              {label(item.status)}
+            </span>
+
+            {item.date && <span class="when">{item.date}</span>}
+          </li>
+        ))
+      }
+    </ul>
   </Main>
   <Footer />
 </Layout>
 
+<style>
+  .filters {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-bottom: 34px;
+  }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  /* Filters are words, in the HUD voice. The active one is simply brighter —
+     no pill, no fill, no gold. */
+  .filter {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    background: none;
+    border: 0;
+    border-bottom: 1px solid transparent;
+    padding: 0 0 4px;
+    color: var(--text-4);
+    transition: color 0.18s ease-out;
+  }
+
+  .filter:hover {
+    color: var(--text-2);
+  }
+
+  .filter.active {
+    color: var(--text);
+    border-bottom-color: var(--border);
+  }
+
+  .items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .list-item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Type is told apart by its label, never by colour alone. */
+  .kind {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-4);
+    min-width: 7ch;
+  }
+
+  .name {
+    flex: 1;
+    min-width: 14ch;
+    color: var(--text-2);
+    text-decoration: none;
+  }
+
+  a.name {
+    text-decoration: underline;
+    text-decoration-color: var(--text-4);
+    text-underline-offset: 4px;
+  }
+
+  a.name:hover {
+    color: var(--torch);
+    text-decoration-color: var(--torch-dim);
+  }
+
+  .state {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-4);
+  }
+
+  .state.done {
+    color: var(--text-3);
+  }
+
+  .when {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--text-4);
+    font-variant-numeric: tabular-nums;
+  }
+</style>
+
 <script>
   function setupFilters() {
-    const typeFilters = document.querySelectorAll(".type-filter");
-    const statusFilters = document.querySelectorAll(".status-filter");
-    const listItems = document.querySelectorAll(".list-item");
+    const typeFilters = document.querySelectorAll<HTMLElement>(".type-filter");
+    const statusFilters =
+      document.querySelectorAll<HTMLElement>(".status-filter");
+    const listItems = document.querySelectorAll<HTMLElement>(".list-item");
+
+    if (!listItems.length) return;
 
     let activeType = "all";
     let activeStatus = "all";
 
     function updateItems() {
-      listItems.forEach((item) => {
-        const itemType = item.getAttribute("data-type");
-        const itemStatus = item.getAttribute("data-status");
-
-        const typeMatch = activeType === "all" || itemType === activeType;
-        const statusMatch = activeStatus === "all" || itemStatus === activeStatus;
-
-        (item as HTMLElement).style.display = typeMatch && statusMatch ? "" : "none";
+      listItems.forEach(item => {
+        const typeMatch =
+          activeType === "all" || item.dataset.type === activeType;
+        const statusMatch =
+          activeStatus === "all" || item.dataset.status === activeStatus;
+        item.style.display = typeMatch && statusMatch ? "" : "none";
       });
     }
 
-    typeFilters.forEach((btn) => {
+    typeFilters.forEach(btn => {
       btn.addEventListener("click", () => {
-        typeFilters.forEach((b) => b.classList.remove("active"));
+        typeFilters.forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
-        activeType = btn.getAttribute("data-type") || "all";
+        activeType = btn.dataset.type || "all";
         updateItems();
       });
     });
 
-    statusFilters.forEach((btn) => {
+    statusFilters.forEach(btn => {
       btn.addEventListener("click", () => {
-        statusFilters.forEach((b) => b.classList.remove("active"));
+        statusFilters.forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
-        activeStatus = btn.getAttribute("data-status") || "all";
+        activeStatus = btn.dataset.status || "all";
         updateItems();
       });
     });
   }
 
   setupFilters();
+  document.addEventListener("astro:after-swap", setupFilters);
 </script>
-
-<style>
-  button.type-filter.active,
-  button.status-filter.active {
-    background-color: var(--color-accent);
-    color: var(--color-background);
-  }
-</style>

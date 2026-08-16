@@ -1,0 +1,945 @@
+<title>Ash Variations</title>
+<style>
+  /*FONTS*/
+
+  /* ============================================================
+   ASH VARIATIONS — five takes on the chosen direction.
+
+   The palette is identical in all five: same ground, same three
+   ink levels, same gold. Only the device changes, so a difference
+   you see is the device and never the colour.
+
+   Each variation isolates one thing darksouls.jp actually does,
+   measured off its own CSS rather than off a screenshot:
+
+     1  as built        our synthetic atmosphere, the baseline
+     2  soot ground     their method: one tiled texture, no gradients
+     3  ruled headings  their .contents h1/h2 recipe
+     4  mincho          their type register: no tracking, no small caps
+     5  spec block      their product-info label/value table
+   ============================================================ */
+
+  :root {
+    --display: Cinzel, Optima, "Palatino Linotype", Palatino, serif;
+    --body: Spectral, Charter, Georgia, serif;
+    --mincho:
+      "Yu Mincho", YuMincho, "Hiragino Mincho ProN", "Songti SC",
+      "Noto Serif CJK JP", Georgia, serif;
+    --mono: GSCode, ui-monospace, Menlo, monospace;
+
+    /* chrome, hollowed */
+    --ui-bg: #121110;
+    --ui-fg: #cfc7b6;
+    --ui-dim: #7d7365;
+    --ui-line: #2e2a24;
+    --ui-mark: #d7ae72;
+  }
+
+  body[data-world="kindled"] {
+    --ui-bg: #f4f2ec;
+    --ui-fg: #2b2924;
+    --ui-dim: #6f6b60;
+    --ui-line: #ddd9cf;
+    --ui-mark: #8a5f18;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    background: var(--ui-bg);
+    color: var(--ui-fg);
+    font-family: var(--body);
+    margin: 0;
+    transition:
+      background-color 0.25s linear,
+      color 0.25s linear;
+  }
+
+  /* ---------- chooser ---------- */
+  .chooser {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--ui-bg);
+    border-bottom: 1px solid var(--ui-line);
+    padding: 14px clamp(16px, 4vw, 32px);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 10px 20px;
+  }
+  .chooser .who {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ui-dim);
+    margin-right: auto;
+  }
+  .tab,
+  .world {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: none;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    padding: 4px 0;
+    color: var(--ui-dim);
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+  .tab:hover,
+  .world:hover {
+    color: var(--ui-fg);
+  }
+  .tab[aria-selected="true"] {
+    color: var(--ui-mark);
+    border-bottom-color: var(--ui-mark);
+  }
+  .tab:focus-visible,
+  .world:focus-visible {
+    outline: 2px solid var(--ui-mark);
+    outline-offset: 3px;
+  }
+  .world {
+    border: 1px solid var(--ui-line);
+    padding: 5px 12px;
+    margin-left: 4px;
+  }
+
+  .note {
+    padding: 18px clamp(16px, 4vw, 32px) 0;
+    max-width: 76ch;
+    font-size: 14.5px;
+    line-height: 1.75;
+    color: var(--ui-dim);
+    margin: 0 0 18px;
+  }
+  .note b {
+    color: var(--ui-fg);
+    font-weight: 600;
+  }
+  .note code {
+    font-family: var(--mono);
+    font-size: 0.86em;
+    color: var(--ui-fg);
+  }
+
+  .stage > section {
+    display: none;
+  }
+  .stage > section.on {
+    display: block;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    body {
+      transition: none;
+    }
+  }
+
+  /* ============================================================
+   THE SHARED ASH PALETTE AND SETTING
+   Every variation inherits this. Nothing below overrides a colour.
+   ============================================================ */
+  .ash {
+    --ground: #100f0d;
+    --ink: #c6bca8;
+    --ink-2: #a99e8a;
+    --ink-3: #7e7361;
+    --gold: #cda76b;
+    --rule: #33302a;
+    --pre: rgba(0, 0, 0, 0.34);
+    --arcane: #7ea3a1;
+    --under: #4e483d;
+    --lit: rgba(205, 167, 107, 0.1);
+    --falloff: rgba(0, 0, 0, 0.42);
+    --tile-ink: 232, 220, 198;
+    --tile-alpha: 0.05;
+  }
+  [data-world="kindled"] .ash {
+    --ground: #ffffff;
+    --ink: #39352a;
+    --ink-2: #4d4739;
+    --ink-3: #6c6553;
+    --gold: #96631a;
+    --rule: #e2dccb;
+    --pre: #faf7ef;
+    --arcane: #2f5296;
+    --under: #c3bba5;
+    --lit: rgba(255, 239, 205, 0.6);
+    --falloff: rgba(190, 172, 130, 0.14);
+    --tile-ink: 60, 52, 36;
+    --tile-alpha: 0.045;
+  }
+
+  .ash {
+    background-color: var(--ground);
+    padding: clamp(56px, 12vh, 130px) clamp(20px, 5vw, 40px) 120px;
+    position: relative;
+  }
+  .ash .col {
+    position: relative;
+    max-width: 34rem;
+    margin: 0 auto;
+  }
+  .ash .mark {
+    color: var(--gold);
+    font-size: 13px;
+    letter-spacing: 0.2em;
+  }
+  .ash .kicker {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10.5px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 26px 0 18px;
+  }
+  .ash h1 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(27px, 4vw, 38px);
+    line-height: 1.25;
+    letter-spacing: 0.04em;
+    font-variant-caps: small-caps;
+    color: var(--ink);
+    margin: 0 0 26px;
+    max-width: 20ch;
+  }
+  .ash .stats {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 54px;
+  }
+  .ash p {
+    color: var(--ink-2);
+    font-size: 17.5px;
+    line-height: 1.9;
+    margin: 0 0 26px;
+  }
+  .ash .lead {
+    color: var(--ink);
+    font-size: 19px;
+  }
+  .ash h2 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 19px;
+    letter-spacing: 0.06em;
+    font-variant-caps: small-caps;
+    color: var(--ink-3);
+    margin: 62px 0 16px;
+  }
+  .ash ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 26px;
+  }
+  .ash li {
+    position: relative;
+    padding-left: 22px;
+    color: var(--ink-2);
+    font-size: 17px;
+    line-height: 1.9;
+  }
+  .ash li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.85em;
+    width: 4px;
+    height: 4px;
+    background: var(--ink-3);
+    transform: rotate(45deg);
+  }
+  .ash pre {
+    background: var(--pre);
+    border: 0;
+    border-left: 1px solid var(--rule);
+    padding: 16px 0 16px 20px;
+    overflow-x: auto;
+    margin: 0 0 26px;
+    font-family: var(--mono);
+    font-size: 13.5px;
+    line-height: 1.75;
+    color: var(--ink-2);
+  }
+  .ash code {
+    font-family: var(--mono);
+    color: var(--arcane);
+    font-size: 0.85em;
+  }
+  .ash blockquote {
+    margin: 0 0 26px;
+    padding-left: 22px;
+    border-left: 1px solid var(--rule);
+    font-style: italic;
+    color: var(--ink-3);
+    font-size: 16.5px;
+    line-height: 1.85;
+  }
+  .ash a {
+    color: var(--ink);
+    text-decoration: underline;
+    text-decoration-color: var(--under);
+    text-underline-offset: 4px;
+  }
+  .ash a:hover {
+    color: var(--gold);
+    text-decoration-color: var(--gold);
+  }
+
+  /* ============================================================
+   1 — AS BUILT
+   Our synthetic atmosphere: a shaft above the column, a vignette
+   draining the edges. Two radial gradients, no bitmap.
+   ============================================================ */
+  .v1::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(42% 34% at 50% -4%, var(--lit), transparent 72%),
+      radial-gradient(130% 95% at 50% 42%, transparent 36%, var(--falloff) 100%);
+  }
+
+  /* ============================================================
+   2 — SOOT GROUND
+   darksouls.jp's own method. Their body carries one 800×570 JPEG
+   of stained plaster, background-repeat: repeat, and there is no
+   gradient and no vignette anywhere on the page — the photograph
+   is the whole atmosphere.
+
+   Theirs is a photo we cannot ship, so the tile here is generated
+   on a canvas at load: seamless value noise at four octaves, blown
+   out into blotches, tinted with the world's own ink. Same idea,
+   no asset. The kindled world gets the same tile inverted to a
+   faint stain on paper.
+   ============================================================ */
+  .v2 {
+    background-repeat: repeat;
+    background-position: center center;
+  }
+
+  /* ============================================================
+   3 — RULED HEADINGS
+   Their .contents recipe, which never sizes a heading up — it
+   fences it. h1 sits between two hairlines; h2 takes a 4px left
+   rule and a 1px rule underneath. Everything else is Ash as built.
+   ============================================================ */
+  .v3::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(42% 34% at 50% -4%, var(--lit), transparent 72%),
+      radial-gradient(130% 95% at 50% 42%, transparent 36%, var(--falloff) 100%);
+  }
+  .v3 h1 {
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    padding: 18px 0;
+    margin-bottom: 22px;
+    max-width: none;
+    font-size: clamp(23px, 3.2vw, 30px);
+  }
+  .v3 h2 {
+    border-left: 4px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    padding: 4px 0 8px 14px;
+    font-size: 16px;
+  }
+
+  /* ============================================================
+   4 — MINCHO
+   Their type register rather than ours. Sawarabi Mincho is a
+   Japanese serif: no tracking, no small caps, no uppercase, line
+   height near 1.6–2, headings that stay close to body size. Our
+   Cinzel small-caps voice is switched off to see what is left.
+   ============================================================ */
+  .v4::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(42% 34% at 50% -4%, var(--lit), transparent 72%),
+      radial-gradient(130% 95% at 50% 42%, transparent 36%, var(--falloff) 100%);
+  }
+  .v4 .kicker,
+  .v4 .stats {
+    font-family: var(--mincho);
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+    font-size: 13px;
+  }
+  .v4 h1 {
+    font-family: var(--mincho);
+    font-weight: 400;
+    font-variant-caps: normal;
+    letter-spacing: 0;
+    font-size: clamp(24px, 3.2vw, 31px);
+    line-height: 1.5;
+  }
+  .v4 h2 {
+    font-family: var(--mincho);
+    font-weight: 400;
+    font-variant-caps: normal;
+    letter-spacing: 0;
+    font-size: 19px;
+    color: var(--ink);
+  }
+  .v4 p,
+  .v4 li,
+  .v4 blockquote {
+    font-family: var(--mincho);
+    line-height: 2;
+  }
+
+  /* ============================================================
+   5 — SPEC BLOCK
+   Their product-info table, which is the most distinctive thing
+   on darksouls.jp: genre, platform, players, price, release date
+   as label/value rows before any prose. Here it carries the post's
+   metadata, and the loose date-and-reading-time line goes away.
+   ============================================================ */
+  .v5::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(42% 34% at 50% -4%, var(--lit), transparent 72%),
+      radial-gradient(130% 95% at 50% 42%, transparent 36%, var(--falloff) 100%);
+  }
+  .v5 .spec {
+    display: grid;
+    grid-template-columns: 8rem 1fr;
+    border-top: 1px solid var(--rule);
+    margin: 0 0 54px;
+    font-variant-numeric: tabular-nums;
+  }
+  .v5 .spec dt {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    padding: 12px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .v5 .spec dd {
+    margin: 0;
+    padding: 11px 0;
+    font-size: 15px;
+    color: var(--ink-2);
+    border-bottom: 1px solid var(--rule);
+  }
+  @media (max-width: 560px) {
+    .v5 .spec {
+      grid-template-columns: 1fr;
+    }
+    .v5 .spec dt {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+  }
+</style>
+
+<div class="chooser">
+  <span class="who">Ash &middot; five variations</span>
+  <button class="tab" data-v="1" aria-selected="true">
+    1 &mdash; As built
+  </button>
+  <button class="tab" data-v="2" aria-selected="false">2 &mdash; Soot</button>
+  <button class="tab" data-v="3" aria-selected="false">3 &mdash; Ruled</button>
+  <button class="tab" data-v="4" aria-selected="false">4 &mdash; Mincho</button>
+  <button class="tab" data-v="5" aria-selected="false">5 &mdash; Spec</button>
+  <button class="world" id="world" type="button">Hollowed</button>
+</div>
+
+<p class="note" id="note"></p>
+
+<div class="stage">
+  <!-- ============ 1 ============ -->
+  <section class="ash v1 on" data-v="1">
+    <div class="col">
+      <span class="mark">&#9670;</span>
+      <p class="kicker">Program Analysis</p>
+      <h1>Symbolic Execution</h1>
+      <div class="stats">02 June 2026 &middot; Nine minutes</div>
+
+      <p class="lead">
+        Symbolic execution is a means of analyzing a program to determine what
+        inputs cause each part of it to execute. Instead of running the code on
+        real values, an interpreter walks it while holding every input as a
+        symbol.
+      </p>
+      <p>
+        It arrives at expressions written in terms of those symbols, and at
+        constraints for the outcome of each conditional branch. Where concrete
+        execution answers what a program does with 5, symbolic execution answers
+        what it would take to reach a place at all.
+      </p>
+
+      <h2>A worked example</h2>
+      <pre>
+int f() {
+  y = read();
+  z = y * 2;
+  if (z == 12) fail();
+  else printf("OK");
+}</pre
+      >
+      <p>
+        During symbolic execution the program reads a symbol,
+        <code>&lambda;</code>, and the branch condition becomes the constraint
+        <code>&lambda; * 2 == 12</code>. Execution forks, and a solver later
+        returns <code>6</code> to reach <code>fail()</code>.
+      </p>
+
+      <h2>Limitations</h2>
+      <ul>
+        <li>
+          Merge states that differ only in irrelevant ways, and accept weaker
+          constraints.
+        </li>
+        <li>
+          Bound loop iterations, and accept incompleteness past the bound.
+        </li>
+        <li>
+          Prioritize paths heuristically, and accept that the interesting one
+          may be starved.
+        </li>
+      </ul>
+
+      <blockquote>
+        Program testing can be used to show the presence of bugs, but never to
+        show their absence.
+      </blockquote>
+
+      <p>
+        Engines worth reading next: <a href="#">KLEE</a> and
+        <a href="#">angr</a>.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ 2 ============ -->
+  <section class="ash v2" data-v="2">
+    <div class="col">
+      <span class="mark">&#9670;</span>
+      <p class="kicker">Program Analysis</p>
+      <h1>Symbolic Execution</h1>
+      <div class="stats">02 June 2026 &middot; Nine minutes</div>
+
+      <p class="lead">
+        Symbolic execution is a means of analyzing a program to determine what
+        inputs cause each part of it to execute. Instead of running the code on
+        real values, an interpreter walks it while holding every input as a
+        symbol.
+      </p>
+      <p>
+        It arrives at expressions written in terms of those symbols, and at
+        constraints for the outcome of each conditional branch. Where concrete
+        execution answers what a program does with 5, symbolic execution answers
+        what it would take to reach a place at all.
+      </p>
+
+      <h2>A worked example</h2>
+      <pre>
+int f() {
+  y = read();
+  z = y * 2;
+  if (z == 12) fail();
+  else printf("OK");
+}</pre
+      >
+      <p>
+        During symbolic execution the program reads a symbol,
+        <code>&lambda;</code>, and the branch condition becomes the constraint
+        <code>&lambda; * 2 == 12</code>. Execution forks, and a solver later
+        returns <code>6</code> to reach <code>fail()</code>.
+      </p>
+
+      <h2>Limitations</h2>
+      <ul>
+        <li>
+          Merge states that differ only in irrelevant ways, and accept weaker
+          constraints.
+        </li>
+        <li>
+          Bound loop iterations, and accept incompleteness past the bound.
+        </li>
+        <li>
+          Prioritize paths heuristically, and accept that the interesting one
+          may be starved.
+        </li>
+      </ul>
+
+      <blockquote>
+        Program testing can be used to show the presence of bugs, but never to
+        show their absence.
+      </blockquote>
+
+      <p>
+        Engines worth reading next: <a href="#">KLEE</a> and
+        <a href="#">angr</a>.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ 3 ============ -->
+  <section class="ash v3" data-v="3">
+    <div class="col">
+      <span class="mark">&#9670;</span>
+      <p class="kicker">Program Analysis</p>
+      <h1>Symbolic Execution</h1>
+      <div class="stats">02 June 2026 &middot; Nine minutes</div>
+
+      <p class="lead">
+        Symbolic execution is a means of analyzing a program to determine what
+        inputs cause each part of it to execute. Instead of running the code on
+        real values, an interpreter walks it while holding every input as a
+        symbol.
+      </p>
+      <p>
+        It arrives at expressions written in terms of those symbols, and at
+        constraints for the outcome of each conditional branch. Where concrete
+        execution answers what a program does with 5, symbolic execution answers
+        what it would take to reach a place at all.
+      </p>
+
+      <h2>A worked example</h2>
+      <pre>
+int f() {
+  y = read();
+  z = y * 2;
+  if (z == 12) fail();
+  else printf("OK");
+}</pre
+      >
+      <p>
+        During symbolic execution the program reads a symbol,
+        <code>&lambda;</code>, and the branch condition becomes the constraint
+        <code>&lambda; * 2 == 12</code>. Execution forks, and a solver later
+        returns <code>6</code> to reach <code>fail()</code>.
+      </p>
+
+      <h2>Limitations</h2>
+      <ul>
+        <li>
+          Merge states that differ only in irrelevant ways, and accept weaker
+          constraints.
+        </li>
+        <li>
+          Bound loop iterations, and accept incompleteness past the bound.
+        </li>
+        <li>
+          Prioritize paths heuristically, and accept that the interesting one
+          may be starved.
+        </li>
+      </ul>
+
+      <blockquote>
+        Program testing can be used to show the presence of bugs, but never to
+        show their absence.
+      </blockquote>
+
+      <p>
+        Engines worth reading next: <a href="#">KLEE</a> and
+        <a href="#">angr</a>.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ 4 ============ -->
+  <section class="ash v4" data-v="4">
+    <div class="col">
+      <span class="mark">&#9670;</span>
+      <p class="kicker">Program Analysis</p>
+      <h1>Symbolic Execution</h1>
+      <div class="stats">02 June 2026 &middot; Nine minutes</div>
+
+      <p class="lead">
+        Symbolic execution is a means of analyzing a program to determine what
+        inputs cause each part of it to execute. Instead of running the code on
+        real values, an interpreter walks it while holding every input as a
+        symbol.
+      </p>
+      <p>
+        It arrives at expressions written in terms of those symbols, and at
+        constraints for the outcome of each conditional branch. Where concrete
+        execution answers what a program does with 5, symbolic execution answers
+        what it would take to reach a place at all.
+      </p>
+
+      <h2>A worked example</h2>
+      <pre>
+int f() {
+  y = read();
+  z = y * 2;
+  if (z == 12) fail();
+  else printf("OK");
+}</pre
+      >
+      <p>
+        During symbolic execution the program reads a symbol,
+        <code>&lambda;</code>, and the branch condition becomes the constraint
+        <code>&lambda; * 2 == 12</code>. Execution forks, and a solver later
+        returns <code>6</code> to reach <code>fail()</code>.
+      </p>
+
+      <h2>Limitations</h2>
+      <ul>
+        <li>
+          Merge states that differ only in irrelevant ways, and accept weaker
+          constraints.
+        </li>
+        <li>
+          Bound loop iterations, and accept incompleteness past the bound.
+        </li>
+        <li>
+          Prioritize paths heuristically, and accept that the interesting one
+          may be starved.
+        </li>
+      </ul>
+
+      <blockquote>
+        Program testing can be used to show the presence of bugs, but never to
+        show their absence.
+      </blockquote>
+
+      <p>
+        Engines worth reading next: <a href="#">KLEE</a> and
+        <a href="#">angr</a>.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ 5 ============ -->
+  <section class="ash v5" data-v="5">
+    <div class="col">
+      <span class="mark">&#9670;</span>
+      <p class="kicker">Program Analysis</p>
+      <h1>Symbolic Execution</h1>
+
+      <dl class="spec">
+        <dt>Filed under</dt>
+        <dd>Program Analysis</dd>
+        <dt>Published</dt>
+        <dd>02 June 2026</dd>
+        <dt>Reading</dt>
+        <dd>Nine minutes, 1,840 words</dd>
+        <dt>Tags</dt>
+        <dd>analysis, verification, solvers</dd>
+      </dl>
+
+      <p class="lead">
+        Symbolic execution is a means of analyzing a program to determine what
+        inputs cause each part of it to execute. Instead of running the code on
+        real values, an interpreter walks it while holding every input as a
+        symbol.
+      </p>
+      <p>
+        It arrives at expressions written in terms of those symbols, and at
+        constraints for the outcome of each conditional branch. Where concrete
+        execution answers what a program does with 5, symbolic execution answers
+        what it would take to reach a place at all.
+      </p>
+
+      <h2>A worked example</h2>
+      <pre>
+int f() {
+  y = read();
+  z = y * 2;
+  if (z == 12) fail();
+  else printf("OK");
+}</pre
+      >
+      <p>
+        During symbolic execution the program reads a symbol,
+        <code>&lambda;</code>, and the branch condition becomes the constraint
+        <code>&lambda; * 2 == 12</code>. Execution forks, and a solver later
+        returns <code>6</code> to reach <code>fail()</code>.
+      </p>
+
+      <h2>Limitations</h2>
+      <ul>
+        <li>
+          Merge states that differ only in irrelevant ways, and accept weaker
+          constraints.
+        </li>
+        <li>
+          Bound loop iterations, and accept incompleteness past the bound.
+        </li>
+        <li>
+          Prioritize paths heuristically, and accept that the interesting one
+          may be starved.
+        </li>
+      </ul>
+
+      <blockquote>
+        Program testing can be used to show the presence of bugs, but never to
+        show their absence.
+      </blockquote>
+
+      <p>
+        Engines worth reading next: <a href="#">KLEE</a> and
+        <a href="#">angr</a>.
+      </p>
+    </div>
+  </section>
+</div>
+
+<script>
+  (function () {
+    var notes = {
+      1: "<b>1 — As built.</b> The baseline, and what is on the branch now. Atmosphere is synthetic: a shaft gradient above the column, a vignette draining the edges, procedural grain behind the text. No bitmap of any kind, so it costs nothing to ship and scales to any viewport.",
+      2: "<b>2 — Soot ground.</b> darksouls.jp's actual method. Their <code>body</code> carries one 800×570 JPEG of stained plaster at <code>background-repeat: repeat</code>, and the detail pages have no gradient and no vignette at all — the photograph is the entire atmosphere. The tile here is generated on a canvas instead of shipped, four octaves of seamless value noise tinted with the world's own ink, so the idea is theirs and the asset is ours. Watch the top of the column: the light no longer comes from anywhere in particular.",
+      3: "<b>3 — Ruled headings.</b> Their <code>.contents</code> recipe. FromSoftware never sizes a heading up to mark it — they fence it: <code>h1</code> between two hairlines, <code>h2</code> with a 4px left rule and a 1px rule underneath. Applied here at our sizes. It makes the page scannable and slightly bureaucratic, which is either the archive feeling you want or the one you don't.",
+      4: "<b>4 — Mincho.</b> Their type register instead of ours. Sawarabi Mincho is a Japanese serif set at <code>letter-spacing: 0</code>, line-height near 1.6–2, with no small caps, no uppercase and headings that stay close to body size. Turning off Cinzel's inscriptional voice is the real test: if the page still reads as Torchlight here, the theme is carried by space and light rather than by the typeface.",
+      5: "<b>5 — Spec block.</b> The most distinctive thing on darksouls.jp is the product table — genre, platform, players, price, release date as label/value rows before any prose. Here it carries the post's metadata and the loose date line goes away. It front-loads facts and it costs 54px of the gate, which is the tallest, quietest part of Ash.",
+    };
+
+    var tabs = document.querySelectorAll(".tab");
+    var stage = document.querySelectorAll(".stage > section");
+    var note = document.getElementById("note");
+    var worldBtn = document.getElementById("world");
+    var world = "hollowed";
+
+    /* ---- the soot tile, generated rather than shipped ----
+       Seamless value noise: a lattice of random values per octave,
+       sampled with wraparound so the tile repeats without a seam,
+       then pushed hard toward the extremes so it reads as blotches
+       and stains rather than as television static. */
+    function soot(size, rgb, alpha) {
+      var c = document.createElement("canvas");
+      c.width = c.height = size;
+      var ctx = c.getContext("2d");
+      var img = ctx.createImageData(size, size);
+      var d = img.data;
+
+      function lattice(n) {
+        var g = new Float32Array(n * n);
+        for (var i = 0; i < g.length; i++) g[i] = Math.random();
+        return g;
+      }
+      function smooth(t) {
+        return t * t * (3 - 2 * t);
+      }
+      function sample(g, n, x, y) {
+        var fx = x * n,
+          fy = y * n;
+        var x0 = Math.floor(fx),
+          y0 = Math.floor(fy);
+        var tx = smooth(fx - x0),
+          ty = smooth(fy - y0);
+        var xa = ((x0 % n) + n) % n,
+          xb = (xa + 1) % n;
+        var ya = ((y0 % n) + n) % n,
+          yb = (ya + 1) % n;
+        var top = g[ya * n + xa] * (1 - tx) + g[ya * n + xb] * tx;
+        var bot = g[yb * n + xa] * (1 - tx) + g[yb * n + xb] * tx;
+        return top * (1 - ty) + bot * ty;
+      }
+
+      var octaves = [
+        { g: lattice(2), n: 2, w: 0.5 },
+        { g: lattice(4), n: 4, w: 0.26 },
+        { g: lattice(8), n: 8, w: 0.14 },
+        { g: lattice(16), n: 16, w: 0.1 },
+      ];
+
+      for (var y = 0; y < size; y++) {
+        for (var x = 0; x < size; x++) {
+          var u = x / size,
+            v = y / size,
+            n = 0;
+          for (var o = 0; o < octaves.length; o++) {
+            n += sample(octaves[o].g, octaves[o].n, u, v) * octaves[o].w;
+          }
+          // contrast: stains, not static
+          n = Math.min(1, Math.max(0, (n - 0.42) * 2.6 + 0.5));
+          n = n * n;
+          // a little per-pixel dirt on top of the blotches
+          n = Math.min(1, n + (Math.random() - 0.5) * 0.06);
+          var i = (y * size + x) * 4;
+          d[i] = rgb[0];
+          d[i + 1] = rgb[1];
+          d[i + 2] = rgb[2];
+          d[i + 3] = Math.round(n * alpha * 255);
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+      return c.toDataURL("image/png");
+    }
+
+    var tiles = {};
+    function paintSoot() {
+      var el = document.querySelector(".v2");
+      var cs = getComputedStyle(el);
+      var rgb = cs
+        .getPropertyValue("--tile-ink")
+        .split(",")
+        .map(function (s) {
+          return parseInt(s, 10);
+        });
+      var alpha = parseFloat(cs.getPropertyValue("--tile-alpha"));
+      var key = world;
+      if (!tiles[key]) tiles[key] = soot(256, rgb, alpha);
+      el.style.backgroundImage = "url(" + tiles[key] + ")";
+    }
+
+    function show(v) {
+      tabs.forEach(function (t) {
+        t.setAttribute("aria-selected", String(t.dataset.v === v));
+      });
+      stage.forEach(function (s) {
+        s.classList.toggle("on", s.dataset.v === v);
+      });
+      note.innerHTML = notes[v];
+      if (v === "2") paintSoot();
+      window.scrollTo({ top: 0 });
+    }
+
+    function setWorld(w) {
+      world = w;
+      document.body.dataset.world = w;
+      worldBtn.textContent = w === "hollowed" ? "Hollowed" : "Kindled";
+      worldBtn.setAttribute(
+        "aria-label",
+        "World: " + worldBtn.textContent + ". Click to switch.",
+      );
+      paintSoot();
+    }
+
+    tabs.forEach(function (t) {
+      t.addEventListener("click", function () {
+        show(t.dataset.v);
+      });
+    });
+    worldBtn.addEventListener("click", function () {
+      setWorld(world === "hollowed" ? "kindled" : "hollowed");
+    });
+
+    setWorld("hollowed");
+    show("1");
+  })();
+</script>

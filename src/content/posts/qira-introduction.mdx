@@ -2,16 +2,16 @@
 title: qira introduction
 pubDatetime: 2026-06-02T20:18:23.003911Z
 description: qira introduction
-tags: ['qira', 'ctf', 'computer science', 'archive']
+tags: ["qira", "ctf", "computer science", "archive"]
 ---
 
 ![image from qira.me website](http://qira.me/img/first_splash.png)
 
-***
+---
 
-* QIRA is timeless debugger
-* Fullname is QEMU Interactive Runtime Analyser
-* QIRA was initially developed at Google by George Hotz. Work continues at CMU.
+- QIRA is timeless debugger
+- Fullname is QEMU Interactive Runtime Analyser
+- QIRA was initially developed at Google by George Hotz. Work continues at CMU.
 
 ## qira website
 
@@ -65,52 +65,52 @@ You could trace the instructions with web browser on http://localhost:3002/
 j -- next invocation of instruction
 k -- prev invocation of instruction
 ```
-    
+
 ```
 shift-j -- next toucher of data
 shift-k -- prev toucher of data
 ```
-    
+
 ```
 m -- go to return from current function
 , -- go to start of current function
 ```
-    
+
 ```
 z -- zoom out max on vtimeline
 ```
-    
+
 ```
 l -- set iaddr to instruction at current clnum
 ```
-    
+
 ```
 left  -- -1 fork
 right -- +1 fork
 up    -- -1 clnum
 down  -- +1 clnum
 ```
-    
+
 ```
 esc -- back
 ```
-    
+
 ```
 shift-c -- clear all forks
 ```
-    
+
 ```
 n -- rename instruction
 shift-n -- rename data
 ; -- add comment at instruction
 shift-; -- add comment at data
 ```
-    
+
 ```
 g -- go to change, address, or name
 space -- toggle flat/function view
 ```
-    
+
 ```
 p -- analyze function at iaddr
 c -- make code at iaddr, one instruction
@@ -123,10 +123,10 @@ u -- make undefined at iaddr
 
 qira is made of following compoments
 
-* qemu
-* flask
-* python
-* qiradb
+- qemu
+- flask
+- python
+- qiradb
 
 qemu is used to emulate other architecture
 
@@ -140,8 +140,8 @@ qiradb is a python package deal with the instruction trace
 
 ### Testing environment
 
-* Windows 10
-* Vmware workstation Pro 12 with Ubuntu 15.10
+- Windows 10
+- Vmware workstation Pro 12 with Ubuntu 15.10
 
 Install qira 1.2 on Ubuntu 15.10 and port-forwarding 3002 port
 

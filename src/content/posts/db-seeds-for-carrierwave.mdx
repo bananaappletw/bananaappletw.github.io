@@ -2,7 +2,7 @@
 title: db/seeds for carrierwave
 pubDatetime: 2026-06-02T20:18:23.003290Z
 description: db/seeds for carrierwave
-tags: ['ruby on rails', 'carrierwave', 'computer science', 'archive']
+tags: ["ruby on rails", "carrierwave", "computer science", "archive"]
 ---
 
 這篇主要是紀錄對 Carrierwave 寫 `db/seeds` 的方法
@@ -17,9 +17,11 @@ Model 是 Material
 ```
 class Material < ApplicationRecord
 ```
+
 ```
   mount_uploader :attachment, AttachmentUploader
 ```
+
 ```
 end
 ```
@@ -28,7 +30,7 @@ end
 
 我有一個檔案路徑在
 
-* `/test/fixtures/magic`
+- `/test/fixtures/magic`
 
 ## `db/seeds.rb`
 
@@ -48,17 +50,19 @@ Database 是使用 sqlite
 
 我有兩個檔案路徑在
 
-* `/test/fixtures/magic`
-* `/test/fixtures/gdb.txt`
+- `/test/fixtures/magic`
+- `/test/fixtures/gdb.txt`
 
 ## `app/models/challenge.rb`
 
 ```
 class Challenge < ApplicationRecord
 ```
+
 ```
   mount_uploaders :attachments, AttachmentUploader
 ```
+
 ```
 end
 ```
@@ -70,9 +74,11 @@ challenge = Challenge.new()
 attachments = [ "magic", "gdb.txt" ]
 attachments.map! do | attachment |
 ```
+
 ```
   attachment = File.new(File.join("test/fixtures/files/",attachment))
 ```
+
 ```
 end
 challenge.attachments = attachments

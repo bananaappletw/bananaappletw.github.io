@@ -1,13 +1,5 @@
 ---
 import { getRelativeLocaleUrl } from "astro:i18n";
-import IconUnderline from "@/assets/icons/IconUnderline.svg";
-import IconMenuDeep from "@/assets/icons/IconMenuDeep.svg";
-import IconArchive from "@/assets/icons/IconArchive.svg";
-import IconSunHigh from "@/assets/icons/IconSunHigh.svg";
-import IconSearch from "@/assets/icons/IconSearch.svg";
-import IconMoon from "@/assets/icons/IconMoon.svg";
-import IconX from "@/assets/icons/IconX.svg";
-import LinkButton from "./LinkButton.astro";
 import { stripBase, stripLocale } from "@/utils/withBase";
 import { useTranslations } from "@/i18n";
 import config from "@/config";
@@ -17,8 +9,8 @@ const { site, features } = config;
 const locale = Astro.currentLocale ?? config.site.lang;
 const t = useTranslations(locale);
 
-// Strip the base prefix so isActive comparisons work regardless of deploy subdirectory.
-// e.g. with base "/blog": "/blog/posts/slug" → "/posts/slug"
+// Strip the base prefix so isActive comparisons work regardless of deploy
+// subdirectory. e.g. with base "/blog": "/blog/posts/slug" → "/posts/slug"
 const relativePath = stripBase(Astro.url.pathname);
 const pathWithoutTrailingSlash =
   relativePath.endsWith("/") && relativePath !== "/"
@@ -32,172 +24,194 @@ const isActive = (path: string) => {
   const pathArray = path.split("/").filter(p => p.trim());
   return currentPath === path || currentPathArray[0] === pathArray[0];
 };
+
+// The HUD carries the fewest words that still let a reader move. Souls
+// affixes its interface to a corner and otherwise leaves the screen alone.
+const links = [
+  { href: "posts", label: t.nav.posts, path: "/posts" },
+  { href: "tags", label: t.nav.tags, path: "/tags" },
+  ...(features.showArchives
+    ? [{ href: "archives", label: t.nav.archives, path: "/archives" }]
+    : []),
+  ...(features.search !== false
+    ? [{ href: "search", label: t.nav.search, path: "/search" }]
+    : []),
+  { href: "list", label: t.nav.list, path: "/list" },
+  { href: "about", label: t.nav.about, path: "/about" },
+];
 ---
 
 <a
   id="skip-to-content"
   href="#main-content"
-  class="bg-background text-accent absolute inset-s-16 -top-full z-50 px-3 py-2 backdrop-blur-lg transition-all focus:top-4"
+  class="label absolute inset-s-16 -top-full z-50 px-3 py-2 focus:top-4"
+  style="background: var(--ground); color: var(--torch);"
 >
   {t.a11y.skipToContent}
 </a>
 
-<header
-  class="app-layout flex flex-col items-center justify-between sm:flex-row"
->
-  <div
-    class="border-border bg-background relative flex w-full items-baseline justify-between border-b py-4 sm:items-center sm:py-6"
-  >
-    <a
-      href={getRelativeLocaleUrl(locale, "")}
-      class="absolute py-1 text-xl leading-8 font-semibold whitespace-nowrap sm:static sm:my-auto sm:text-2xl sm:leading-none"
-    >
-      {site.title}
+<header class="app-layout">
+  <div class="hud">
+    <a href={getRelativeLocaleUrl(locale, "")} class="hud-home">
+      {/* The soul: the site's mark, and the page's one moving thing (§11). */}
+      <svg
+        class="soul flame"
+        viewBox="0 0 16 16"
+        width="14"
+        height="14"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path
+          class="soul-veil"
+          d="M8 0.7c1.1 2.6.2 3.7.7 5.2-.9-.7-1.4-1.8-1.3-3-1.2 1.5-.9 2.9-.9 3.9C4.9 7.6 3.9 9 3.9 10.7c0 2.3 1.8 4.2 4.1 4.2s4.1-1.9 4.1-4.2c0-1.7-1-3.1-2.6-3.9.1-1.6-.4-3.4-1.5-6.1z"
+        ></path>
+        <ellipse class="soul-core" cx="8" cy="10.7" rx="1.7" ry="1.8"></ellipse>
+      </svg>
+      <span>{site.title}</span>
     </a>
-    <nav
-      id="nav-menu"
-      class="flex w-full flex-col items-center sm:ms-2 sm:flex-row sm:justify-end sm:space-x-4 sm:py-0"
-    >
-      <button
-        id="menu-btn"
-        class="focus-outline self-end p-2 sm:hidden"
-        aria-label={t.a11y.openMenu}
-        aria-expanded="false"
-        aria-controls="menu-items"
-        data-label-open={t.a11y.openMenu}
-        data-label-close={t.a11y.closeMenu}
-      >
-        <IconX id="close-icon" class="hidden" />
-        <IconMenuDeep id="menu-icon" />
-      </button>
-      <ul
-        id="menu-items"
-        class="[&>li>a]:hover:text-accent mt-4 hidden w-44 grid-cols-2 place-content-center gap-2 sm:mt-0 sm:flex sm:w-auto sm:gap-x-5 sm:gap-y-0 sm:[&>li]:h-8 [&>li>a]:block [&>li>a]:px-4 [&>li>a]:py-3 [&>li>a]:text-center [&>li>a]:font-medium sm:[&>li>a]:px-2 sm:[&>li>a]:py-1"
-      >
-        <li class="col-span-2">
+
+    <nav aria-label={t.nav.posts}>
+      {
+        links.map(link => (
           <a
-            href={getRelativeLocaleUrl(locale, "posts")}
-            class:list={{ "active-nav": isActive("/posts") }}
+            href={getRelativeLocaleUrl(locale, link.href)}
+            aria-current={isActive(link.path) ? "page" : undefined}
           >
-            {t.nav.posts}
+            {link.label}
           </a>
-        </li>
-        <li class="col-span-2">
-          <a
-            href={getRelativeLocaleUrl(locale, "tags")}
-            class:list={{ "active-nav": isActive("/tags") }}
+        ))
+      }
+      {
+        features.lightAndDarkMode && (
+          <button
+            id="world-btn"
+            type="button"
+            aria-label="Dark theme. Switch to light."
           >
-            {t.nav.tags}
-          </a>
-        </li>
-        <li class="col-span-2">
-          <a
-            href={getRelativeLocaleUrl(locale, "about")}
-            class:list={{ "active-nav": isActive("/about") }}
-          >
-            {t.nav.about}
-          </a>
-        </li>
-        <li class="col-span-2">
-          <a
-            href={getRelativeLocaleUrl(locale, "list")}
-            class:list={{ "active-nav": isActive("/list") }}
-          >
-            {t.nav.list}
-          </a>
-        </li>
-        {
-          features.showArchives && (
-            <li class="col-span-2">
-              <LinkButton
-                href={getRelativeLocaleUrl(locale, "archives")}
-                class:list={[
-                  "focus-outline flex size-full justify-center p-3 sm:relative sm:size-8 sm:p-0",
-                  { "active-nav": isActive("/archives") },
-                ]}
-                title={t.nav.archives}
-                aria-label={t.nav.archives}
-              >
-                <IconArchive class="hidden sm:absolute sm:top-1/2 sm:left-1/2 sm:block sm:size-6 sm:-translate-x-1/2 sm:-translate-y-1/2" />
-                <span class="sm:sr-only">{t.nav.archives}</span>
-                {isActive("/archives") && (
-                  <IconUnderline
-                    aria-hidden="true"
-                    class="scale-125 max-sm:hidden sm:absolute sm:bottom-0 sm:w-6"
-                  />
-                )}
-              </LinkButton>
-            </li>
-          )
-        }
-        {
-          features.search !== false && (
-            <li class="col-span-1 flex items-center justify-center">
-              <LinkButton
-                href={getRelativeLocaleUrl(locale, "search")}
-                class:list={["focus-outline relative size-8"]}
-                title={t.nav.search}
-                aria-label={t.nav.search}
-              >
-                <IconSearch class="absolute top-1/2 left-1/2 size-6 -translate-x-1/2 -translate-y-1/2" />
-                <span class="sr-only">{t.nav.search}</span>
-                {isActive("/search") && (
-                  <IconUnderline
-                    aria-hidden="true"
-                    class="absolute bottom-0 w-6 scale-125 max-sm:inset-s-2"
-                  />
-                )}
-              </LinkButton>
-            </li>
-          )
-        }
-        {
-          features.lightAndDarkMode && (
-            <li class="col-span-1 flex items-center justify-center">
-              <button
-                id="theme-btn"
-                class="focus-outline hover:[&>svg]:stroke-accent relative size-12 p-4 sm:size-8"
-                title={t.a11y.toggleTheme}
-                aria-label="auto"
-                aria-live="polite"
-              >
-                <IconMoon class="absolute top-[50%] left-[50%] translate-[-50%] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
-                <IconSunHigh class="absolute top-[50%] left-[50%] translate-[-50%] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
-              </button>
-            </li>
-          )
-        }
-      </ul>
+            {/* The torch: out when hollowed, lit when kindled. Static. */}
+            <svg
+              class="torch"
+              viewBox="0 0 16 16"
+              width="15"
+              height="15"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path
+                class="torch-fire"
+                d="M8 1.1c1.3 2.8 3 3.8 3 6.4 0 2.1-1.3 3.6-3 3.6s-3-1.5-3-3.6c0-1.6.9-2.3 1.3-3.4.5 1.2 1.1.7 1.7-3z"
+              />
+              <path class="torch-haft" d="M7.3 11.4h1.4v3.5H7.3z" />
+            </svg>
+          </button>
+        )
+      }
     </nav>
   </div>
 </header>
 
-<script>
-  function toggleNav() {
-    const menuBtn = document.querySelector<HTMLButtonElement>("#menu-btn");
-    const menuItems = document.querySelector("#menu-items");
-    const menuIcon = document.querySelector("#menu-icon");
-    const closeIcon = document.querySelector("#close-icon");
-
-    if (!menuBtn || !menuItems || !menuIcon || !closeIcon) return;
-
-    const openLabel = menuBtn.dataset.labelOpen ?? "Open menu";
-    const closeLabel = menuBtn.dataset.labelClose ?? "Close menu";
-
-    menuBtn.addEventListener("click", () => {
-      const openMenu = menuBtn.getAttribute("aria-expanded") === "true";
-
-      menuBtn.setAttribute("aria-expanded", openMenu ? "false" : "true");
-      menuBtn.setAttribute("aria-label", openMenu ? openLabel : closeLabel);
-
-      menuItems.classList.toggle("hidden");
-      menuItems.classList.toggle("grid");
-      menuIcon.classList.toggle("hidden");
-      closeIcon.classList.toggle("hidden");
-    });
+<style>
+  .hud {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 10px 18px;
+    padding-top: 26px;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-4);
   }
 
-  toggleNav();
+  .hud-home {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    color: var(--text-4);
+    text-decoration: none;
+  }
 
-  document.addEventListener("astro:after-swap", toggleNav);
-</script>
+  .hud-home:hover {
+    color: var(--text-2);
+  }
+
+  /* One colour at two opacities — veil is the glow, core is the soul.
+     Two tones, one gold: the accent is still spent once (§4). */
+  .hud .soul {
+    align-self: center;
+  }
+
+  .soul-veil {
+    fill: var(--torch);
+    opacity: 0.42;
+  }
+
+  .soul-core {
+    fill: var(--torch);
+  }
+
+  nav {
+    margin-inline-start: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+  }
+
+  nav a {
+    color: var(--text-4);
+    text-decoration: none;
+  }
+
+  nav a:hover,
+  nav a[aria-current="page"] {
+    color: var(--text-2);
+  }
+
+  button {
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    background: none;
+    border: 0;
+    padding: 0;
+    color: var(--text-4);
+    display: flex;
+    align-items: center;
+    align-self: center; /* the nav is baseline-aligned; the icon is not */
+    line-height: 1;
+  }
+
+  button:hover {
+    color: var(--text-2);
+  }
+
+  /* Out when hollowed, lit when kindled — the one control that takes gold,
+     which §4 permits for an active state. The haft never lights. */
+  .torch-fire {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.25;
+    stroke-linejoin: round;
+  }
+
+  .torch-haft {
+    fill: currentColor;
+  }
+
+  :root[data-theme="kindled"] .torch-fire,
+  :root[data-theme="light"] .torch-fire {
+    fill: var(--torch);
+    stroke: var(--torch);
+  }
+
+  @media (max-width: 620px) {
+    nav {
+      margin-inline-start: 0;
+      width: 100%;
+      padding-top: 8px;
+    }
+  }
+</style>

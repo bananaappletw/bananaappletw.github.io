@@ -1,0 +1,634 @@
+<title>Stain Calibration</title>
+<style>
+  /*FONTS*/
+
+  /* ============================================================
+   STAIN CALIBRATION
+
+   Two problems with the tiled approach, both raised by the user:
+
+     1. repeat is visible. A 700px tile on a 1600px screen shows
+        its own grid, and the eye finds it immediately.
+     2. too busy, and the light world suffers first — the same
+        amount of dirt that reads as atmosphere on #100f0d reads
+        as a stained page on #ffffff.
+
+   Both are fixed here.
+
+   The tile is gone: ONE turbulence field, background-repeat: no-repeat,
+   background-size: cover, background-attachment: fixed. There is no
+   second copy, so there is no seam, and because it is fixed the stain
+   stays with the window while the text scrolls past it. That is also
+   what the atmosphere layers already do — the room does not scroll.
+
+   Busyness is two numbers, and the worlds do not share them.
+   Frequency sets blotch size: lower is bigger and calmer, higher is
+   finer and noisier. Strength is the alpha. The kindled world wants
+   roughly half the strength and a lower frequency than hollowed.
+   ============================================================ */
+
+  :root {
+    --display: Cinzel, Optima, "Palatino Linotype", Palatino, serif;
+    --body: Spectral, Charter, Georgia, serif;
+    --mono: GSCode, ui-monospace, Menlo, monospace;
+
+    --ui-bg: #121110;
+    --ui-fg: #cfc7b6;
+    --ui-dim: #7d7365;
+    --ui-line: #2e2a24;
+    --ui-mark: #d7ae72;
+
+    --ground: #100f0d;
+    --ink: #c6bca8;
+    --ink-2: #a99e8a;
+    --ink-3: #7e7361;
+    --gold: #cda76b;
+    --rule: #33302a;
+    --pre-bg: rgba(0, 0, 0, 0.34);
+    --arcane: #7ea3a1;
+    --under: #4e483d;
+  }
+
+  body[data-world="kindled"] {
+    --ui-bg: #f4f2ec;
+    --ui-fg: #2b2924;
+    --ui-dim: #6f6b60;
+    --ui-line: #ddd9cf;
+    --ui-mark: #8a5f18;
+
+    --ground: #ffffff;
+    --ink: #39352a;
+    --ink-2: #4d4739;
+    --ink-3: #6c6553;
+    --gold: #96631a;
+    --rule: #e2dccb;
+    --pre-bg: #faf7ef;
+    --arcane: #2f5296;
+    --under: #c3bba5;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    background: var(--ui-bg);
+    color: var(--ui-fg);
+    font-family: var(--body);
+    margin: 0;
+  }
+
+  /* ---------- the console ---------- */
+  .console {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--ui-bg);
+    border-bottom: 1px solid var(--ui-line);
+    padding: 12px clamp(14px, 3vw, 28px);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 26px;
+  }
+  .console .who {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ui-dim);
+  }
+
+  .dial {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  .dial label {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ui-dim);
+    white-space: nowrap;
+  }
+  .dial output {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ui-fg);
+    min-width: 4.2em;
+    font-variant-numeric: tabular-nums;
+  }
+  input[type="range"] {
+    width: 116px;
+    accent-color: var(--ui-mark);
+    cursor: pointer;
+  }
+  input[type="range"]:focus-visible {
+    outline: 2px solid var(--ui-mark);
+    outline-offset: 3px;
+  }
+
+  .btn {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: none;
+    border: 1px solid var(--ui-line);
+    padding: 6px 12px;
+    color: var(--ui-dim);
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+  .btn:hover {
+    color: var(--ui-fg);
+  }
+  .btn:focus-visible {
+    outline: 2px solid var(--ui-mark);
+    outline-offset: 3px;
+  }
+  .btn[aria-pressed="true"] {
+    color: var(--ui-mark);
+    border-color: var(--ui-mark);
+  }
+  .spacer {
+    margin-left: auto;
+  }
+
+  .hint {
+    padding: 14px clamp(14px, 3vw, 28px) 0;
+    max-width: 80ch;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--ui-dim);
+    margin: 0 0 14px;
+  }
+  .hint b {
+    color: var(--ui-fg);
+    font-weight: 600;
+  }
+  .hint code {
+    font-family: var(--mono);
+    font-size: 0.87em;
+    color: var(--ui-fg);
+  }
+
+  /* ---------- the page under test ---------- */
+  .room {
+    position: relative;
+    background-color: var(--ground);
+    padding: clamp(44px, 8vh, 96px) clamp(20px, 5vw, 40px) 120px;
+  }
+
+  /* THE STAIN.
+     One field. No repeat, no tile, no seam. Fixed to the window, so
+     the dirt belongs to the room and the text moves through it. */
+  .stain {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center center;
+  }
+  /* The stain is positioned, so it paints above any NON-positioned
+     sibling. Everything that must sit over it gets a stacking order
+     of its own — the same rule global.css enforces with
+     `body > * { z-index: 1 }`. */
+  .room > .col,
+  .hint,
+  .out {
+    position: relative;
+    z-index: 1;
+  }
+
+  .col {
+    max-width: 34rem;
+    margin: 0 auto;
+  }
+  .mark {
+    color: var(--gold);
+    font-size: 13px;
+    letter-spacing: 0.2em;
+  }
+  .kicker {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10.5px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 26px 0 18px;
+  }
+  .room h1 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(27px, 4vw, 38px);
+    line-height: 1.25;
+    letter-spacing: 0.04em;
+    font-variant-caps: small-caps;
+    color: var(--ink);
+    margin: 0 0 26px;
+    max-width: 20ch;
+  }
+  .stats {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 54px;
+  }
+  .room p {
+    color: var(--ink-2);
+    font-size: 17.5px;
+    line-height: 1.9;
+    margin: 0 0 26px;
+  }
+  .room .lead {
+    color: var(--ink);
+    font-size: 19px;
+  }
+  .room h2 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 19px;
+    letter-spacing: 0.06em;
+    font-variant-caps: small-caps;
+    color: var(--ink-3);
+    margin: 62px 0 16px;
+  }
+  .room ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 26px;
+  }
+  .room li {
+    position: relative;
+    padding-left: 22px;
+    color: var(--ink-2);
+    font-size: 17px;
+    line-height: 1.9;
+  }
+  .room li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.85em;
+    width: 4px;
+    height: 4px;
+    background: var(--ink-3);
+    transform: rotate(45deg);
+  }
+  .room pre {
+    background: var(--pre-bg);
+    border-left: 1px solid var(--rule);
+    padding: 16px 0 16px 20px;
+    overflow-x: auto;
+    margin: 0 0 26px;
+    font-family: var(--mono);
+    font-size: 13.5px;
+    line-height: 1.75;
+    color: var(--ink-2);
+  }
+  .room :not(pre) > code {
+    font-family: var(--mono);
+    color: var(--arcane);
+    font-size: 0.85em;
+  }
+  .room blockquote {
+    margin: 0 0 26px;
+    padding-left: 22px;
+    border-left: 1px solid var(--rule);
+    font-style: italic;
+    color: var(--ink-3);
+    font-size: 16.5px;
+    line-height: 1.85;
+  }
+  .room a {
+    color: var(--ink);
+    text-decoration: underline;
+    text-decoration-color: var(--under);
+    text-underline-offset: 4px;
+  }
+  .room a:hover {
+    color: var(--gold);
+    text-decoration-color: var(--gold);
+  }
+
+  /* ---------- the output ---------- */
+  .out {
+    padding: 26px clamp(14px, 3vw, 28px) 60px;
+    background: var(--ui-bg);
+    border-top: 1px solid var(--ui-line);
+  }
+  .out h3 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ui-dim);
+    margin: 0 0 14px;
+  }
+  .out pre {
+    margin: 0;
+    padding: 16px 18px;
+    border-left: 1px solid var(--ui-line);
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.75;
+    color: var(--ui-dim);
+    white-space: pre;
+  }
+</style>
+
+<div class="console">
+  <span class="who">Stain</span>
+
+  <div class="dial">
+    <label for="freq">Scale</label>
+    <input
+      type="range"
+      id="freq"
+      min="2"
+      max="40"
+      step="1"
+      value="9"
+      aria-describedby="freqOut"
+    />
+    <output id="freqOut">0.009</output>
+  </div>
+
+  <div class="dial">
+    <label for="amt">Strength</label>
+    <input
+      type="range"
+      id="amt"
+      min="0"
+      max="140"
+      step="1"
+      value="55"
+      aria-describedby="amtOut"
+    />
+    <output id="amtOut">0.055</output>
+  </div>
+
+  <div class="dial">
+    <label for="hard">Contrast</label>
+    <input
+      type="range"
+      id="hard"
+      min="10"
+      max="45"
+      step="1"
+      value="26"
+      aria-describedby="hardOut"
+    />
+    <output id="hardOut">2.6</output>
+  </div>
+
+  <button class="btn" id="fixed" type="button" aria-pressed="true">
+    Fixed
+  </button>
+  <button class="btn spacer" id="world" type="button">Hollowed</button>
+</div>
+
+<p class="hint">
+  <b>No tile.</b> One turbulence field at
+  <code>background-repeat: no-repeat</code>,
+  <code>background-size: cover</code>,
+  <code>background-attachment: fixed</code> — there is no second copy, so there
+  is no seam, and the dirt stays with the window while the text scrolls through
+  it. Turn <b>Fixed</b> off to see the tiled version you disliked.
+  <b>Scale</b> is blotch size: drag left for bigger and calmer.
+  <b>Strength</b> and <b>Scale</b> are stored per world, so setting the light
+  one gently does not darken the dark one — flip worlds and dial each
+  separately.
+</p>
+
+<div class="room">
+  <div class="stain" id="stain"></div>
+  <div class="col">
+    <span class="mark">&#9670;</span>
+    <p class="kicker">Program Analysis</p>
+    <h1>Symbolic Execution</h1>
+    <div class="stats">02 June 2026 &middot; Nine minutes</div>
+
+    <p class="lead">
+      Symbolic execution is a means of analyzing a program to determine what
+      inputs cause each part of it to execute. Instead of running the code on
+      real values, an interpreter walks it while holding every input as a
+      symbol.
+    </p>
+    <p>
+      It arrives at expressions written in terms of those symbols, and at
+      constraints for the outcome of each conditional branch. Where concrete
+      execution answers what a program does with 5, symbolic execution answers
+      what it would take to reach a place at all.
+    </p>
+
+    <h2>A worked example</h2>
+    <pre>
+int f() {
+  y = read();
+  z = y * 2;
+  if (z == 12) fail();
+  else printf("OK");
+}</pre
+    >
+    <p>
+      During symbolic execution the program reads a symbol,
+      <code>&lambda;</code>, and the branch condition becomes the constraint
+      <code>&lambda; * 2 == 12</code>. Execution forks, and a solver later
+      returns <code>6</code> to reach <code>fail()</code>.
+    </p>
+
+    <h2>Limitations</h2>
+    <ul>
+      <li>
+        Merge states that differ only in irrelevant ways, and accept weaker
+        constraints.
+      </li>
+      <li>Bound loop iterations, and accept incompleteness past the bound.</li>
+      <li>
+        Prioritize paths heuristically, and accept that the interesting one may
+        be starved.
+      </li>
+    </ul>
+
+    <blockquote>
+      Program testing can be used to show the presence of bugs, but never to
+      show their absence.
+    </blockquote>
+
+    <p>
+      Engines worth reading next: <a href="#">KLEE</a> and <a href="#">angr</a>.
+    </p>
+  </div>
+</div>
+
+<div class="out">
+  <h3>Values to keep</h3>
+  <pre id="out"></pre>
+</div>
+
+<script>
+  (function () {
+    var stain = document.getElementById("stain");
+    var freq = document.getElementById("freq");
+    var amt = document.getElementById("amt");
+    var hard = document.getElementById("hard");
+    var freqOut = document.getElementById("freqOut");
+    var amtOut = document.getElementById("amtOut");
+    var hardOut = document.getElementById("hardOut");
+    var worldBtn = document.getElementById("world");
+    var fixedBtn = document.getElementById("fixed");
+    var out = document.getElementById("out");
+
+    var world = "hollowed";
+    var tiled = false;
+
+    /* Per world, because the same amount of dirt that reads as
+       atmosphere on #100f0d reads as a stained page on #ffffff.
+       Kindled starts at roughly half the strength and a coarser
+       scale, which is the settings pair that keeps it calm. */
+    var state = {
+      hollowed: { freq: 9, amt: 55, hard: 26, rgb: "0, 0, 0" },
+      kindled: { freq: 6, amt: 26, hard: 22, rgb: "150, 132, 96" },
+    };
+
+    function svg(f, alpha, exponent, rgb) {
+      var parts = rgb.split(",").map(function (s) {
+        return parseInt(s, 10) / 255;
+      });
+      /* feTurbulence → luminance into alpha → gamma to crush the
+         mid-tones, so the field reads as stains with edges rather
+         than as even fog. The colour is baked with feColorMatrix
+         rather than blended, so it works on any ground. */
+      var m = [
+        "0 0 0 0 " + parts[0],
+        "0 0 0 0 " + parts[1],
+        "0 0 0 0 " + parts[2],
+        "1 0 0 0 -0.28",
+      ].join(" ");
+      var s =
+        "<svg xmlns='http://www.w3.org/2000/svg' width='1600' height='1600'>" +
+        "<filter id='s' color-interpolation-filters='sRGB'>" +
+        "<feTurbulence type='fractalNoise' baseFrequency='" +
+        f +
+        "' numOctaves='5' seed='7'/>" +
+        "<feColorMatrix type='matrix' values='" +
+        m +
+        "'/>" +
+        "<feComponentTransfer><feFuncA type='gamma' amplitude='" +
+        (alpha * 2).toFixed(3) +
+        "' exponent='" +
+        exponent +
+        "'/></feComponentTransfer>" +
+        "</filter>" +
+        "<rect width='100%' height='100%' filter='url(#s)'/>" +
+        "</svg>";
+      return 'url("data:image/svg+xml,' + encodeURIComponent(s) + '")';
+    }
+
+    function apply() {
+      var s = state[world];
+      var f = (s.freq / 1000).toFixed(3);
+      var a = s.amt / 1000;
+      var e = (s.hard / 10).toFixed(1);
+
+      freq.value = s.freq;
+      amt.value = s.amt;
+      hard.value = s.hard;
+      freqOut.textContent = f;
+      amtOut.textContent = a.toFixed(3);
+      hardOut.textContent = e;
+
+      stain.style.backgroundImage = svg(f, a, e, s.rgb);
+
+      if (tiled) {
+        stain.style.position = "absolute";
+        stain.style.backgroundAttachment = "scroll";
+        stain.style.backgroundRepeat = "repeat";
+        stain.style.backgroundSize = "700px 700px";
+      } else {
+        stain.style.position = "fixed";
+        stain.style.backgroundAttachment = "fixed";
+        stain.style.backgroundRepeat = "no-repeat";
+        stain.style.backgroundSize = "cover";
+      }
+
+      var k = state.kindled,
+        h = state.hollowed;
+      out.textContent =
+        "/* one field, no tile, no seam — global.css */\n" +
+        ".stain {\n" +
+        "  position: fixed;\n" +
+        "  inset: 0;\n" +
+        "  z-index: 0;\n" +
+        "  pointer-events: none;\n" +
+        "  background-repeat: no-repeat;\n" +
+        "  background-size: cover;\n" +
+        '  background-image: url("data:image/svg+xml,…");\n' +
+        "}\n\n" +
+        "/* tokens.json — the two worlds do not share these */\n" +
+        '"hollowed": {\n' +
+        '  "--stain-scale":    "' +
+        (h.freq / 1000).toFixed(3) +
+        '",\n' +
+        '  "--stain-strength": "' +
+        (h.amt / 1000).toFixed(3) +
+        '",\n' +
+        '  "--stain-contrast": "' +
+        (h.hard / 10).toFixed(1) +
+        '"\n' +
+        "},\n" +
+        '"kindled": {\n' +
+        '  "--stain-scale":    "' +
+        (k.freq / 1000).toFixed(3) +
+        '",\n' +
+        '  "--stain-strength": "' +
+        (k.amt / 1000).toFixed(3) +
+        '",\n' +
+        '  "--stain-contrast": "' +
+        (k.hard / 10).toFixed(1) +
+        '"\n' +
+        "}";
+    }
+
+    [freq, amt, hard].forEach(function (el) {
+      el.addEventListener("input", function () {
+        var s = state[world];
+        s.freq = +freq.value;
+        s.amt = +amt.value;
+        s.hard = +hard.value;
+        apply();
+      });
+    });
+
+    worldBtn.addEventListener("click", function () {
+      world = world === "hollowed" ? "kindled" : "hollowed";
+      document.body.dataset.world = world;
+      worldBtn.textContent = world === "hollowed" ? "Hollowed" : "Kindled";
+      apply();
+    });
+
+    fixedBtn.addEventListener("click", function () {
+      tiled = !tiled;
+      fixedBtn.setAttribute("aria-pressed", String(!tiled));
+      fixedBtn.textContent = tiled ? "Tiled" : "Fixed";
+      apply();
+    });
+
+    document.body.dataset.world = world;
+    apply();
+  })();
+</script>

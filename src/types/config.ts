@@ -45,7 +45,6 @@ interface FeaturesConfig {
   /** Show the /archives page and link it in nav. Defaults to true. */
   showArchives?: boolean;
   /** Show back button on post detail pages. Defaults to true. */
-  showBackButton?: boolean;
   /** "Edit page" link shown on post detail pages. */
   editPost?:
     | {
@@ -92,7 +91,7 @@ interface ShareLink {
   linkTitle?: string;
 }
 
-interface AstroPaperConfig {
+interface TorchlightConfig {
   site: SiteConfig;
   posts?: PostsConfig;
   features?: FeaturesConfig;
@@ -117,7 +116,7 @@ type ResolvedSiteConfig = Required<
 > &
   Pick<SiteConfig, "profile" | "googleVerification">;
 
-export interface ResolvedAstroPaperConfig {
+export interface ResolvedTorchlightConfig {
   site: ResolvedSiteConfig;
   posts: Required<PostsConfig>;
   features: Required<FeaturesConfig>;
@@ -126,11 +125,11 @@ export interface ResolvedAstroPaperConfig {
 }
 
 /**
- * Type helper for astro-paper.config.ts.
+ * Type helper for torchlight.config.ts.
  * Provides full IntelliSense without any runtime overhead.
  */
-export function defineAstroPaperConfig(
-  config: AstroPaperConfig
-): AstroPaperConfig {
+export function defineTorchlightConfig(
+  config: TorchlightConfig,
+): TorchlightConfig {
   return config;
 }

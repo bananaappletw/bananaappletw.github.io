@@ -18,7 +18,6 @@ export default {
     sharePostViaEmail: "Share this post via email",
     tagLabel: "Tags",
     backToTop: "Back to top",
-    goBack: "Go back",
     editPage: "Edit page",
     previousPost: "Previous Post",
     nextPost: "Next Post",
@@ -40,19 +39,14 @@ export default {
   },
   pages: {
     tagTitle: "Tag",
-    tagDesc: "All the articles with the tag",
 
     tagsTitle: "Tags",
-    tagsDesc: "All the tags used in posts.",
 
     postsTitle: "Posts",
-    postsDesc: "All the articles I've posted.",
 
     archivesTitle: "Archives",
-    archivesDesc: "All the articles I've archived.",
 
     searchTitle: "Search",
-    searchDesc: "Search any article ...",
   },
   a11y: {
     skipToContent: "Skip to content",

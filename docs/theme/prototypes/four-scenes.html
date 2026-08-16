@@ -1,0 +1,925 @@
+<title>Four Scenes</title>
+<style>
+  /*FONTS*/
+
+  /* ============================================================
+   FOUR SCENES
+
+   One hand-painted vignette per page, low in the bottom-right
+   corner, behind the text. Four scenes, four pages:
+
+     Approach   gothic castle from outside   → home
+     Nave       gothic castle inside          → listings
+     Rest       armoured figure at a bonfire  → about
+     Drowned    ruined tower, moon, lake      → 404
+
+   These are SILHOUETTES, not paintings. Two filters do the work
+   that a brush would:
+
+     #painted   feDisplacementMap at scale 3 — enough to make a
+                vector edge wobble the way a drawn line does, not
+                enough to be read as an effect. Straight machine
+                edges are the single thing that says "clip art".
+
+     #wash      a second turbulence field used as a MASK, so the
+                fill varies in density instead of being flat ink.
+                Flat fills are the other thing that says clip art.
+
+   Everything else is placement, and placement is most of the job:
+   the vignette must never compete with the measure, must go quiet
+   in the kindled world, and must leave when the viewport is too
+   narrow to hold both it and the text.
+   ============================================================ */
+
+  :root {
+    --display: Cinzel, Optima, "Palatino Linotype", Palatino, serif;
+    --body: Spectral, Charter, Georgia, serif;
+    --mono: GSCode, ui-monospace, Menlo, monospace;
+
+    --ui-bg: #121110;
+    --ui-fg: #cfc7b6;
+    --ui-dim: #7d7365;
+    --ui-line: #2e2a24;
+    --ui-mark: #d7ae72;
+
+    --ground: #100f0d;
+    --ink: #c6bca8;
+    --ink-2: #a99e8a;
+    --ink-3: #7e7361;
+    --gold: #cda76b;
+    --rule: #33302a;
+    --pre-bg: rgba(0, 0, 0, 0.34);
+    --arcane: #7ea3a1;
+    --under: #4e483d;
+
+    /* the vignette's own ink. Hollowed it is a shape darker than
+       the room; kindled it is a wash paler than the paper. */
+    --scene-ink: #000000;
+    --scene-opacity: 0.62;
+    --scene-lit: #cda76b;
+    --scene-moon: #d8cdb4;
+
+    /* THE WASH. A second turbulence field, used as a mask so the ink
+       varies in density instead of being flat. The alpha is mapped
+       into a narrow band near 1 (slope 0.34, intercept 0.66) — this
+       must thin the fill, never punch holes in it. Wider than that
+       and the drawing looks eaten rather than brushed. */
+    --wash: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='380' height='380'%3E%3Cfilter id='w' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.021' numOctaves='3' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0.34' intercept='0.66'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23w)'/%3E%3C/svg%3E");
+  }
+
+  body[data-world="kindled"] {
+    --ui-bg: #f4f2ec;
+    --ui-fg: #2b2924;
+    --ui-dim: #6f6b60;
+    --ui-line: #ddd9cf;
+    --ui-mark: #8a5f18;
+
+    --ground: #ffffff;
+    --ink: #39352a;
+    --ink-2: #4d4739;
+    --ink-3: #6c6553;
+    --gold: #96631a;
+    --rule: #e2dccb;
+    --pre-bg: #faf7ef;
+    --arcane: #2f5296;
+    --under: #c3bba5;
+
+    /* NOT a dark silhouette on white — that shouts. A sepia wash at
+       a third of the strength, the way a drawing sits on paper. */
+    --scene-ink: #9c8f74;
+    --scene-opacity: 0.3;
+    --scene-lit: #96631a;
+    --scene-moon: #c9b98e;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    background: var(--ui-bg);
+    color: var(--ui-fg);
+    font-family: var(--body);
+    margin: 0;
+  }
+
+  .bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--ui-bg);
+    border-bottom: 1px solid var(--ui-line);
+    padding: 13px clamp(14px, 3vw, 28px);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 16px;
+  }
+  .bar .who {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ui-dim);
+    margin-right: auto;
+  }
+  .tab,
+  .btn {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    background: none;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    padding: 4px 0;
+    color: var(--ui-dim);
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+  .tab:hover,
+  .btn:hover {
+    color: var(--ui-fg);
+  }
+  .tab[aria-selected="true"] {
+    color: var(--ui-mark);
+    border-bottom-color: var(--ui-mark);
+  }
+  .tab:focus-visible,
+  .btn:focus-visible {
+    outline: 2px solid var(--ui-mark);
+    outline-offset: 3px;
+  }
+  .btn {
+    border: 1px solid var(--ui-line);
+    padding: 6px 12px;
+  }
+  .btn[aria-pressed="true"] {
+    color: var(--ui-mark);
+    border-color: var(--ui-mark);
+  }
+
+  .note {
+    padding: 18px clamp(14px, 3vw, 28px) 0;
+    max-width: 78ch;
+    font-size: 14.5px;
+    line-height: 1.75;
+    color: var(--ui-dim);
+    margin: 0 0 14px;
+    position: relative;
+    z-index: 2;
+  }
+  .note b {
+    color: var(--ui-fg);
+    font-weight: 600;
+  }
+  .note .page {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ui-mark);
+  }
+  code {
+    font-family: var(--mono);
+    font-size: 0.87em;
+    color: var(--ui-fg);
+  }
+
+  /* ---------- the room ---------- */
+  .room {
+    position: relative;
+    overflow: hidden;
+    background-color: var(--ground);
+    padding: clamp(40px, 7vh, 88px) clamp(20px, 5vw, 40px) 130px;
+    min-height: 78vh;
+  }
+
+  /* THE VIGNETTE.
+     Bottom-right, behind everything, sized against the viewport so
+     it holds its proportion to the measure rather than to the page. */
+  .scene {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    z-index: 0;
+    width: clamp(200px, 30vw, 420px);
+    opacity: var(--scene-opacity);
+    pointer-events: none;
+    color: var(--scene-ink);
+  }
+  .scene svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .scene .fill {
+    fill: currentColor;
+  }
+  .scene .line {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+  }
+  .scene .lit {
+    fill: var(--scene-lit);
+  }
+  .scene .moon {
+    fill: var(--scene-moon);
+  }
+
+  /* the painted treatment, toggleable so the difference is visible */
+  .scene.painted .art {
+    filter: url(#painted);
+  }
+  /* The wash goes on the HTML wrapper, NOT on the <g> inside the svg.
+     Inside the viewBox, `380px` would be read as 380 user units — far
+     wider than the 220-unit drawing — so the mask would resolve to one
+     flat region and do nothing. On the wrapper it is real CSS pixels
+     against a ~420px-wide picture, which is the variation we want. */
+  .scene.painted {
+    -webkit-mask-image: var(--wash);
+    mask-image: var(--wash);
+    -webkit-mask-size: 380px 380px;
+    mask-size: 380px 380px;
+  }
+
+  /* Narrow screens: the text column is the whole viewport, so the
+     vignette would sit underneath it. It leaves rather than fades —
+     a picture at 12% opacity is not a picture, it is a smudge. */
+  @media (max-width: 900px) {
+    .scene {
+      display: none;
+    }
+  }
+
+  .col {
+    position: relative;
+    z-index: 1;
+    max-width: 34rem;
+    margin: 0 auto;
+  }
+  .mark {
+    color: var(--gold);
+    font-size: 13px;
+    letter-spacing: 0.2em;
+  }
+  .kicker {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10.5px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 26px 0 18px;
+  }
+  .room h1 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(27px, 4vw, 38px);
+    line-height: 1.25;
+    letter-spacing: 0.04em;
+    font-variant-caps: small-caps;
+    color: var(--ink);
+    margin: 0 0 26px;
+    max-width: 20ch;
+  }
+  .stats {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 50px;
+  }
+  .room p {
+    color: var(--ink-2);
+    font-size: 17.5px;
+    line-height: 1.9;
+    margin: 0 0 26px;
+  }
+  .room .lead {
+    color: var(--ink);
+    font-size: 19px;
+  }
+  .room h2 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 19px;
+    letter-spacing: 0.06em;
+    font-variant-caps: small-caps;
+    color: var(--ink-3);
+    margin: 58px 0 16px;
+  }
+  .room pre {
+    background: var(--pre-bg);
+    border-left: 1px solid var(--rule);
+    padding: 16px 0 16px 20px;
+    overflow-x: auto;
+    margin: 0 0 26px;
+    font-family: var(--mono);
+    font-size: 13.5px;
+    line-height: 1.75;
+    color: var(--ink-2);
+  }
+  .room :not(pre) > code {
+    font-family: var(--mono);
+    color: var(--arcane);
+    font-size: 0.85em;
+  }
+  .room a {
+    color: var(--ink);
+    text-decoration: underline;
+    text-decoration-color: var(--under);
+    text-underline-offset: 4px;
+  }
+  .room a:hover {
+    color: var(--gold);
+    text-decoration-color: var(--gold);
+  }
+
+  .stage > .room {
+    display: none;
+  }
+  .stage > .room.on {
+    display: block;
+  }
+
+  .after {
+    padding: 30px clamp(14px, 3vw, 28px) 70px;
+    max-width: 84ch;
+    font-size: 14.5px;
+    line-height: 1.75;
+    color: var(--ui-dim);
+  }
+  .after h3 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ui-dim);
+    margin: 30px 0 12px;
+  }
+  .after h3:first-child {
+    margin-top: 0;
+  }
+  .after p {
+    margin: 0 0 14px;
+  }
+  .after b {
+    color: var(--ui-fg);
+    font-weight: 600;
+  }
+  .after pre {
+    margin: 0 0 18px;
+    padding: 15px 17px;
+    border-left: 1px solid var(--ui-line);
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.72;
+    color: var(--ui-dim);
+    white-space: pre;
+  }
+</style>
+
+<svg
+  width="0"
+  height="0"
+  aria-hidden="true"
+  focusable="false"
+  style="position: absolute"
+>
+  <!-- The brush. scale=3 is the whole trick: enough that no edge in
+       the drawing is mechanically straight, little enough that it is
+       never read as a distortion effect. Turn it off with the
+       Painted toggle to see how dead the vectors are without it. -->
+  <filter id="painted" x="-10%" y="-10%" width="120%" height="120%">
+    <feTurbulence
+      type="fractalNoise"
+      baseFrequency="0.04"
+      numOctaves="3"
+      seed="9"
+      result="brush"
+    />
+    <feDisplacementMap
+      in="SourceGraphic"
+      in2="brush"
+      scale="3"
+      xChannelSelector="R"
+      yChannelSelector="G"
+    />
+  </filter>
+</svg>
+
+<div class="bar">
+  <span class="who">Four scenes</span>
+  <button class="tab" data-v="1" aria-selected="true">
+    1 &mdash; Approach
+  </button>
+  <button class="tab" data-v="2" aria-selected="false">2 &mdash; Nave</button>
+  <button class="tab" data-v="3" aria-selected="false">3 &mdash; Rest</button>
+  <button class="tab" data-v="4" aria-selected="false">
+    4 &mdash; Drowned
+  </button>
+  <button class="btn" id="painted" type="button" aria-pressed="true">
+    Painted
+  </button>
+  <button class="btn" id="world" type="button">Hollowed</button>
+</div>
+
+<p class="note" id="note"></p>
+
+<div class="stage">
+  <!-- ============ 1. APPROACH ============ -->
+  <div class="room on" data-v="1">
+    <div class="scene painted" aria-hidden="true">
+      <svg viewBox="0 0 220 170">
+        <g class="art">
+          <!-- the rock it stands on -->
+          <path
+            class="fill"
+            d="M0 170 L0 141 C 20 134 33 143 50 137 C 65 131 78 140 95 133
+               C 112 126 126 134 143 130 C 162 125 182 133 220 126 L220 170 Z"
+          />
+          <!-- outer curtain wall, crenellated -->
+          <path
+            class="fill"
+            d="M14 141 L14 116 L21 116 L21 110 L28 110 L28 116 L35 116 L35 110
+               L42 110 L42 116 L49 116 L49 110 L56 110 L56 116 L62 116 L62 137 Z"
+          />
+          <!-- the keep -->
+          <path class="fill" d="M80 136 L80 62 L124 62 L124 134 Z" />
+          <path
+            class="fill"
+            d="M80 62 L80 53 L88 53 L88 60 L95 60 L95 53 L103 53 L103 60
+               L110 60 L110 53 L118 53 L118 60 L124 60 L124 62 Z"
+          />
+          <!-- left spire -->
+          <path class="fill" d="M60 137 L60 82 L75 82 L75 136 Z" />
+          <path class="fill" d="M60 82 L67.5 44 L75 82 Z" />
+          <!-- right spire, the tall one -->
+          <path class="fill" d="M129 133 L129 72 L146 72 L146 131 Z" />
+          <path class="fill" d="M129 72 L137.5 22 L146 72 Z" />
+          <!-- a far tower, smaller, to give depth -->
+          <path class="fill" d="M166 129 L166 95 L177 95 L177 128 Z" />
+          <path class="fill" d="M166 95 L171.5 71 L177 95 Z" />
+          <!-- the buttress reaching between them -->
+          <path
+            class="fill"
+            d="M146 106 C 154 101 158 96 166 96 L166 100 C 159 100 155 105 148 110 Z"
+          />
+          <!-- lit windows. Two golds — the whole budget for this page,
+               so nothing else here may take the accent. -->
+          <rect class="lit" x="98" y="88" width="4" height="9" rx="2" />
+          <rect class="lit" x="135" y="98" width="3.5" height="8" rx="1.75" />
+        </g>
+      </svg>
+    </div>
+
+    <div class="col">
+      <span class="mark">&#9670;</span>
+      <p class="kicker">Program Analysis</p>
+      <h1>Symbolic Execution</h1>
+      <div class="stats">02 June 2026 &middot; Nine minutes</div>
+      <p class="lead">
+        Symbolic execution is a means of analyzing a program to determine what
+        inputs cause each part of it to execute. Instead of running the code on
+        real values, an interpreter walks it while holding every input as a
+        symbol.
+      </p>
+      <p>
+        It arrives at expressions written in terms of those symbols, and at
+        constraints for the outcome of each conditional branch. Where concrete
+        execution answers what a program does with 5, symbolic execution answers
+        what it would take to reach a place at all.
+      </p>
+      <h2>A worked example</h2>
+      <pre>
+int f() {
+  y = read();
+  z = y * 2;
+  if (z == 12) fail();
+}</pre
+      >
+      <p>
+        Engines worth reading next: <a href="#">KLEE</a> and
+        <a href="#">angr</a>.
+      </p>
+    </div>
+  </div>
+
+  <!-- ============ 2. NAVE ============ -->
+  <div class="room" data-v="2">
+    <div class="scene painted" aria-hidden="true">
+      <svg viewBox="0 0 220 170">
+        <g class="art">
+          <!-- the shaft through the clerestory, drawn first so the
+               stonework sits in front of it -->
+          <path
+            class="lit"
+            opacity="0.16"
+            d="M150 8 L186 8 L128 170 L74 170 Z"
+          />
+          <!-- floor -->
+          <path class="fill" d="M0 168 L220 158 L220 170 L0 170 Z" />
+          <!-- the arcade, receding. Each arch is an ogive: two curves
+               meeting at a point, which is what makes it gothic rather
+               than romanesque. -->
+          <path
+            class="line"
+            d="M10 168 L10 92 Q10 46 60 34 Q110 46 110 92 L110 166"
+          />
+          <path
+            class="line"
+            d="M40 167 L40 100 Q40 60 82 50 Q124 60 124 100 L124 164"
+            opacity="0.72"
+          />
+          <path
+            class="line"
+            d="M66 166 L66 108 Q66 74 100 65 Q134 74 134 108 L134 162"
+            opacity="0.5"
+          />
+          <path
+            class="line"
+            d="M88 164 L88 116 Q88 88 116 80 Q144 88 144 116 L144 160"
+            opacity="0.34"
+          />
+          <!-- piers -->
+          <path class="fill" d="M4 168 L4 88 L16 88 L16 168 Z" />
+          <path class="fill" d="M104 166 L104 92 L116 92 L116 166 Z" />
+          <!-- the far window the light comes through -->
+          <path
+            class="fill"
+            d="M158 150 L158 60 Q158 30 178 22 Q198 30 198 60 L198 148 Z"
+          />
+          <path
+            class="lit"
+            d="M163 146 L163 62 Q163 36 178 30 Q193 36 193 62 L193 144 Z"
+            opacity="0.5"
+          />
+        </g>
+      </svg>
+    </div>
+
+    <div class="col">
+      <span class="mark">&#9670;</span>
+      <p class="kicker">Program Analysis</p>
+      <h1>Symbolic Execution</h1>
+      <div class="stats">02 June 2026 &middot; Nine minutes</div>
+      <p class="lead">
+        Symbolic execution is a means of analyzing a program to determine what
+        inputs cause each part of it to execute. Instead of running the code on
+        real values, an interpreter walks it while holding every input as a
+        symbol.
+      </p>
+      <p>
+        It arrives at expressions written in terms of those symbols, and at
+        constraints for the outcome of each conditional branch. Where concrete
+        execution answers what a program does with 5, symbolic execution answers
+        what it would take to reach a place at all.
+      </p>
+      <h2>A worked example</h2>
+      <pre>
+int f() {
+  y = read();
+  z = y * 2;
+  if (z == 12) fail();
+}</pre
+      >
+      <p>
+        Engines worth reading next: <a href="#">KLEE</a> and
+        <a href="#">angr</a>.
+      </p>
+    </div>
+  </div>
+
+  <!-- ============ 3. REST ============ -->
+  <div class="room" data-v="3">
+    <div class="scene painted" aria-hidden="true">
+      <svg viewBox="0 0 220 170">
+        <g class="art">
+          <!-- ground -->
+          <path
+            class="fill"
+            d="M0 170 L0 154 C 34 148 62 156 96 152 C 130 148 160 155 220 149 L220 170 Z"
+          />
+          <!-- the seated figure. Hunched, knees up, head down: the
+               posture is the whole story, so it is drawn as one mass
+               rather than as anatomy. -->
+          <path
+            class="fill"
+            d="M54 153
+               C 50 138 52 126 58 118
+               C 60 110 64 105 70 103
+               C 70 95 76 89 84 90
+               C 92 91 96 98 93 106
+               C 100 110 105 119 106 130
+               L108 153 Z"
+          />
+          <!-- the pauldron, the one detail that says 'armour' -->
+          <path
+            class="fill"
+            d="M64 112 C 60 106 62 100 68 98 C 74 97 78 101 78 106 C 74 108 68 110 64 112 Z"
+          />
+          <!-- the greatsword, planted -->
+          <path class="fill" d="M117 152 L117 88 L121 88 L121 152 Z" />
+          <path class="fill" d="M110 92 L128 92 L128 96 L110 96 Z" />
+          <path class="fill" d="M115 88 L123 88 L119 78 Z" />
+          <!-- the bonfire: a coiled sword in a mound of ash -->
+          <path
+            class="fill"
+            d="M144 153 C 150 143 166 141 178 147 C 184 150 186 152 186 153 Z"
+          />
+          <path class="fill" d="M163 146 L163 108 L166 108 L166 146 Z" />
+          <path class="fill" d="M157 114 L172 114 L172 117 L157 117 Z" />
+          <!-- the flame. One gold, and the only one on the page. -->
+          <path
+            class="lit"
+            d="M164.5 96
+               C 170 102 172 107 170 112
+               C 168 116 162 117 159 113
+               C 156 109 158 103 164.5 96 Z"
+          />
+          <!-- its light on the ash -->
+          <ellipse
+            class="lit"
+            cx="165"
+            cy="150"
+            rx="26"
+            ry="6"
+            opacity="0.18"
+          />
+        </g>
+      </svg>
+    </div>
+
+    <div class="col">
+      <span class="mark">&#9670;</span>
+      <p class="kicker">Program Analysis</p>
+      <h1>Symbolic Execution</h1>
+      <div class="stats">02 June 2026 &middot; Nine minutes</div>
+      <p class="lead">
+        Symbolic execution is a means of analyzing a program to determine what
+        inputs cause each part of it to execute. Instead of running the code on
+        real values, an interpreter walks it while holding every input as a
+        symbol.
+      </p>
+      <p>
+        It arrives at expressions written in terms of those symbols, and at
+        constraints for the outcome of each conditional branch. Where concrete
+        execution answers what a program does with 5, symbolic execution answers
+        what it would take to reach a place at all.
+      </p>
+      <h2>A worked example</h2>
+      <pre>
+int f() {
+  y = read();
+  z = y * 2;
+  if (z == 12) fail();
+}</pre
+      >
+      <p>
+        Engines worth reading next: <a href="#">KLEE</a> and
+        <a href="#">angr</a>.
+      </p>
+    </div>
+  </div>
+
+  <!-- ============ 4. DROWNED ============ -->
+  <div class="room" data-v="4">
+    <div class="scene painted" aria-hidden="true">
+      <svg viewBox="0 0 220 170">
+        <g class="art">
+          <!-- moon, above -->
+          <circle class="moon" cx="168" cy="34" r="15" opacity="0.5" />
+          <!-- the tower, leaning. The lean is what makes it corrupt
+               rather than merely old. -->
+          <path class="fill" d="M86 112 L92 40 L106 38 L108 112 Z" />
+          <path class="fill" d="M91 42 L99 14 L105 40 Z" />
+          <!-- broken flank, so the silhouette is not a clean solid -->
+          <path
+            class="fill"
+            d="M108 112 L110 74 L118 76 L120 96 L126 98 L127 112 Z"
+          />
+          <path class="fill" d="M74 112 L78 88 L86 90 L86 112 Z" />
+          <!-- one lit window, high -->
+          <rect class="lit" x="96" y="60" width="3.5" height="8" rx="1.75" />
+          <!-- the waterline -->
+          <path class="line" d="M0 113 L220 113" opacity="0.4" />
+          <!-- the reflection. Not a mirror copy: broken into bands,
+               which is how a reflection survives on moving water. -->
+          <g opacity="0.42">
+            <path class="fill" d="M86 116 L92 150 L106 152 L108 116 Z" />
+            <path class="fill" d="M91 148 L99 172 L105 150 Z" opacity="0.5" />
+            <circle class="moon" cx="168" cy="150" r="13" opacity="0.34" />
+          </g>
+          <!-- the bands that cut it, drawn in the water's own colour -->
+          <g opacity="0.9">
+            <path class="line" d="M78 122 L128 122" opacity="0.22" />
+            <path class="line" d="M84 131 L122 131" opacity="0.18" />
+            <path class="line" d="M150 144 L188 144" opacity="0.2" />
+            <path class="line" d="M88 142 L118 142" opacity="0.14" />
+            <path class="line" d="M154 156 L184 156" opacity="0.14" />
+          </g>
+        </g>
+      </svg>
+    </div>
+
+    <div class="col">
+      <span class="mark">&#9670;</span>
+      <p class="kicker">Program Analysis</p>
+      <h1>Symbolic Execution</h1>
+      <div class="stats">02 June 2026 &middot; Nine minutes</div>
+      <p class="lead">
+        Symbolic execution is a means of analyzing a program to determine what
+        inputs cause each part of it to execute. Instead of running the code on
+        real values, an interpreter walks it while holding every input as a
+        symbol.
+      </p>
+      <p>
+        It arrives at expressions written in terms of those symbols, and at
+        constraints for the outcome of each conditional branch. Where concrete
+        execution answers what a program does with 5, symbolic execution answers
+        what it would take to reach a place at all.
+      </p>
+      <h2>A worked example</h2>
+      <pre>
+int f() {
+  y = read();
+  z = y * 2;
+  if (z == 12) fail();
+}</pre
+      >
+      <p>
+        Engines worth reading next: <a href="#">KLEE</a> and
+        <a href="#">angr</a>.
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="after">
+  <h3>What makes a vector look drawn</h3>
+  <p>
+    <b>Two things give clip art away, and neither is the drawing.</b> The first
+    is that every edge is mechanically exact; the second is that every fill is
+    perfectly even. The <code>#painted</code> filter fixes the first with a
+    displacement map at <code>scale="3"</code> — small enough that it never
+    reads as a distortion, large enough that no line in the picture is truly
+    straight. Toggle <b>Painted</b> off and the scenes go dead immediately,
+    which is the fastest way to see what it is doing.
+  </p>
+  <pre>
+&lt;filter id="painted" x="-10%" y="-10%" width="120%" height="120%"&gt;
+  &lt;feTurbulence type="fractalNoise" baseFrequency="0.04"
+                numOctaves="3" seed="9" result="brush"/&gt;
+  &lt;feDisplacementMap in="SourceGraphic" in2="brush" scale="3"
+                     xChannelSelector="R" yChannelSelector="G"/&gt;
+&lt;/filter&gt;</pre
+  >
+  <p>
+    <b>The filter region matters.</b> Displacement pushes pixels outward, so
+    without <code>x="-10%" width="120%"</code> the filter's default region clips
+    the very edges it just moved and the drawing loses its outline.
+  </p>
+
+  <h3>Placement is most of the work</h3>
+  <p>
+    <b>The kindled world does not get a dark silhouette.</b> Black on white
+    shouts; the scene switches to a sepia wash at roughly a third of the
+    strength, so it sits on the page the way a drawing does rather than sitting
+    on top of it. That is one custom property, not a second drawing.
+  </p>
+  <p>
+    <b>Below 900px the vignette leaves entirely.</b> It does not fade — a
+    picture at 12% opacity is not a picture, it is a smudge. The text column
+    owns the whole viewport on a phone, and the scene has nowhere to be that is
+    not underneath it.
+  </p>
+  <p>
+    <b>Each scene spends the gold.</b> Approach has two lit windows, Rest has
+    the bonfire flame, Drowned has one high window. That is the accent already
+    committed, so on those pages the HUD flame is the second and a hovered link
+    is the third — the three-per-viewport ceiling, exactly. Nave spends none:
+    its light shaft is gold at 16% opacity, which is atmosphere rather than
+    accent.
+  </p>
+
+  <h3>Which page gets which</h3>
+  <p>
+    <span class="page">Approach</span> → <b>home</b>. You are outside, and you
+    have not gone in yet. Seen once per visit, which is the right frequency for
+    the most illustrative of the four.
+  </p>
+  <p>
+    <span class="page">Nave</span> → <b>listings</b>, posts and tags and
+    archive. You are inside now, and the receding arches are a corridor of
+    entries. The quietest scene, which suits the page you return to most.
+  </p>
+  <p>
+    <span class="page">Rest</span> → <b>about</b>. A person, sitting down, not
+    going anywhere. It is the only scene with a figure in it, and about is the
+    only page with a person behind it.
+  </p>
+  <p>
+    <span class="page">Drowned</span> → <b>404</b>. The tower is ruined, the
+    moon is reflected in water that should not be there, and the reader has
+    arrived somewhere that no longer exists.
+  </p>
+  <p>
+    <b>Post pages get nothing.</b> Four scenes for four page types works because
+    each is seen occasionally; putting one behind every post would make it
+    wallpaper by the third read, and it would compete with the one thing a post
+    page is for.
+  </p>
+
+  <h3>Why SVG is the right medium here, not a compromise</h3>
+  <p>
+    <b>It recolours with the world for free.</b> The scenes take
+    <code>fill: currentColor</code> and the parent sets
+    <code>color: var(--scene-ink)</code>, so flipping to kindled restyles the
+    drawing rather than swapping a second asset. A pair of PNGs would need two
+    files, two downloads, and a rule to pick between them.
+  </p>
+  <p>
+    <b>It is a few kilobytes and it never blurs.</b> No image request, no layout
+    shift while it loads, sharp at any zoom or pixel density. On a page whose
+    whole argument is space and light, the vignette should not be the heaviest
+    thing on it.
+  </p>
+  <p>
+    <b>And the drawing stays editable.</b> The lean of the tower, the height of
+    a spire, whether the figure's head is lower — these are numbers in the path,
+    changeable in a second, which matters because the composition is the part
+    that will actually need iterating.
+  </p>
+  <p>
+    <b>What to watch.</b> Silhouette is doing all the work, so each scene has to
+    read at a glance in one flat colour — if it needs interior detail to be
+    legible, the shape is wrong and adding lines will not save it. Keep the
+    filters as they are: displacement above about <code>scale="5"</code> stops
+    reading as a brush and starts reading as damage, and a wash mask that dips
+    below roughly 0.6 alpha eats the drawing instead of thinning it.
+  </p>
+</div>
+
+<script>
+  (function () {
+    var notes = {
+      1: '<span class="page">Approach → home</span> &nbsp; <b>Gothic castle from outside.</b> A keep, three spires, a buttress reaching between two towers, all standing on rock. Two lit windows carry the gold. Vertical emphasis, because the point of an exterior is that the thing is taller than you.',
+      2: '<span class="page">Nave → listings</span> &nbsp; <b>Gothic castle inside.</b> Four ogive arches receding, each fainter than the last, with a shaft coming through a far window. An ogive is two curves meeting at a point — that is what makes an arch gothic rather than romanesque, and it is the entire silhouette of the style.',
+      3: '<span class="page">Rest → about</span> &nbsp; <b>A full-armoured figure at the bonfire.</b> Hunched, knees up, head down, drawn as one mass rather than as anatomy — the posture carries it, so detail would only weaken it. One pauldron says armour. The coiled sword stands in the ash, and its flame is the only gold.',
+      4: '<span class="page">Drowned → 404</span> &nbsp; <b>Ruined tower, moon, and the lake.</b> The tower leans, which is what makes it corrupt rather than merely old, and its flank is broken so the silhouette is not a clean solid. The reflection is deliberately not a mirror copy: it is cut by bands, because that is how a reflection survives on moving water.',
+    };
+
+    var tabs = document.querySelectorAll(".tab");
+    var rooms = document.querySelectorAll(".stage > .room");
+    var note = document.getElementById("note");
+    var worldBtn = document.getElementById("world");
+    var paintedBtn = document.getElementById("painted");
+    var world = "hollowed";
+    var painted = true;
+
+    document.body.dataset.world = world;
+
+    function show(v) {
+      tabs.forEach(function (t) {
+        t.setAttribute("aria-selected", String(t.dataset.v === v));
+      });
+      rooms.forEach(function (r) {
+        r.classList.toggle("on", r.dataset.v === v);
+      });
+      note.innerHTML = notes[v];
+      window.scrollTo({ top: 0 });
+    }
+
+    tabs.forEach(function (t) {
+      t.addEventListener("click", function () {
+        show(t.dataset.v);
+      });
+    });
+
+    worldBtn.addEventListener("click", function () {
+      world = world === "hollowed" ? "kindled" : "hollowed";
+      document.body.dataset.world = world;
+      worldBtn.textContent = world === "hollowed" ? "Hollowed" : "Kindled";
+    });
+
+    paintedBtn.addEventListener("click", function () {
+      painted = !painted;
+      document.querySelectorAll(".scene").forEach(function (s) {
+        s.classList.toggle("painted", painted);
+      });
+      paintedBtn.setAttribute("aria-pressed", String(painted));
+    });
+
+    show("1");
+  })();
+</script>

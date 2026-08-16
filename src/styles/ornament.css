@@ -1,0 +1,83 @@
+/* Torchlight ornament.
+   Every mark reads --ornament, never --torch, so ornament goes out with
+   the world. Gold is rare relief (design.md); it is not a mark colour. */
+
+@layer components {
+  /* Eroded rule — fades at both ends. Nothing in Lordran is intact. */
+  .rule {
+    height: 1px;
+    border: 0;
+    background: linear-gradient(
+      to right,
+      transparent,
+      var(--border) 18%,
+      var(--border) 82%,
+      transparent
+    );
+  }
+
+  /* Small caps label. The HUD voice: metadata, eyebrows, footers. */
+  .label {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-4);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .label-wide {
+    letter-spacing: 0.2em;
+  }
+
+  /* Rotated square bullet, cut from the same stock as the flame mark. */
+  .rune-list {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .rune-list > li {
+    position: relative;
+    padding-left: 26px;
+  }
+
+  .rune-list > li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.72em;
+    width: 5px;
+    height: 5px;
+    background: var(--ornament);
+    transform: rotate(45deg);
+  }
+
+  /* The flame. The one thing on the page that moves on its own. */
+  .flame {
+    color: var(--torch);
+    line-height: 1;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .flame {
+      animation: flicker 5.5s ease-in-out infinite;
+    }
+
+    @keyframes flicker {
+      0%,
+      100% {
+        opacity: 1;
+      }
+      43% {
+        opacity: 0.72;
+      }
+      71% {
+        opacity: 0.93;
+      }
+    }
+  }
+}

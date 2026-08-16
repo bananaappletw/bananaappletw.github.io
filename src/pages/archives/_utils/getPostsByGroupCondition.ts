@@ -5,7 +5,7 @@ type GroupFunction<T> = (item: T, index?: number) => GroupKey;
 
 export function getPostsByGroupCondition(
   posts: CollectionEntry<"posts">[],
-  groupFunction: GroupFunction<CollectionEntry<"posts">>
+  groupFunction: GroupFunction<CollectionEntry<"posts">>,
 ) {
   const result: Record<GroupKey, CollectionEntry<"posts">[]> = {};
 

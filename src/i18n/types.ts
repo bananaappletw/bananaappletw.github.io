@@ -6,6 +6,7 @@ export interface UIStrings {
     about: string;
     archives: string;
     search: string;
+    list: string;
   };
   post: {
     publishedAt: string;
@@ -15,7 +16,6 @@ export interface UIStrings {
     sharePostViaEmail: string;
     tagLabel: string;
     backToTop: string;
-    goBack: string;
     editPage: string;
     previousPost: string;
     nextPost: string;
@@ -37,19 +37,14 @@ export interface UIStrings {
   };
   pages: {
     tagTitle: string;
-    tagDesc: string;
 
     tagsTitle: string;
-    tagsDesc: string;
 
     postsTitle: string;
-    postsDesc: string;
 
     archivesTitle: string;
-    archivesDesc: string;
 
     searchTitle: string;
-    searchDesc: string;
   };
   a11y: {
     skipToContent: string;

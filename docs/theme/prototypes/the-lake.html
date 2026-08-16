@@ -1,0 +1,791 @@
+<title>The Lake</title>
+<style>
+  /*FONTS*/
+
+  /* ============================================================
+   THE LAKE — second attempt
+
+   The first version rendered an empty lake. Two real bugs, both
+   documented traps rather than taste:
+
+   1. transform-origin: top with a negative scaleY maps the box
+      UPWARD. A point at y maps to -0.62y, so the whole reflection
+      was drawn above the waterline and clipped away by the
+      overflow: hidden on the water. The fix is the documented
+      pattern: position the copy absolutely inside the water at
+      top: 0 and flip it with the DEFAULT centre origin, so it
+      mirrors in place instead of about its own top edge.
+
+   2. The mask was inverted. A transform applies to an element's
+      mask as well as to its pixels, so after scaleY(-1) the
+      element's bottom edge is what you see at the top. A mask
+      written black → transparent therefore faded the reflection
+      at the WATERLINE and left it solid in the deep water, which
+      is backwards. Written in source order it has to be
+      transparent → black.
+
+   Foreshortening is now done by cropping rather than by scaling:
+   the water has a fixed height and the reflection overflows it.
+   You see less of the reflection than of the original, which is
+   what perspective does, and it needs no arithmetic that can go
+   wrong at a different viewport size.
+   ============================================================ */
+
+  :root {
+    --display: Cinzel, Optima, "Palatino Linotype", Palatino, serif;
+    --body: Spectral, Charter, Georgia, serif;
+    --mono: GSCode, ui-monospace, Menlo, monospace;
+
+    --ui-bg: #121110;
+    --ui-fg: #cfc7b6;
+    --ui-dim: #7d7365;
+    --ui-line: #2e2a24;
+    --ui-mark: #d7ae72;
+
+    --ground: #100f0d;
+    --ink: #c6bca8;
+    --ink-2: #a99e8a;
+    --ink-3: #7e7361;
+    --gold: #cda76b;
+    --rule: #33302a;
+    --pre-bg: rgba(0, 0, 0, 0.34);
+    --arcane: #7ea3a1;
+    --under: #4e483d;
+
+    --water: #0b0a09;
+    --sheen: rgba(205, 167, 107, 0.06);
+    --depth: rgba(0, 0, 0, 0.5);
+    --reflect-opacity: 0.4;
+  }
+
+  body[data-world="kindled"] {
+    --ui-bg: #f4f2ec;
+    --ui-fg: #2b2924;
+    --ui-dim: #6f6b60;
+    --ui-line: #ddd9cf;
+    --ui-mark: #8a5f18;
+
+    --ground: #ffffff;
+    --ink: #39352a;
+    --ink-2: #4d4739;
+    --ink-3: #6c6553;
+    --gold: #96631a;
+    --rule: #e2dccb;
+    --pre-bg: #faf7ef;
+    --arcane: #2f5296;
+    --under: #c3bba5;
+
+    /* kindled water is bright; the reflection is what dims */
+    --water: #f5f2e8;
+    --sheen: rgba(255, 233, 178, 0.5);
+    --depth: rgba(190, 172, 130, 0.22);
+    --reflect-opacity: 0.3;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    background: var(--ui-bg);
+    color: var(--ui-fg);
+    font-family: var(--body);
+    margin: 0;
+  }
+
+  .bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--ui-bg);
+    border-bottom: 1px solid var(--ui-line);
+    padding: 13px clamp(14px, 3vw, 28px);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 16px;
+  }
+  .bar .who {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ui-dim);
+    margin-right: auto;
+  }
+  .btn {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: none;
+    border: 1px solid var(--ui-line);
+    padding: 6px 13px;
+    color: var(--ui-dim);
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+  .btn:hover {
+    color: var(--ui-fg);
+  }
+  .btn:focus-visible {
+    outline: 2px solid var(--ui-mark);
+    outline-offset: 3px;
+  }
+  .btn[aria-pressed="true"] {
+    color: var(--ui-mark);
+    border-color: var(--ui-mark);
+  }
+
+  .lede {
+    padding: 20px clamp(14px, 3vw, 28px) 0;
+    max-width: 78ch;
+    font-size: 14.5px;
+    line-height: 1.75;
+    color: var(--ui-dim);
+    margin: 0 0 18px;
+  }
+  .lede b {
+    color: var(--ui-fg);
+    font-weight: 600;
+  }
+  code {
+    font-family: var(--mono);
+    font-size: 0.87em;
+    color: var(--ui-fg);
+  }
+
+  /* ---------- the shore ---------- */
+  .shore {
+    background-color: var(--ground);
+    padding: clamp(40px, 7vh, 84px) clamp(20px, 5vw, 40px) 0;
+  }
+  .col {
+    max-width: 34rem;
+    margin: 0 auto;
+  }
+  .mark {
+    color: var(--gold);
+    font-size: 13px;
+    letter-spacing: 0.2em;
+  }
+  .kicker {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10.5px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 26px 0 18px;
+  }
+  .shore h1 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(27px, 4vw, 38px);
+    line-height: 1.25;
+    letter-spacing: 0.04em;
+    font-variant-caps: small-caps;
+    color: var(--ink);
+    margin: 0 0 26px;
+    max-width: 20ch;
+  }
+  .stats {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 50px;
+  }
+  .shore p {
+    color: var(--ink-2);
+    font-size: 17.5px;
+    line-height: 1.9;
+    margin: 0 0 26px;
+  }
+  .shore .lead {
+    color: var(--ink);
+    font-size: 19px;
+  }
+  .shore h2 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 19px;
+    letter-spacing: 0.06em;
+    font-variant-caps: small-caps;
+    color: var(--ink-3);
+    margin: 58px 0 16px;
+  }
+  .shore pre {
+    background: var(--pre-bg);
+    border-left: 1px solid var(--rule);
+    padding: 16px 0 16px 20px;
+    overflow-x: auto;
+    margin: 0 0 26px;
+    font-family: var(--mono);
+    font-size: 13.5px;
+    line-height: 1.75;
+    color: var(--ink-2);
+  }
+  .shore :not(pre) > code {
+    font-family: var(--mono);
+    color: var(--arcane);
+    font-size: 0.85em;
+  }
+  .shore a {
+    color: var(--ink);
+    text-decoration: underline;
+    text-decoration-color: var(--under);
+    text-underline-offset: 4px;
+  }
+  .shore a:hover {
+    color: var(--gold);
+    text-decoration-color: var(--gold);
+  }
+
+  /* ---------- what stands at the water's edge ---------- */
+  .standing {
+    max-width: 34rem;
+    margin: 0 auto;
+    padding: 70px 0 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 13px;
+    text-align: center;
+  }
+  .standing .flame {
+    color: var(--gold);
+    font-size: 15px;
+    line-height: 1;
+  }
+  .standing .name {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 16px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+  .standing nav {
+    display: flex;
+    gap: 22px;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+  .standing nav a,
+  .standing nav span {
+    color: var(--ink-3);
+    text-decoration: none;
+  }
+  .standing nav a:hover {
+    color: var(--gold);
+  }
+
+  .waterline {
+    height: 1px;
+    background: linear-gradient(
+      to right,
+      transparent,
+      var(--rule) 14%,
+      var(--rule) 86%,
+      transparent
+    );
+  }
+
+  /* ============================================================
+   THE WATER
+
+   Fixed height, so the reflection is CROPPED rather than scaled.
+   You see less of it than of the original, which is what
+   perspective does to anything lying down.
+   ============================================================ */
+  .lake {
+    position: relative;
+    overflow: hidden;
+    background: var(--water);
+    height: clamp(130px, 20vh, 190px);
+  }
+
+  /* THE REFLECTION.
+     top: 0 inside the water, and scaleY(-1) with the DEFAULT centre
+     origin so it mirrors within its own box instead of flipping out
+     of it. What was nearest the waterline is now at the top, which
+     is what a reflection is. */
+  .reflection {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 0;
+    transform: scaleY(-1);
+    opacity: var(--reflect-opacity);
+    filter: url(#ripple);
+
+    /* INVERTED ON PURPOSE. The transform applies to the mask too, so
+       source-bottom is what you see at the top. Written this way it
+       reads, on screen, as opaque at the waterline fading into the
+       depths — which is the way round water actually works. */
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 6%,
+      rgba(0, 0, 0, 0.5) 46%,
+      rgba(0, 0, 0, 1) 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 6%,
+      rgba(0, 0, 0, 0.5) 46%,
+      rgba(0, 0, 0, 1) 100%
+    );
+  }
+
+  /* surface sheen: shallow horizontal bands, light lying flat */
+  .lake::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      var(--sheen) 0 1px,
+      transparent 1px 6px
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.9),
+      transparent 82%
+    );
+    mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent 82%);
+  }
+
+  /* depth: the water darkens away from the shore */
+  .lake::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background: linear-gradient(to bottom, transparent 6%, var(--depth) 100%);
+  }
+
+  /* the drift, off by default — see the note below */
+  @media (prefers-reduced-motion: no-preference) {
+    .lake.drift::before {
+      animation: swell 13s ease-in-out infinite alternate;
+    }
+    @keyframes swell {
+      from {
+        background-position: 0 0;
+      }
+      to {
+        background-position: 0 6px;
+      }
+    }
+  }
+
+  /* ---- the one-liner, for comparison ----
+     -webkit-box-reflect does all of the above in a single
+     declaration, and does nothing at all in Firefox. */
+  .lake.boxref .reflection {
+    display: none;
+  }
+  .lake.boxref {
+    height: auto;
+    background: none;
+  }
+  .boxref-host {
+    display: none;
+  }
+  .lake.boxref + .boxref-host {
+    display: block;
+    background: var(--water);
+  }
+  .boxref-host .standing {
+    -webkit-box-reflect: below 0
+      linear-gradient(to bottom, transparent 40%, rgba(0, 0, 0, 0.42));
+  }
+
+  /* ---------- glossary ---------- */
+  .after {
+    padding: 30px clamp(14px, 3vw, 28px) 70px;
+    max-width: 84ch;
+    font-size: 14.5px;
+    line-height: 1.75;
+    color: var(--ui-dim);
+  }
+  .after h3 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ui-dim);
+    margin: 34px 0 12px;
+  }
+  .after h3:first-child {
+    margin-top: 0;
+  }
+  .after p {
+    margin: 0 0 14px;
+  }
+  .after b {
+    color: var(--ui-fg);
+    font-weight: 600;
+  }
+  .after pre {
+    margin: 0 0 18px;
+    padding: 15px 17px;
+    border-left: 1px solid var(--ui-line);
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.72;
+    color: var(--ui-dim);
+    white-space: pre;
+  }
+  .gloss {
+    display: grid;
+    grid-template-columns: minmax(9rem, 12rem) 1fr;
+    gap: 0;
+    margin: 0 0 18px;
+    border-top: 1px solid var(--ui-line);
+  }
+  .gloss dt {
+    padding: 10px 18px 10px 0;
+    border-bottom: 1px solid var(--ui-line);
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--ui-fg);
+  }
+  .gloss dd {
+    margin: 0;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--ui-line);
+    font-size: 14px;
+    line-height: 1.65;
+  }
+  @media (max-width: 560px) {
+    .gloss {
+      grid-template-columns: 1fr;
+    }
+    .gloss dt {
+      border-bottom: 0;
+      padding-bottom: 2px;
+    }
+  }
+</style>
+
+<svg
+  width="0"
+  height="0"
+  aria-hidden="true"
+  focusable="false"
+  style="position: absolute"
+>
+  <!-- The ripple. feTurbulence generates Perlin noise;
+       feDisplacementMap reads two channels of it as a 2-vector and
+       shifts each pixel by that amount. The one number doing the
+       work is baseFrequency: it is ANISOTROPIC here, 0.005 across
+       and 0.09 down, so the noise is stretched wide and squashed
+       tall and breaks into horizontal bands. That is the whole
+       difference between water and fog. -->
+  <filter id="ripple" color-interpolation-filters="sRGB">
+    <feTurbulence
+      type="fractalNoise"
+      baseFrequency="0.005 0.09"
+      numOctaves="2"
+      seed="5"
+      result="w"
+    />
+    <feDisplacementMap
+      in="SourceGraphic"
+      in2="w"
+      scale="11"
+      xChannelSelector="R"
+      yChannelSelector="G"
+    />
+  </filter>
+</svg>
+
+<div class="bar">
+  <span class="who">The lake</span>
+  <button class="btn" id="rippleToggle" type="button" aria-pressed="true">
+    Ripple
+  </button>
+  <button class="btn" id="drift" type="button" aria-pressed="false">
+    Drift
+  </button>
+  <button class="btn" id="boxref" type="button" aria-pressed="false">
+    box-reflect
+  </button>
+  <button class="btn" id="world" type="button">Hollowed</button>
+</div>
+
+<p class="lede">
+  <b>Fixed.</b> The previous version drew the reflection above the waterline and
+  clipped it away, and had its depth mask on backwards. Both are documented
+  traps, both are explained at the bottom. Scroll down. <b>Ripple</b> removes
+  the displacement filter so you can see what it contributes;
+  <b>box-reflect</b> swaps the whole hand-built version for the one-line WebKit
+  property, which does nothing in Firefox.
+</p>
+
+<div class="shore">
+  <div class="col">
+    <span class="mark">&#9670;</span>
+    <p class="kicker">Program Analysis</p>
+    <h1>Symbolic Execution</h1>
+    <div class="stats">02 June 2026 &middot; Nine minutes</div>
+
+    <p class="lead">
+      Symbolic execution is a means of analyzing a program to determine what
+      inputs cause each part of it to execute. Instead of running the code on
+      real values, an interpreter walks it while holding every input as a
+      symbol.
+    </p>
+    <p>
+      It arrives at expressions written in terms of those symbols, and at
+      constraints for the outcome of each conditional branch. Where concrete
+      execution answers what a program does with 5, symbolic execution answers
+      what it would take to reach a place at all.
+    </p>
+
+    <h2>A worked example</h2>
+    <pre>
+int f() {
+  y = read();
+  z = y * 2;
+  if (z == 12) fail();
+  else printf("OK");
+}</pre
+    >
+    <p>
+      During symbolic execution the program reads a symbol,
+      <code>&lambda;</code>, and the branch condition becomes the constraint
+      <code>&lambda; * 2 == 12</code>. Execution forks, and a solver later
+      returns <code>6</code> to reach <code>fail()</code>.
+    </p>
+
+    <h2>Limitations</h2>
+    <p>
+      Merge states that differ only in irrelevant ways and you accept weaker
+      constraints. Bound the loops and you accept incompleteness past the bound.
+      Prioritize paths heuristically and the interesting one may be starved.
+    </p>
+    <p>
+      Engines worth reading next: <a href="#">KLEE</a> and <a href="#">angr</a>.
+    </p>
+  </div>
+
+  <footer class="standing">
+    <span class="flame">&#9670;</span>
+    <span class="name">Weibo&rsquo;s Home</span>
+    <nav>
+      <a href="#">Posts</a>
+      <a href="#">Tags</a>
+      <a href="#">Archive</a>
+      <a href="#">About</a>
+    </nav>
+  </footer>
+</div>
+
+<div class="waterline"></div>
+
+<div class="lake" id="lake">
+  <!-- The same block again, as an image of itself. aria-hidden and
+       links demoted to spans: a screen reader must not read the
+       footer twice, and tab order must not collect four stops that
+       go nowhere. -->
+  <div class="reflection" aria-hidden="true">
+    <div class="standing">
+      <span class="flame">&#9670;</span>
+      <span class="name">Weibo&rsquo;s Home</span>
+      <nav>
+        <span>Posts</span><span>Tags</span><span>Archive</span
+        ><span>About</span>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<!-- the -webkit-box-reflect version, shown only when toggled -->
+<div class="boxref-host" id="boxrefHost">
+  <div class="standing">
+    <span class="flame">&#9670;</span>
+    <span class="name">Weibo&rsquo;s Home</span>
+    <nav>
+      <span>Posts</span><span>Tags</span><span>Archive</span><span>About</span>
+    </nav>
+  </div>
+</div>
+
+<div class="after">
+  <h3>The two bugs, and why they are worth knowing</h3>
+  <p>
+    <b>A negative <code>scaleY</code> maps the box away from its origin.</b>
+    With <code>transform-origin: top</code>, a point at <code>y</code> lands at
+    <code>-0.62y</code> — above the top edge, outside the water, clipped by
+    <code>overflow: hidden</code>. Nothing errors; the lake is simply empty. The
+    fix is to position the copy inside the water and flip it with the default
+    centre origin, so it mirrors within its own box.
+  </p>
+  <p>
+    <b>A transform applies to the element's mask as well as its pixels.</b>
+    After <code>scaleY(-1)</code> the source-bottom is what appears at the top,
+    so a mask written <code>black → transparent</code> fades the reflection at
+    the waterline and leaves it solid in the deep — backwards. Written in source
+    order it has to be <code>transparent → black</code>. This one is easy to
+    stare past, because it looks deliberate.
+  </p>
+  <pre>
+.lake {
+  position: relative;
+  overflow: hidden;
+  height: clamp(130px, 20vh, 190px);   /* crop = foreshortening */
+}
+
+.reflection {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  transform: scaleY(-1);               /* default centre origin */
+  filter: url(#ripple);
+  mask-image: linear-gradient(to bottom,
+                transparent 6%,        /* inverted: this is the DEEP end */
+                rgba(0,0,0,.5) 46%,
+                rgba(0,0,0,1) 100%);   /* and this is the waterline */
+}</pre
+  >
+
+  <h3>The words for it, in English</h3>
+  <dl class="gloss">
+    <dt>waterline</dt>
+    <dd>
+      The horizontal line where the solid page stops and the water begins. In
+      the sense used here it is the boundary itself, not the water.
+    </dd>
+    <dt>foreshortening</dt>
+    <dd>
+      An object appearing shorter along the axis pointing away from the viewer.
+      A reflection lying flat on water is foreshortened; that is why you see
+      less of it than of the thing reflected.
+    </dd>
+    <dt>falloff</dt>
+    <dd>
+      How quickly something fades with distance — light, a shadow, a reflection.
+      "A soft falloff" fades gradually, "a hard falloff" ends abruptly.
+    </dd>
+    <dt>anisotropic</dt>
+    <dd>
+      Having different properties in different directions. The ripple noise is
+      anisotropic because its frequency across is not its frequency down, which
+      is what stretches it into bands.
+    </dd>
+    <dt>iso-lines</dt>
+    <dd>
+      The contours joining points of equal value in a field. A plain gradient
+      has straight or circular iso-lines; warping it makes them irregular.
+    </dd>
+    <dt>sheen</dt>
+    <dd>
+      A soft, low, spread-out reflectivity on a surface — not a highlight, which
+      is small and bright. Water has sheen; polished metal has highlights.
+    </dd>
+    <dt>to read as</dt>
+    <dd>
+      Design shorthand for "to be perceived as", regardless of how it was made:
+      "the noise reads as dirt", "gold on every link reads as wallpaper". The
+      single most useful phrase in this vocabulary.
+    </dd>
+    <dt>to carry</dt>
+    <dd>
+      For an element to do the work of communicating something: "space and light
+      carry the theme", "the left rule carries the code block". Its opposite is
+      decoration, which carries nothing.
+    </dd>
+    <dt>to spend</dt>
+    <dd>
+      To use up a limited budget of attention: "gold is spent once, on the
+      title". Implies you now have less of it left, which is exactly the idea.
+    </dd>
+    <dt>to date</dt>
+    <dd>
+      To become recognisably of its period, and so to look old: "heavy ornament
+      dates fastest". Not the same as looking bad — it looks like 2026 rather
+      than timeless.
+    </dd>
+  </dl>
+
+  <h3>Per page, not per site</h3>
+  <p>
+    You are right that the design can differ by page, and the lake is the
+    argument for it: on every post it would be a tic, but on <b>one</b> page it
+    is a place. The honest candidates, in order — the <b>404</b>, where the
+    reader has reached the end of the world and a shore is the right metaphor;
+    <b>About</b>, which is the one page whose job is atmosphere rather than
+    information; and the <b>home gate</b>, seen once per visit. Behind a post it
+    would flatten the atmosphere, the same objection <code>design.md</code> §15
+    already records against full-bleed header images.
+  </p>
+  <p>
+    <b>Two costs that do not go away.</b> It is a second ambient animation if
+    you switch <b>Drift</b> on, and <code>design.md</code> §11 permits exactly
+    one — the flame. Leave it static. And the flame plus its reflection is two
+    golds, so with one link under the cursor the page is at the
+    three-per-viewport ceiling with nothing spare.
+  </p>
+</div>
+
+<script>
+  (function () {
+    var worldBtn = document.getElementById("world");
+    var driftBtn = document.getElementById("drift");
+    /* NOT "ripple" — that id belongs to the SVG filter, and a
+       duplicate id would have handed us the filter element instead
+       of the button. */
+    var rippleBtn = document.getElementById("rippleToggle");
+    var boxrefBtn = document.getElementById("boxref");
+    var lake = document.getElementById("lake");
+    var reflection = document.querySelector(".reflection");
+
+    var world = "hollowed";
+    var drifting = false;
+    var rippling = true;
+    var boxref = false;
+
+    document.body.dataset.world = world;
+
+    worldBtn.addEventListener("click", function () {
+      world = world === "hollowed" ? "kindled" : "hollowed";
+      document.body.dataset.world = world;
+      worldBtn.textContent = world === "hollowed" ? "Hollowed" : "Kindled";
+    });
+
+    driftBtn.addEventListener("click", function () {
+      drifting = !drifting;
+      lake.classList.toggle("drift", drifting);
+      driftBtn.setAttribute("aria-pressed", String(drifting));
+    });
+
+    rippleBtn.addEventListener("click", function () {
+      rippling = !rippling;
+      reflection.style.filter = rippling ? "url(#ripple)" : "none";
+      rippleBtn.setAttribute("aria-pressed", String(rippling));
+    });
+
+    boxrefBtn.addEventListener("click", function () {
+      boxref = !boxref;
+      lake.classList.toggle("boxref", boxref);
+      boxrefBtn.setAttribute("aria-pressed", String(boxref));
+    });
+  })();
+</script>

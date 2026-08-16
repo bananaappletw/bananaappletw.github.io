@@ -1,0 +1,718 @@
+<title>Texture Without a Bitmap</title>
+<style>
+  /*FONTS*/
+
+  /* ============================================================
+   TEXTURE WITHOUT A BITMAP
+
+   darksouls.jp ships one 800×570 JPEG of stained plaster and tiles
+   it on <body>. This page asks whether CSS alone can reach the same
+   place, and compares six answers on the same ground with the same
+   text over them.
+
+   The finding, up front: feTurbulence is the whole trick, and the
+   only variable that matters is baseFrequency. High frequency is
+   film grain — that is what the theme already uses at 0.85. LOW
+   frequency, around 0.006–0.02, is clouds, stains and soot. Same
+   filter primitive, two completely different materials.
+   ============================================================ */
+
+  :root {
+    --display: Cinzel, Optima, "Palatino Linotype", Palatino, serif;
+    --body: Spectral, Charter, Georgia, serif;
+    --mono: GSCode, ui-monospace, Menlo, monospace;
+
+    --ui-bg: #121110;
+    --ui-fg: #cfc7b6;
+    --ui-dim: #7d7365;
+    --ui-line: #2e2a24;
+    --ui-mark: #d7ae72;
+
+    /* the shared Ash ground, so only the texture differs */
+    --ground: #100f0d;
+    --ink: #c6bca8;
+    --ink-2: #a99e8a;
+    --ink-3: #7e7361;
+    --gold: #cda76b;
+    --rule: #33302a;
+    --pre-bg: rgba(0, 0, 0, 0.34);
+    --arcane: #7ea3a1;
+    --under: #4e483d;
+
+    /* the soot ink, flipped with the world by script; declared here so
+       the gradient techniques still resolve before the script runs */
+    --soot-rgb: 0, 0, 0;
+  }
+
+  body[data-world="kindled"] {
+    --ui-bg: #f4f2ec;
+    --ui-fg: #2b2924;
+    --ui-dim: #6f6b60;
+    --ui-line: #ddd9cf;
+    --ui-mark: #8a5f18;
+
+    --ground: #ffffff;
+    --ink: #39352a;
+    --ink-2: #4d4739;
+    --ink-3: #6c6553;
+    --gold: #96631a;
+    --rule: #e2dccb;
+    --pre-bg: #faf7ef;
+    --arcane: #2f5296;
+    --under: #c3bba5;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    background: var(--ui-bg);
+    color: var(--ui-fg);
+    font-family: var(--body);
+    margin: 0;
+  }
+
+  /* ============================================================
+   THE SIX TEXTURES
+   Each is a background-image only. Nothing here touches type,
+   spacing or colour, so any difference you see is the texture.
+   ============================================================ */
+
+  /* ---- A. Layered radial gradients ----------------------------
+     No SVG at all: six radial gradients at deliberately unrelated
+     sizes and positions, tiled at a large background-size so the
+     repeat is hard to spot. Cheapest possible, and the one that
+     most often still reads as CSS rather than as dirt. */
+  .tA {
+    background-image:
+      radial-gradient(
+        38% 52% at 12% 24%,
+        rgba(var(--soot-rgb), 0.1),
+        transparent 60%
+      ),
+      radial-gradient(
+        46% 30% at 78% 12%,
+        rgba(var(--soot-rgb), 0.07),
+        transparent 62%
+      ),
+      radial-gradient(
+        30% 44% at 62% 68%,
+        rgba(var(--soot-rgb), 0.09),
+        transparent 58%
+      ),
+      radial-gradient(
+        52% 26% at 28% 86%,
+        rgba(var(--soot-rgb), 0.06),
+        transparent 64%
+      ),
+      radial-gradient(
+        24% 38% at 90% 60%,
+        rgba(var(--soot-rgb), 0.08),
+        transparent 56%
+      ),
+      radial-gradient(
+        40% 40% at 44% 40%,
+        rgba(var(--soot-rgb), 0.05),
+        transparent 66%
+      );
+    background-size: 780px 620px;
+    background-repeat: repeat;
+  }
+
+  /* ---- B. feTurbulence, low frequency --------------------------
+     The same primitive as the theme's film grain, dropped from
+     baseFrequency 0.85 to 0.014. That single number is the entire
+     difference between static and stains. stitchTiles='stitch'
+     makes the tile seamless, so it repeats without a visible seam. */
+  .tB {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='700' height='700'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.014' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+    background-size: 700px 700px;
+    background-repeat: repeat;
+    opacity: 1;
+  }
+  /* the noise rect is opaque grey, so it is composited rather than
+     painted flat: multiply darkens the ground, soft-light stains it */
+  .tB {
+    background-blend-mode: soft-light;
+    background-color: var(--ground);
+  }
+
+  /* ---- C. Turbulence crushed into blotches ---------------------
+     B still looks like fog. Moving luminance into the alpha channel
+     with feColorMatrix and then bending that alpha with a gamma
+     curve throws away the mid-tones, which is what turns a cloud
+     into a stain with edges. This is the closest to the JPEG. */
+  .tC {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='700' height='700'%3E%3Cfilter id='f' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.009' numOctaves='5' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 -0.25'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='gamma' amplitude='1.9' exponent='2.6' offset='0'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+    background-size: 700px 700px;
+    background-repeat: repeat;
+    background-color: var(--ground);
+  }
+
+  /* ---- D. Noise-masked vignette --------------------------------
+     This is the "simulate a shadow" one. A plain radial-gradient
+     vignette always reads as CSS because its falloff is perfectly
+     smooth. Masking that same gradient with low-frequency noise
+     makes the darkness gather unevenly, the way it does in a room
+     with a dirty wall — the shadow stops being a shape and starts
+     being a condition. */
+  .tD::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      120% 90% at 50% 34%,
+      transparent 30%,
+      rgba(var(--soot-rgb), 0.55) 100%
+    );
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='800'%3E%3Cfilter id='f' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.006' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='gamma' amplitude='1.6' exponent='1.1'/%3E%3CfeFuncG type='gamma' amplitude='1.6' exponent='1.1'/%3E%3CfeFuncB type='gamma' amplitude='1.6' exponent='1.1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='800'%3E%3Cfilter id='f' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.006' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='gamma' amplitude='1.6' exponent='1.1'/%3E%3CfeFuncG type='gamma' amplitude='1.6' exponent='1.1'/%3E%3CfeFuncB type='gamma' amplitude='1.6' exponent='1.1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+    -webkit-mask-size: 800px 800px;
+    mask-size: 800px 800px;
+    -webkit-mask-repeat: repeat;
+    mask-repeat: repeat;
+  }
+
+  /* ---- E. Two turbulence layers at different scales -------------
+     One coarse layer for the large stains, one fine for the tooth,
+     blended together. Two background-images, two sizes, one
+     background-blend-mode. Closest in structure to how the JPEG
+     itself was probably made. */
+  .tE {
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='700' height='700'%3E%3Cfilter id='f' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.007' numOctaves='5' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 -0.3'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='gamma' amplitude='2' exponent='2.4'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E"),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.055'/%3E%3C/svg%3E");
+    background-size:
+      700px 700px,
+      220px 220px;
+    background-repeat: repeat, repeat;
+    background-color: var(--ground);
+  }
+
+  /* ---- F. The bitmap, for reference ----------------------------
+     Not CSS. A canvas-generated tile, painted once at load and set
+     as a background-image — the same shape of solution as shipping
+     a JPEG, minus the download. Here to answer "is CSS actually
+     close enough", not as a candidate. */
+  .tF {
+    background-repeat: repeat;
+    background-color: var(--ground);
+  }
+
+  /* ============================================================
+   CHROME
+   ============================================================ */
+  .chooser {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--ui-bg);
+    border-bottom: 1px solid var(--ui-line);
+    padding: 14px clamp(16px, 4vw, 32px);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 10px 18px;
+  }
+  .chooser .who {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ui-dim);
+    margin-right: auto;
+  }
+  .tab,
+  .world {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: none;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    padding: 4px 0;
+    color: var(--ui-dim);
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+  .tab:hover,
+  .world:hover {
+    color: var(--ui-fg);
+  }
+  .tab[aria-selected="true"] {
+    color: var(--ui-mark);
+    border-bottom-color: var(--ui-mark);
+  }
+  .tab:focus-visible,
+  .world:focus-visible {
+    outline: 2px solid var(--ui-mark);
+    outline-offset: 3px;
+  }
+  .world {
+    border: 1px solid var(--ui-line);
+    padding: 5px 12px;
+    margin-left: 4px;
+  }
+
+  .intro {
+    padding: 22px clamp(16px, 4vw, 32px) 0;
+    max-width: 78ch;
+    font-size: 14.5px;
+    line-height: 1.75;
+    color: var(--ui-dim);
+  }
+  .intro b {
+    color: var(--ui-fg);
+    font-weight: 600;
+  }
+  .intro code,
+  .note code {
+    font-family: var(--mono);
+    font-size: 0.86em;
+    color: var(--ui-fg);
+  }
+  .intro p {
+    margin: 0 0 14px;
+  }
+
+  /* ---- the swatch wall ---- */
+  .wall {
+    padding: 8px clamp(16px, 4vw, 32px) 30px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 14px;
+  }
+  .swatch {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    border: 1px solid var(--ui-line);
+    background-color: var(--ground);
+    overflow: hidden;
+    padding: 0;
+    cursor: pointer;
+    display: block;
+  }
+  .swatch .cap {
+    position: absolute;
+    left: 10px;
+    bottom: 8px;
+    z-index: 2;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .swatch:hover .cap,
+  .swatch:focus-visible .cap {
+    color: var(--gold);
+  }
+  .swatch:focus-visible {
+    outline: 2px solid var(--ui-mark);
+    outline-offset: 2px;
+  }
+
+  .note {
+    padding: 0 clamp(16px, 4vw, 32px);
+    max-width: 78ch;
+    font-size: 14.5px;
+    line-height: 1.75;
+    color: var(--ui-dim);
+    margin: 0 0 16px;
+  }
+  .note b {
+    color: var(--ui-fg);
+    font-weight: 600;
+  }
+
+  .src {
+    margin: 0 clamp(16px, 4vw, 32px) 26px;
+    padding: 14px 16px;
+    border-left: 1px solid var(--ui-line);
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--ui-dim);
+    white-space: pre;
+  }
+
+  /* ---- the full-page stage ---- */
+  .stage > section {
+    display: none;
+  }
+  .stage > section.on {
+    display: block;
+  }
+  .stage > section {
+    position: relative;
+    background-color: var(--ground);
+    padding: clamp(48px, 9vh, 104px) clamp(20px, 5vw, 40px) 110px;
+  }
+  .col {
+    position: relative;
+    z-index: 1;
+    max-width: 34rem;
+    margin: 0 auto;
+  }
+  .mark {
+    color: var(--gold);
+    font-size: 13px;
+    letter-spacing: 0.2em;
+  }
+  .kicker {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10.5px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 26px 0 18px;
+  }
+  .stage h1 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(27px, 4vw, 38px);
+    line-height: 1.25;
+    letter-spacing: 0.04em;
+    font-variant-caps: small-caps;
+    color: var(--ink);
+    margin: 0 0 26px;
+    max-width: 20ch;
+  }
+  .stats {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 54px;
+  }
+  .stage p {
+    color: var(--ink-2);
+    font-size: 17.5px;
+    line-height: 1.9;
+    margin: 0 0 26px;
+  }
+  .stage .lead {
+    color: var(--ink);
+    font-size: 19px;
+  }
+  .stage h2 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 19px;
+    letter-spacing: 0.06em;
+    font-variant-caps: small-caps;
+    color: var(--ink-3);
+    margin: 62px 0 16px;
+  }
+  .stage pre {
+    background: var(--pre-bg);
+    border-left: 1px solid var(--rule);
+    padding: 16px 0 16px 20px;
+    overflow-x: auto;
+    margin: 0 0 26px;
+    font-family: var(--mono);
+    font-size: 13.5px;
+    line-height: 1.75;
+    color: var(--ink-2);
+  }
+  .stage :not(pre) > code {
+    font-family: var(--mono);
+    color: var(--arcane);
+    font-size: 0.85em;
+  }
+  .stage a {
+    color: var(--ink);
+    text-decoration: underline;
+    text-decoration-color: var(--under);
+    text-underline-offset: 4px;
+  }
+  .stage a:hover {
+    color: var(--gold);
+    text-decoration-color: var(--gold);
+  }
+</style>
+
+<div class="chooser">
+  <span class="who">Texture without a bitmap</span>
+  <button class="tab" data-v="A" aria-selected="true">
+    A &mdash; Gradients
+  </button>
+  <button class="tab" data-v="B" aria-selected="false">
+    B &mdash; Turbulence
+  </button>
+  <button class="tab" data-v="C" aria-selected="false">
+    C &mdash; Crushed
+  </button>
+  <button class="tab" data-v="D" aria-selected="false">D &mdash; Masked</button>
+  <button class="tab" data-v="E" aria-selected="false">
+    E &mdash; Two scales
+  </button>
+  <button class="tab" data-v="F" aria-selected="false">F &mdash; Canvas</button>
+  <button class="world" id="world" type="button">Hollowed</button>
+</div>
+
+<div class="intro">
+  <p>
+    <b>darksouls.jp ships a photograph.</b> Their <code>body</code> carries one
+    800&times;570 JPEG of stained plaster at
+    <code>background-repeat: repeat</code>, and on the product pages there is no
+    gradient and no vignette anywhere &mdash; the bitmap is the entire
+    atmosphere.
+  </p>
+  <p>
+    <b>The CSS equivalent is one number.</b> <code>feTurbulence</code> at
+    <code>baseFrequency: 0.85</code> is film grain, which is what Torchlight
+    already uses. The same primitive at <code>0.006&ndash;0.02</code> is clouds,
+    soot and water stains. Everything below is that observation applied six
+    ways. Click a swatch to put it behind a real post.
+  </p>
+</div>
+
+<div class="wall" id="wall">
+  <button class="swatch tA" data-v="A" type="button">
+    <span class="cap">A &mdash; Gradients</span>
+  </button>
+  <button class="swatch tB" data-v="B" type="button">
+    <span class="cap">B &mdash; Turbulence</span>
+  </button>
+  <button class="swatch tC" data-v="C" type="button">
+    <span class="cap">C &mdash; Crushed</span>
+  </button>
+  <button class="swatch tD" data-v="D" type="button">
+    <span class="cap">D &mdash; Masked</span>
+  </button>
+  <button class="swatch tE" data-v="E" type="button">
+    <span class="cap">E &mdash; Two scales</span>
+  </button>
+  <button class="swatch tF" data-v="F" type="button">
+    <span class="cap">F &mdash; Canvas</span>
+  </button>
+</div>
+
+<p class="note" id="note"></p>
+<pre class="src" id="src"></pre>
+
+<div class="stage" id="stage"></div>
+
+<template id="post">
+  <div class="col">
+    <span class="mark">&#9670;</span>
+    <p class="kicker">Program Analysis</p>
+    <h1>Symbolic Execution</h1>
+    <div class="stats">02 June 2026 &middot; Nine minutes</div>
+
+    <p class="lead">
+      Symbolic execution is a means of analyzing a program to determine what
+      inputs cause each part of it to execute. Instead of running the code on
+      real values, an interpreter walks it while holding every input as a
+      symbol.
+    </p>
+    <p>
+      It arrives at expressions written in terms of those symbols, and at
+      constraints for the outcome of each conditional branch. Where concrete
+      execution answers what a program does with 5, symbolic execution answers
+      what it would take to reach a place at all.
+    </p>
+
+    <h2>A worked example</h2>
+    <pre>
+int f() {
+  y = read();
+  z = y * 2;
+  if (z == 12) fail();
+  else printf("OK");
+}</pre
+    >
+    <p>
+      During symbolic execution the program reads a symbol,
+      <code>&lambda;</code>, and the branch condition becomes the constraint
+      <code>&lambda; * 2 == 12</code>. Execution forks, and a solver later
+      returns <code>6</code> to reach <code>fail()</code>.
+    </p>
+
+    <h2>Limitations</h2>
+    <p>
+      Merge states that differ only in irrelevant ways and you accept weaker
+      constraints. Bound the loops and you accept incompleteness past the bound.
+      Prioritize paths heuristically and the interesting one may be starved.
+    </p>
+    <p>
+      Engines worth reading next: <a href="#">KLEE</a> and <a href="#">angr</a>.
+    </p>
+  </div>
+</template>
+
+<script>
+  (function () {
+    var notes = {
+      A: "<b>A — Layered gradients.</b> Six radial gradients at unrelated sizes and positions, tiled at 780×620 so the repeat is hard to catch. No SVG, no filter, nothing to decode — the cheapest option by a wide margin, and it renders identically everywhere. The weakness is that gradients are smooth all the way down: at any size you can still see that the blotches are ellipses, so it reads as lighting rather than as dirt.",
+      B: "<b>B — feTurbulence, low frequency.</b> The theme's own grain filter with <code>baseFrequency</code> dropped from 0.85 to 0.014. That one number is the whole difference between static and stains. <code>stitchTiles='stitch'</code> makes the tile seamless so it repeats without a visible edge, and <code>background-blend-mode: soft-light</code> stains the ground rather than sitting on top of it. Convincing as fog; still too even to read as a wall.",
+      C: "<b>C — Crushed to blotches.</b> B with the mid-tones thrown away. <code>feColorMatrix</code> moves luminance into the alpha channel and subtracts a constant, then <code>feFuncA type='gamma'</code> bends what is left, so the soft cloud gains edges and becomes a stain. This is the closest CSS gets to the JPEG, and it is the one I would ship.",
+      D: "<b>D — Noise-masked vignette.</b> The answer to your hunch about shadow. A plain radial-gradient vignette always reads as CSS because its falloff is mathematically smooth; masking that same gradient with 0.006 turbulence makes the dark gather unevenly, so it stops being a shape and becomes a condition of the room. Costs nothing extra if you already have a vignette — you are masking the layer you were drawing anyway.",
+      E: "<b>E — Two scales.</b> A coarse turbulence layer for the stains plus the existing fine-grain layer for tooth, composited as two background images. Structurally this is how the original photograph works: large-scale staining and small-scale surface, at different frequencies. The most convincing of the six, and the most expensive — two filter rasterizations on every resize.",
+      F: "<b>F — Canvas tile.</b> Not CSS: four octaves of value noise painted into a 256px canvas at load and handed back as a data URL. The same shape of solution as shipping a JPEG, without the download. Here to answer whether CSS is close enough — compare it against C and E, and if you cannot tell them apart, CSS wins on principle.",
+    };
+
+    var src = {
+      A: "background-image:\n  radial-gradient(38% 52% at 12% 24%, rgba(0,0,0,.10), transparent 60%),\n  radial-gradient(46% 30% at 78% 12%, rgba(0,0,0,.07), transparent 62%),\n  /* …four more, unrelated sizes and positions… */;\nbackground-size: 780px 620px;\nbackground-repeat: repeat;",
+      B: "background-image: url(\"data:image/svg+xml,\n  <svg xmlns='http://www.w3.org/2000/svg' width='700' height='700'>\n    <filter id='f'>\n      <feTurbulence type='fractalNoise' baseFrequency='0.014'\n                    numOctaves='4' stitchTiles='stitch'/>\n      <feColorMatrix type='saturate' values='0'/>\n    </filter>\n    <rect width='100%' height='100%' filter='url(#f)'/>\n  </svg>\");\nbackground-blend-mode: soft-light;",
+      C: "<filter id='f' color-interpolation-filters='sRGB'>\n  <feTurbulence type='fractalNoise' baseFrequency='0.009'\n                numOctaves='5' stitchTiles='stitch'/>\n  <!-- luminance → alpha, minus a constant: kills the mid-tones -->\n  <feColorMatrix type='matrix' values='0 0 0 0 0\n                                       0 0 0 0 0\n                                       0 0 0 0 0\n                                       1 0 0 0 -0.25'/>\n  <feComponentTransfer>\n    <feFuncA type='gamma' amplitude='1.9' exponent='2.6'/>\n  </feComponentTransfer>\n</filter>",
+      D: '/* the vignette you were already drawing… */\nbackground: radial-gradient(120% 90% at 50% 34%,\n              transparent 30%, rgba(0,0,0,.55) 100%);\n\n/* …with its falloff eaten by noise */\n-webkit-mask-image: url("data:image/svg+xml,…feTurbulence\n                        baseFrequency=\'0.006\'…");\nmask-image: url("data:image/svg+xml,…");\nmask-size: 800px 800px;\nmask-repeat: repeat;',
+      E: "background-image:\n  url(\"…feTurbulence baseFrequency='0.007' numOctaves='5'…\"),  /* stains */\n  url(\"…feTurbulence baseFrequency='0.85'  numOctaves='4'…\");  /* tooth  */\nbackground-size: 700px 700px, 220px 220px;\nbackground-repeat: repeat, repeat;",
+      F: "// four octaves of seamless value noise, painted once\nvar img = ctx.createImageData(256, 256);\nfor (…) {\n  n = octave(2,.50) + octave(4,.26) + octave(8,.14) + octave(16,.10);\n  n = clamp((n - 0.42) * 2.6 + 0.5);  // contrast: stains, not static\n  d[i+3] = n * n * alpha * 255;\n}\nel.style.backgroundImage = 'url(' + canvas.toDataURL() + ')';",
+    };
+
+    var tabs = document.querySelectorAll(".tab");
+    var swatches = document.querySelectorAll(".swatch");
+    var note = document.getElementById("note");
+    var srcEl = document.getElementById("src");
+    var stage = document.getElementById("stage");
+    var tpl = document.getElementById("post");
+    var worldBtn = document.getElementById("world");
+    var world = "hollowed";
+    var current = "A";
+
+    /* one section per technique, built from the same template so the
+       text over each texture is identical */
+    ["A", "B", "C", "D", "E", "F"].forEach(function (v) {
+      var s = document.createElement("section");
+      s.className = "t" + v;
+      s.dataset.v = v;
+      s.appendChild(tpl.content.cloneNode(true));
+      stage.appendChild(s);
+    });
+
+    /* ---- F: the canvas tile, for reference ---- */
+    function soot(size, rgb, alpha) {
+      var c = document.createElement("canvas");
+      c.width = c.height = size;
+      var ctx = c.getContext("2d");
+      var img = ctx.createImageData(size, size);
+      var d = img.data;
+
+      function lattice(n) {
+        var g = new Float32Array(n * n);
+        for (var i = 0; i < g.length; i++) g[i] = Math.random();
+        return g;
+      }
+      function smooth(t) {
+        return t * t * (3 - 2 * t);
+      }
+      function sample(g, n, x, y) {
+        var fx = x * n,
+          fy = y * n;
+        var x0 = Math.floor(fx),
+          y0 = Math.floor(fy);
+        var tx = smooth(fx - x0),
+          ty = smooth(fy - y0);
+        var xa = ((x0 % n) + n) % n,
+          xb = (xa + 1) % n;
+        var ya = ((y0 % n) + n) % n,
+          yb = (ya + 1) % n;
+        var top = g[ya * n + xa] * (1 - tx) + g[ya * n + xb] * tx;
+        var bot = g[yb * n + xa] * (1 - tx) + g[yb * n + xb] * tx;
+        return top * (1 - ty) + bot * ty;
+      }
+
+      var oct = [
+        { g: lattice(2), n: 2, w: 0.5 },
+        { g: lattice(4), n: 4, w: 0.26 },
+        { g: lattice(8), n: 8, w: 0.14 },
+        { g: lattice(16), n: 16, w: 0.1 },
+      ];
+
+      for (var y = 0; y < size; y++) {
+        for (var x = 0; x < size; x++) {
+          var u = x / size,
+            v = y / size,
+            n = 0;
+          for (var o = 0; o < oct.length; o++) {
+            n += sample(oct[o].g, oct[o].n, u, v) * oct[o].w;
+          }
+          n = Math.min(1, Math.max(0, (n - 0.42) * 2.6 + 0.5));
+          n = n * n;
+          n = Math.min(1, n + (Math.random() - 0.5) * 0.06);
+          var i = (y * size + x) * 4;
+          d[i] = rgb[0];
+          d[i + 1] = rgb[1];
+          d[i + 2] = rgb[2];
+          d[i + 3] = Math.round(n * alpha * 255);
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+      return c.toDataURL("image/png");
+    }
+
+    var tiles = {};
+    function paintCanvasTile() {
+      var rgb = world === "hollowed" ? [232, 220, 198] : [60, 52, 36];
+      var alpha = world === "hollowed" ? 0.06 : 0.05;
+      if (!tiles[world]) tiles[world] = soot(256, rgb, alpha);
+      document.querySelectorAll(".tF").forEach(function (el) {
+        el.style.backgroundImage = "url(" + tiles[world] + ")";
+      });
+    }
+
+    function show(v) {
+      current = v;
+      tabs.forEach(function (t) {
+        t.setAttribute("aria-selected", String(t.dataset.v === v));
+      });
+      stage.querySelectorAll("section").forEach(function (s) {
+        s.classList.toggle("on", s.dataset.v === v);
+      });
+      note.innerHTML = notes[v];
+      srcEl.textContent = src[v];
+    }
+
+    function setWorld(w) {
+      world = w;
+      document.body.dataset.world = w;
+      /* the soot ink flips with the world: bone dust on a dark ground,
+         a brown stain on paper */
+      document.documentElement.style.setProperty(
+        "--soot-rgb",
+        w === "hollowed" ? "0, 0, 0" : "150, 132, 96",
+      );
+      worldBtn.textContent = w === "hollowed" ? "Hollowed" : "Kindled";
+      worldBtn.setAttribute(
+        "aria-label",
+        "World: " + worldBtn.textContent + ". Click to switch.",
+      );
+      paintCanvasTile();
+    }
+
+    tabs.forEach(function (t) {
+      t.addEventListener("click", function () {
+        show(t.dataset.v);
+        document
+          .getElementById("stage")
+          .scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    });
+    swatches.forEach(function (s) {
+      s.addEventListener("click", function () {
+        show(s.dataset.v);
+        document
+          .getElementById("stage")
+          .scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    });
+    worldBtn.addEventListener("click", function () {
+      setWorld(world === "hollowed" ? "kindled" : "hollowed");
+    });
+
+    setWorld("hollowed");
+    show("A");
+  })();
+</script>
