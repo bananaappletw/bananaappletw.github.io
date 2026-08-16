@@ -95,10 +95,16 @@ one fire throwing light on three surfaces is one gold.
 
 ## 3. The five scenes
 
-### 3.1 Approach → **home**
+### 3.1 Approach → **home** — **built**
 
 > Castle exterior. Faint mist drifting. The castle's silhouette is readable
 > through it. A stone-brick road runs from the foreground to the gate.
+
+Shipped as `src/components/scenes/Approach.astro`, drawn in SVG rather than
+painted. Three depth planes — far ridge, castle, ground — separated by two
+bands of mist, all in **one colour at different opacities**, so the whole
+scene follows a single `color` declaration and needs no second asset for the
+light world.
 
 You are outside and you have not gone in. Seen once per visit, which is the
 right frequency for the most illustrative of the five.
@@ -114,6 +120,15 @@ right frequency for the most illustrative of the five.
   and it is why the road is worth walking.
 - **Avoid:** a symmetrical fairy-tale castle; a full moon (that belongs to
   Drowned); anything in the sky.
+
+**What the first attempt got wrong, since the next four will face it too:**
+the stone was drawn at 0.82 opacity and the mist at 0.22, which is a bright
+castle in clear weather. The light is _behind_ the castle, so the mist has to
+be the brightest thing and the stone a silhouette against it. Inverting those
+two numbers is what turned a flat cutout into a picture. The castle then
+needed splitting into two planes as well — one flat mass has no depth of its
+own, and a step in value between the gatehouse and the keep is what gives it
+any.
 
 ### 3.2 Clerestory → **listings** (posts, tags, archive)
 
@@ -266,6 +281,26 @@ A delivered scene is done when all of these pass:
 - [ ] Placed behind a real paragraph of body copy and still readable — both the
       paragraph and the scene.
 - [ ] Nothing in it is clickable-looking.
+
+---
+
+## 6b. Two traps, both cost real time
+
+**An SVG `<mask>` defaults to _luminance_; CSS `mask-image` defaults to
+_alpha_.** A fade written with `black` stops at varying opacity is correct in
+CSS and means _hide everything_ inside an SVG mask, because black is luminance
+zero. Use `white` stops, or set `mask-type="alpha"`. The first build of
+Approach rendered as an entirely blank rectangle for this reason. Nesting two
+masked groups also beats combining gradients with `mix-blend-mode`, which is
+poorly supported inside masks.
+
+**Look at the thing.** These scenes cannot be judged from source. Extract the
+`<svg>` from `dist/`, rasterise it with `sharp` at its real delivered width,
+knock it back to its real opacity, and composite it over the real ground
+colour — the whole check is about forty lines and it caught both the blank
+mask and the inverted values. Strip Astro's `data-astro-cid-*` attributes
+first: they are valueless, which is legal HTML and invalid XML, and librsvg
+will refuse the file.
 
 ---
 

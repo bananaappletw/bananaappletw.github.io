@@ -407,21 +407,23 @@ The rule that follows: **`--text` targets 8–13:1, never above 14:1.** Borders 
 
 Listed so they can be caught in review. Several were committed during this theme's own construction.
 
-| Anti-pattern                               | Why it breaks                                                                       |
-| ------------------------------------------ | ----------------------------------------------------------------------------------- |
-| Gold on links, tags, nav or listing titles | Turns relief into wallpaper; §4                                                     |
-| A fourth hue                               | Three hues is what keeps this a system rather than a costume                        |
-| Cool grey anywhere                         | Souls is desaturated _brown_; cool grey reads as a rendering bug                    |
-| Flat black hollowed ground                 | Reads as an empty page rather than a lit room                                       |
-| Pushing `--text` to maximum contrast       | Above ~14:1 text detaches and glows instead of sitting in the page                  |
-| High-contrast borders                      | A hard hairline buzzes exactly as much as glaring type                              |
-| Ornament reading `--torch`                 | Leaves ornament lit in a dead world, killing the central idea                       |
-| A dark page with no grain                  | Reads as clean vector art, not a photographed room                                  |
-| `position: fixed` in a hand-written rule   | Tailwind hoists it into a utility and strips it — the atmosphere ships unpositioned |
-| A panel, frame, card or drop shadow        | Ash lifts nothing; that is direction A, and the hedge is what stalled the theme     |
-| Category colours (movie / anime / manga)   | Four decorative hues, and colour as the only signal                                 |
-| Drop caps and section marks                | Cut: with two ornaments per viewport, space and light do it better                  |
-| A second ambient animation                 | §11 permits exactly one, and it is the flame                                        |
+| Anti-pattern                                  | Why it breaks                                                                       |
+| --------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Gold on links, tags, nav or listing titles    | Turns relief into wallpaper; §4                                                     |
+| A fourth hue                                  | Three hues is what keeps this a system rather than a costume                        |
+| Cool grey anywhere                            | Souls is desaturated _brown_; cool grey reads as a rendering bug                    |
+| Flat black hollowed ground                    | Reads as an empty page rather than a lit room                                       |
+| Pushing `--text` to maximum contrast          | Above ~14:1 text detaches and glows instead of sitting in the page                  |
+| High-contrast borders                         | A hard hairline buzzes exactly as much as glaring type                              |
+| Ornament reading `--torch`                    | Leaves ornament lit in a dead world, killing the central idea                       |
+| A dark page with no grain                     | Reads as clean vector art, not a photographed room                                  |
+| `position: fixed` in a hand-written rule      | Tailwind hoists it into a utility and strips it — the atmosphere ships unpositioned |
+| A panel, frame, card or drop shadow           | Ash lifts nothing; that is direction A, and the hedge is what stalled the theme     |
+| `black` stops in an SVG `<mask>`              | SVG masks are luminance by default, so black hides — CSS `mask-image` is alpha      |
+| A scene whose stone is brighter than its mist | The light is behind the castle; bright stone reads as clear weather, and flat       |
+| Category colours (movie / anime / manga)      | Four decorative hues, and colour as the only signal                                 |
+| Drop caps and section marks                   | Cut: with two ornaments per viewport, space and light do it better                  |
+| A second ambient animation                    | §11 permits exactly one, and it is the flame                                        |
 
 ---
 

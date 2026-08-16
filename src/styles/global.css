@@ -45,10 +45,10 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  /* .air and .grain are positioned, so they paint above any non-positioned
-     content. Each atmosphere layer must be excluded, or this rule overrides
-     its own positioning. */
-  body > *:not(.air):not(.grain) {
+  /* .air, .grain and .scene are positioned, so they paint above any
+     non-positioned content. Every such layer must be excluded here, or this
+     rule overrides the positioning it is meant to sit above. */
+  body > *:not(.air):not(.grain):not(.scene) {
     position: relative;
     z-index: 1;
   }
@@ -118,6 +118,47 @@
 
 /* Borderless: only the falloff in .air marks where the content ends.
    Vertical rules at the hall's edges were tried and removed. */
+
+/* The scene layer — one vignette per page type, low in the bottom-right
+   corner, behind the text. Placement lives here rather than in each
+   scene so all five share it; see docs/theme/scenes.md §1.
+
+   The reader sees this small, dim and partly behind a paragraph, so a
+   scene has to read as a SHAPE. That is a constraint on the art, and
+   the reason none of them carry fine interior detail. */
+.scene {
+  /* position:fixed is applied as a utility in the component, because
+     Tailwind hoists that declaration out of hand-written rules — the same
+     trap that once shipped the whole atmosphere unpositioned. */
+  inset-block-end: 0;
+  inset-inline-end: 0;
+  z-index: 0;
+  width: clamp(220px, 32vw, 460px);
+  opacity: var(--scene-opacity);
+  pointer-events: none;
+  user-select: none;
+}
+
+.scene svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Below the hall's own width there are no margins left to put a picture
+   in, so it leaves rather than fades. A picture at 12% opacity is not a
+   picture, it is a smudge. */
+@media (max-width: 60rem) {
+  .scene {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .scene {
+    display: none;
+  }
+}
 
 /* Film grain. Without it a dark page reads as clean vector art rather
    than as a photographed room. Static — animated grain is nauseating. */

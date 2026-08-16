@@ -1,0 +1,278 @@
+---
+/**
+ * Approach — the home page's scene. See docs/theme/scenes.md §3.1.
+ *
+ * You are outside the castle and have not gone in. The road enters bottom
+ * left and leads to the gate; the castle mass fills the upper right.
+ *
+ * Three depth planes, each separated by a band of mist, because a single
+ * plane reads as a sticker and a single mist reads as fog. Back to front:
+ * the far ridge and its spires, the castle itself, then the rock and road
+ * you are standing on. Nothing is drawn in more than one colour — depth is
+ * carried entirely by opacity, so the whole scene recolours with the world
+ * from one `color` declaration.
+ *
+ * The light is cold and behind the castle, so the stone is a silhouette
+ * and the MIST is the lit thing. One gold window in the gatehouse is the
+ * only warm mark, and the reason the road is worth walking.
+ */
+---
+
+<div class="scene scene-approach fixed" aria-hidden="true">
+  <svg viewBox="0 0 400 300" width="400" height="300" focusable="false">
+    <defs>
+      {
+        /* The brush. scale=2.2 is enough that no edge is mechanically
+          straight and little enough that it never reads as a distortion.
+          The filter region is widened because displacement pushes pixels
+          outward, and the default region would clip the edges it just
+          moved. */
+      }
+      <filter
+        id="approach-brush"
+        x="-8%"
+        y="-8%"
+        width="116%"
+        height="116%"
+        color-interpolation-filters="sRGB"
+      >
+        <feTurbulence
+          type="fractalNoise"
+          baseFrequency="0.035"
+          numOctaves="3"
+          seed="17"
+          result="brush"></feTurbulence>
+        <feDisplacementMap
+          in="SourceGraphic"
+          in2="brush"
+          scale="2.2"
+          xChannelSelector="R"
+          yChannelSelector="G"></feDisplacementMap>
+      </filter>
+
+      {
+        /* Mist. Lit from behind the castle, so it is brightest where it
+          meets the stone and dissolves upward and downward. */
+      }
+      <linearGradient id="approach-mist-far" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="currentColor" stop-opacity="0"></stop>
+        <stop offset="55%" stop-color="currentColor" stop-opacity="0.62"></stop>
+        <stop offset="100%" stop-color="currentColor" stop-opacity="0"></stop>
+      </linearGradient>
+
+      <linearGradient id="approach-mist-near" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="currentColor" stop-opacity="0"></stop>
+        <stop offset="50%" stop-color="currentColor" stop-opacity="0.42"></stop>
+        <stop offset="100%" stop-color="currentColor" stop-opacity="0"></stop>
+      </linearGradient>
+
+      {
+        /* The scene dissolves into the page on its top and left edges and
+          is flush on bottom and right — cropped by the viewport, not
+          floating in it. Four soft edges would read as a sticker. */
+      }
+      <linearGradient id="approach-fade-x" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="white" stop-opacity="0"></stop>
+        <stop offset="24%" stop-color="white" stop-opacity="1"></stop>
+      </linearGradient>
+      <linearGradient id="approach-fade-y" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="white" stop-opacity="0"></stop>
+        <stop offset="30%" stop-color="white" stop-opacity="1"></stop>
+      </linearGradient>
+      <mask id="approach-fade-left">
+        <rect width="400" height="300" fill="url(#approach-fade-x)"></rect>
+      </mask>
+      <mask id="approach-fade-top">
+        <rect width="400" height="300" fill="url(#approach-fade-y)"></rect>
+      </mask>
+    </defs>
+
+    <g mask="url(#approach-fade-top)">
+      <g mask="url(#approach-fade-left)" filter="url(#approach-brush)">
+        {
+          /* ---------- PLANE 1: the far ridge ----------
+          Lightest, because the most air sits between it and you. Its
+          spires are thin and uneven; a matched pair would read as a
+          fairy tale. */
+        }
+        <g class="far">
+          <path
+            d="M0 196 L38 182 L74 190 L96 176 L128 186 L150 178 L182 188 L206 182
+             L240 190 L268 184 L300 191 L340 183 L400 190 L400 210 L0 210 Z"
+          ></path>
+          <path d="M60 182 L64 148 L70 146 L74 184 Z"></path>
+          <path d="M62 148 L67 132 L72 148 Z"></path>
+          <path d="M126 186 L129 158 L136 157 L138 187 Z"></path>
+          <path d="M128 158 L132 140 L137 158 Z"></path>
+          <path d="M204 182 L207 164 L213 164 L214 183 Z"></path>
+        </g>
+
+        {/* mist between the ridge and the castle */}
+        <rect
+          x="0"
+          y="146"
+          width="400"
+          height="86"
+          fill="url(#approach-mist-far)"></rect>
+
+        {
+          /* ---------- PLANE 2: the castle ----------
+          Asymmetric on purpose: the keep is off-centre, the towers are
+          three different heights, and the silhouette is broken at the
+          right so it does not close into a shape. */
+        }
+        <g class="keep">
+          {/* left curtain wall, crenellated */}
+          <path
+            d="M96 252 L96 206 L104 206 L104 199 L112 199 L112 206 L120 206 L120 199
+             L128 199 L128 206 L136 206 L136 199 L144 199 L144 206 L152 206 L152 252 Z"
+          ></path>
+
+          {/* the keep */}
+          <path d="M152 252 L152 116 L216 116 L216 252 Z"></path>
+          <path
+            d="M152 116 L152 105 L162 105 L162 113 L172 113 L172 105 L182 105
+             L182 113 L192 113 L192 105 L202 105 L202 113 L212 113 L212 105
+             L216 105 L216 116 Z"
+          ></path>
+
+          {/* the tall tower — the highest thing, and off to one side */}
+          <path d="M300 252 L300 96 L332 96 L332 252 Z"></path>
+          <path d="M298 96 L316 44 L334 96 Z"></path>
+
+          {/* the broken flank, so the mass does not end in a clean line */}
+          <path d="M332 252 L332 168 L346 172 L350 196 L362 200 L366 252 Z"
+          ></path>
+        </g>
+
+        {
+          /* The two structures nearest the road, on their own plane. A
+          castle drawn as one flat cutout has no mass; a step in value
+          between what is near and what is behind is what gives it any. */
+        }
+        <g class="keep-fore">
+          <path d="M216 252 L216 148 L244 148 L244 252 Z"></path>
+          <path d="M214 148 L230 112 L246 148 Z"></path>
+          <path d="M244 252 L244 178 L300 178 L300 252 Z"></path>
+          <path
+            d="M244 178 L244 170 L253 170 L253 176 L262 176 L262 170 L271 170
+               L271 176 L280 176 L280 170 L289 170 L289 176 L300 176 L300 178 Z"
+          ></path>
+        </g>
+
+        {
+          /* The gate itself — an ogive cut out of the gatehouse. Drawn in the
+          page's own ground colour so it reads as an opening rather than as
+          a darker stone. */
+        }
+        <path
+          class="gate"
+          d="M262 252 L262 218 Q262 202 272 199 Q282 202 282 218 L282 252 Z"
+        ></path>
+
+        {
+          /* The one gold. A lit window above the gate: the only warm thing in
+          the picture, and the whole reason the road is worth walking. */
+        }
+        <rect class="lit" x="268" y="186" width="8" height="9" rx="1.5"></rect>
+
+        {
+          /* mist at the foot of the walls, separating the castle from the
+          ground you stand on */
+        }
+        <rect
+          x="0"
+          y="224"
+          width="400"
+          height="62"
+          fill="url(#approach-mist-near)"></rect>
+
+        {
+          /* ---------- PLANE 3: the ground ----------
+          Darkest, because it is nearest. The road converges on the gate,
+          which is what makes the gate the subject rather than the tower. */
+        }
+        <g class="near">
+          <path
+            d="M0 300 L0 268 C 44 260 92 266 140 258 C 190 250 232 256 276 251
+             C 320 246 360 252 400 247 L400 300 Z"
+          ></path>
+        </g>
+
+        {
+          /* the road: a quadrilateral narrowing toward the gate, with courses
+          of brick laid across it. Perspective, not decoration — the lines
+          shorten and crowd as they recede. */
+        }
+        <g class="road">
+          <path d="M0 300 L118 300 L272 252 L262 252 Z"></path>
+          <g class="course">
+            <path d="M28 300 L146 300"></path>
+            <path d="M92 282 L188 282"></path>
+            <path d="M140 268 L216 268"></path>
+            <path d="M176 259 L238 259"></path>
+            <path d="M204 254 L252 254"></path>
+          </g>
+        </g>
+      </g>
+    </g>
+  </svg>
+</div>
+
+<style>
+  /* The art. Everything is one colour at different opacities, so the whole
+     scene follows `color` and needs no second asset for the light world. */
+  .scene-approach svg {
+    color: var(--scene-ink);
+  }
+
+  /* The value stack, back to front. The MIST is the brightest thing —
+     the light is behind the castle, so the stone is a silhouette against
+     lit air rather than a lit object itself. Getting this backwards is
+     what made the first version read flat: stone at 0.82 against mist at
+     0.22 is a bright castle in clear weather. */
+  .far {
+    fill: currentColor;
+    opacity: 0.18;
+  }
+
+  .keep {
+    fill: currentColor;
+    opacity: 0.52;
+  }
+
+  .keep-fore {
+    fill: currentColor;
+    opacity: 0.68;
+  }
+
+  .near {
+    fill: currentColor;
+    opacity: 0.78;
+  }
+
+  /* The road is the lightest thing on the ground, because wet stone under
+     a cold sky catches what little light there is — and because it has to
+     pull the eye to the gate. */
+  .road {
+    fill: currentColor;
+    opacity: 0.95;
+  }
+
+  .course {
+    fill: none;
+    stroke: var(--ground);
+    stroke-width: 1.4;
+    opacity: 0.5;
+  }
+
+  /* The gate is a hole, not a shape: it takes the page's ground so the
+     wall reads as opened rather than as painted a darker colour. */
+  .gate {
+    fill: var(--ground);
+  }
+
+  .lit {
+    fill: var(--torch);
+  }
+</style>
