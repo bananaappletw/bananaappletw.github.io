@@ -25,7 +25,9 @@ This is an Astro-based personal blog and knowledge base built with [AstroPaper](
 
 ## Theme: Torchlight
 
-The site runs a custom theme built on FromSoftware's design language, replacing AstroPaper's presentation layer. **Read `docs/theme/design.md` before changing anything visual.**
+The site runs a custom theme built on FromSoftware's design language, replacing AstroPaper's presentation layer.
+
+**Start at `docs/theme/STATUS.md`** — it carries the current state, the open design decision, and the traps already hit. Then `docs/theme/design.md` for the spec.
 
 Two rules that are easy to break and enforced by tests:
 
