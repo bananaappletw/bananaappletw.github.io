@@ -2,274 +2,502 @@
 /**
  * Approach — the home page's scene. See docs/theme/scenes.md §3.1.
  *
- * You are outside the castle and have not gone in. The road enters bottom
- * left and leads to the gate; the castle mass fills the upper right.
+ * A pen drawing, not a silhouette. The geometry that repeats — stone
+ * coursing, roof tiles, window tracery, cobbles, hatching — is GENERATED
+ * below rather than hand-authored, which is the only reason this much
+ * detail is affordable in a component. Repetition is where code beats a
+ * hand: a loop draws a hundred tile arcs instantly and perfectly evenly,
+ * and evenness is then the thing to fight, which is what the jitter is
+ * for.
  *
- * Three depth planes, each separated by a band of mist, because a single
- * plane reads as a sticker and a single mist reads as fog. Back to front:
- * the far ridge and its spires, the castle itself, then the rock and road
- * you are standing on. Nothing is drawn in more than one colour — depth is
- * carried entirely by opacity, so the whole scene recolours with the world
- * from one `color` declaration.
- *
- * The light is cold and behind the castle, so the stone is a silhouette
- * and the MIST is the lit thing. One gold window in the gatehouse is the
- * only warm mark, and the reason the road is worth walking.
+ * Every mark takes `currentColor`, so the drawing recolours with the
+ * world from one declaration and needs no second asset.
  */
+
+/** deterministic jitter — a drawn line is never mechanically straight */
+let seed = 20260816;
+const rnd = () => {
+  seed = (seed * 1664525 + 1013904223) >>> 0;
+  return seed / 4294967296;
+};
+const j = (n: number) => (rnd() - 0.5) * n;
+const n2 = (v: number) => Math.round(v * 100) / 100;
+
+/** horizontal stone coursing with staggered vertical joints */
+function courses(x: number, y: number, w: number, h: number, step = 7) {
+  const d: string[] = [];
+  for (let cy = y + step; cy < y + h; cy += step) {
+    d.push(
+      `M${n2(x + j(1))} ${n2(cy + j(0.6))}L${n2(x + w + j(1))} ${n2(cy + j(0.6))}`,
+    );
+    // joints offset every other course, so the stones bond
+    const off = ((cy - y) / step) % 2 ? step * 1.6 : 0;
+    for (let jx = x + off + step * 1.1; jx < x + w - 2; jx += step * 3.2) {
+      d.push(
+        `M${n2(jx + j(0.8))} ${n2(cy)}L${n2(jx + j(0.8))} ${n2(cy - step)}`,
+      );
+    }
+  }
+  return d.join("");
+}
+
+/** roof tiles: rows of arcs, tightening as the pitch recedes */
+function tiles(
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  rows = 7,
+  taper = 0.5,
+) {
+  const d: string[] = [];
+  for (let r = 1; r <= rows; r++) {
+    const t = r / rows;
+    const ry = y + h * t;
+    const inset = (w / 2) * t * taper;
+    const x0 = x + inset;
+    const x1 = x + w - inset;
+    const span = 6 + (1 - t) * 3;
+    d.push(`M${n2(x0)} ${n2(ry)}L${n2(x1)} ${n2(ry)}`);
+    for (let tx = x0 + span / 2; tx < x1; tx += span) {
+      d.push(
+        `M${n2(tx)} ${n2(ry)}q${n2(span / 2)} ${n2(-span * 0.55)} ${n2(span)} 0`,
+      );
+    }
+  }
+  return d.join("");
+}
+
+/** diagonal hatching; the caller clips it to the face it falls on */
+function hatch(
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  step = 4,
+  slope = 1,
+) {
+  const d: string[] = [];
+  for (let o = -h; o < w + h; o += step) {
+    d.push(
+      `M${n2(x + o + j(0.7))} ${n2(y + h)}L${n2(x + o + h * slope + j(0.7))} ${n2(y)}`,
+    );
+  }
+  return d.join("");
+}
+
+/** a lancet — the pointed arch that makes a window gothic, not romanesque */
+function lancet(x: number, y: number, w: number, h: number) {
+  const half = w / 2;
+  return (
+    `M${n2(x)} ${n2(y + h)}L${n2(x)} ${n2(y + half)}` +
+    `Q${n2(x)} ${n2(y)} ${n2(x + half)} ${n2(y - half * 0.35)}` +
+    `Q${n2(x + w)} ${n2(y)} ${n2(x + w)} ${n2(y + half)}` +
+    `L${n2(x + w)} ${n2(y + h)}Z`
+  );
+}
+
+/** a row of lancets, each with a mullion and a transom */
+function windows(xs: number[], y: number, w: number, h: number) {
+  const shape: string[] = [];
+  const bars: string[] = [];
+  for (const x of xs) {
+    shape.push(lancet(x, y, w, h));
+    bars.push(
+      `M${n2(x + w / 2)} ${n2(y + h)}L${n2(x + w / 2)} ${n2(y - w * 0.1)}`,
+    );
+    bars.push(`M${n2(x)} ${n2(y + h * 0.45)}L${n2(x + w)} ${n2(y + h * 0.45)}`);
+  }
+  return { shape: shape.join(""), bars: bars.join("") };
+}
+
+/**
+ * Cobbles. The courses converge on the GATE, not on the frame's centre —
+ * that is what makes the road lead somewhere rather than read as steps.
+ * Spacing eases so the near courses are far apart and the distant ones
+ * crowd, which is the whole of linear perspective for a flat plane.
+ */
+function cobbles(rows = 14) {
+  const d: string[] = [];
+  const VX = 287; // the gate's centre: the vanishing point
+  const VY = 268;
+  for (let r = 0; r < rows; r++) {
+    const t = (r + 1) / rows;
+    const ease = Math.pow(t, 2.4); // courses crowd as they recede
+    const yy = 400 - ease * (400 - VY - 6);
+    const halfW = (1 - ease) * 190 + 9;
+    const cx = VX - (1 - ease) * 96;
+    d.push(
+      `M${n2(cx - halfW)} ${n2(yy + j(0.8))}L${n2(cx + halfW)} ${n2(yy + j(0.8))}`,
+    );
+    // the joints run along the lines of sight, so they converge too
+    const stones = Math.max(2, Math.round(8 * (1 - ease) + 2));
+    const nt = Math.pow((r + 2) / rows, 2.4);
+    const nextY = 400 - nt * (400 - VY - 6);
+    const nextHalf = (1 - nt) * 190 + 9;
+    const nextCx = VX - (1 - nt) * 96;
+    for (let sIdx = 1; sIdx < stones; sIdx++) {
+      const f = (sIdx + (r % 2 ? 0.5 : 0)) / stones;
+      d.push(
+        `M${n2(cx - halfW + halfW * 2 * f)} ${n2(yy)}` +
+          `L${n2(nextCx - nextHalf + nextHalf * 2 * f)} ${n2(nextY)}`,
+      );
+    }
+  }
+  return d.join("");
+}
+
+/**
+ * A bare tree, grown recursively. Architecture is all straight lines and
+ * repeats; without something organic against it a pen drawing of a
+ * building reads as a technical elevation. Branch angle and length carry
+ * jitter at every node, so no two limbs match and the tree never looks
+ * generated.
+ */
+function tree(
+  x: number,
+  y: number,
+  len: number,
+  angle: number,
+  depth: number,
+  out: string[] = [],
+): string {
+  if (depth === 0 || len < 2.4) return out.join("");
+  const x2 = x + Math.cos(angle) * len;
+  const y2 = y + Math.sin(angle) * len;
+  // a slight bow in every limb — a straight branch reads as a stick
+  const mx = (x + x2) / 2 + Math.cos(angle + Math.PI / 2) * len * 0.12;
+  const my = (y + y2) / 2 + Math.sin(angle + Math.PI / 2) * len * 0.12;
+  out.push(`M${n2(x)} ${n2(y)}Q${n2(mx)} ${n2(my)} ${n2(x2)} ${n2(y2)}`);
+  const spread = 0.42 + rnd() * 0.34;
+  tree(
+    x2,
+    y2,
+    len * (0.66 + rnd() * 0.14),
+    angle - spread + j(0.18),
+    depth - 1,
+    out,
+  );
+  tree(
+    x2,
+    y2,
+    len * (0.66 + rnd() * 0.14),
+    angle + spread + j(0.18),
+    depth - 1,
+    out,
+  );
+  // an occasional third limb, so the branching is not a binary lattice
+  if (rnd() > 0.62) {
+    tree(x2, y2, len * 0.5, angle + j(0.5), depth - 1, out);
+  }
+  return out.join("");
+}
+
+const wingWall = courses(96, 216, 56, 56, 7);
+const keepWall = courses(150, 150, 92, 122, 8);
+const towerWall = courses(322, 96, 54, 176, 7);
+const gateWall = courses(250, 214, 74, 58, 7);
+const flankWall = courses(376, 196, 38, 76, 8);
+
+const wingRoofTiles = tiles(90, 190, 68, 28, 4, 0.55);
+const keepRoofTiles = tiles(142, 108, 108, 44, 6, 0.62);
+const towerSpireTiles = tiles(320, 40, 58, 58, 7, 0.9);
+
+const keepWindows = windows([164, 190, 216], 176, 13, 30);
+const towerWindows = windows([334, 356], 132, 11, 26);
+const gateRose = windows([278], 226, 18, 20);
+
+const keepShade = hatch(242, 150, 34, 122, 4.4, 0.55);
+const towerShade = hatch(360, 96, 20, 176, 4.6, 0.5);
+const road = cobbles(14);
+
+// Two near, one far. The near pair frames the road without closing it.
+const treeNear = tree(168, 330, 42, -Math.PI / 2 + 0.06, 7);
+const treeMid = tree(228, 312, 30, -Math.PI / 2 - 0.1, 6);
+const treeFar = tree(456, 296, 22, -Math.PI / 2 + 0.14, 5);
 ---
 
 <div class="scene scene-approach fixed" aria-hidden="true">
-  <svg viewBox="0 0 400 300" width="400" height="300" focusable="false">
+  <svg viewBox="0 0 520 400" width="520" height="400" focusable="false">
     <defs>
       {
-        /* The brush. scale=2.2 is enough that no edge is mechanically
-          straight and little enough that it never reads as a distortion.
-          The filter region is widened because displacement pushes pixels
-          outward, and the default region would clip the edges it just
-          moved. */
+        /* The pen. Small displacement so no ruled line is mechanically
+          straight — the single thing separating a drawn line from a
+          plotted one. The region is widened because displacement pushes
+          pixels outward and would otherwise clip its own edges. */
       }
       <filter
-        id="approach-brush"
-        x="-8%"
-        y="-8%"
-        width="116%"
-        height="116%"
+        id="approach-pen"
+        x="-6%"
+        y="-6%"
+        width="112%"
+        height="112%"
         color-interpolation-filters="sRGB"
       >
         <feTurbulence
           type="fractalNoise"
-          baseFrequency="0.035"
+          baseFrequency="0.028"
           numOctaves="3"
-          seed="17"
-          result="brush"></feTurbulence>
+          seed="11"
+          result="pen"></feTurbulence>
         <feDisplacementMap
           in="SourceGraphic"
-          in2="brush"
-          scale="2.2"
+          in2="pen"
+          scale="1.6"
           xChannelSelector="R"
           yChannelSelector="G"></feDisplacementMap>
       </filter>
 
       {
-        /* Mist. Lit from behind the castle, so it is brightest where it
-          meets the stone and dissolves upward and downward. */
+        /* Mist, drawn in the page's own ground and laid OVER the linework:
+          in a pen drawing fog is not a grey wash, it is where the lines
+          stop. */
       }
-      <linearGradient id="approach-mist-far" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="currentColor" stop-opacity="0"></stop>
-        <stop offset="55%" stop-color="currentColor" stop-opacity="0.62"></stop>
-        <stop offset="100%" stop-color="currentColor" stop-opacity="0"></stop>
-      </linearGradient>
-
-      <linearGradient id="approach-mist-near" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="currentColor" stop-opacity="0"></stop>
-        <stop offset="50%" stop-color="currentColor" stop-opacity="0.42"></stop>
-        <stop offset="100%" stop-color="currentColor" stop-opacity="0"></stop>
+      <linearGradient id="approach-mist" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="var(--ground)" stop-opacity="0"></stop>
+        <stop offset="52%" stop-color="var(--ground)" stop-opacity="0.85"
+        ></stop>
+        <stop offset="100%" stop-color="var(--ground)" stop-opacity="0"></stop>
       </linearGradient>
 
       {
-        /* The scene dissolves into the page on its top and left edges and
-          is flush on bottom and right — cropped by the viewport, not
-          floating in it. Four soft edges would read as a sticker. */
+        /* SVG masks are LUMINANCE by default — white reveals, black hides.
+          Written with the black stops that are correct for CSS
+          mask-image, this hides the entire drawing. */
       }
       <linearGradient id="approach-fade-x" x1="0" y1="0" x2="1" y2="0">
         <stop offset="0%" stop-color="white" stop-opacity="0"></stop>
-        <stop offset="24%" stop-color="white" stop-opacity="1"></stop>
+        <stop offset="26%" stop-color="white" stop-opacity="1"></stop>
       </linearGradient>
       <linearGradient id="approach-fade-y" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="white" stop-opacity="0"></stop>
-        <stop offset="30%" stop-color="white" stop-opacity="1"></stop>
+        <stop offset="24%" stop-color="white" stop-opacity="1"></stop>
       </linearGradient>
       <mask id="approach-fade-left">
-        <rect width="400" height="300" fill="url(#approach-fade-x)"></rect>
+        <rect width="520" height="400" fill="url(#approach-fade-x)"></rect>
       </mask>
       <mask id="approach-fade-top">
-        <rect width="400" height="300" fill="url(#approach-fade-y)"></rect>
+        <rect width="520" height="400" fill="url(#approach-fade-y)"></rect>
       </mask>
+
+      {/* the road dissolves into the mist before it reaches the walls */}
+      <linearGradient id="approach-road-y" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="white" stop-opacity="0"></stop>
+        <stop offset="34%" stop-color="white" stop-opacity="1"></stop>
+      </linearGradient>
+      <mask id="approach-road-fade">
+        <rect y="256" width="520" height="144" fill="url(#approach-road-y)"
+        ></rect>
+      </mask>
+
+      <clipPath id="clip-keep-shade">
+        <rect x="242" y="150" width="34" height="122"></rect>
+      </clipPath>
+      <clipPath id="clip-tower-shade">
+        <rect x="360" y="96" width="20" height="176"></rect>
+      </clipPath>
     </defs>
 
     <g mask="url(#approach-fade-top)">
-      <g mask="url(#approach-fade-left)" filter="url(#approach-brush)">
-        {
-          /* ---------- PLANE 1: the far ridge ----------
-          Lightest, because the most air sits between it and you. Its
-          spires are thin and uneven; a matched pair would read as a
-          fairy tale. */
-        }
+      <g mask="url(#approach-fade-left)" filter="url(#approach-pen)">
+        {/* the far ridge, outline only — distance is drawn with less ink */}
         <g class="far">
           <path
-            d="M0 196 L38 182 L74 190 L96 176 L128 186 L150 178 L182 188 L206 182
-             L240 190 L268 184 L300 191 L340 183 L400 190 L400 210 L0 210 Z"
+            d="M0 258 L44 240 L86 250 L118 232 L150 244 L196 234 L236 246
+               L286 236 L330 248 L380 238 L440 250 L520 240"
           ></path>
-          <path d="M60 182 L64 148 L70 146 L74 184 Z"></path>
-          <path d="M62 148 L67 132 L72 148 Z"></path>
-          <path d="M126 186 L129 158 L136 157 L138 187 Z"></path>
-          <path d="M128 158 L132 140 L137 158 Z"></path>
-          <path d="M204 182 L207 164 L213 164 L214 183 Z"></path>
+          <path d="M64 240 L70 196 L78 194 L84 244"></path>
+          <path d="M66 196 L74 176 L82 196"></path>
+          <path d="M116 232 L120 202 L128 201 L130 234"></path>
+          <path d="M118 202 L124 184 L130 202"></path>
         </g>
 
-        {/* mist between the ridge and the castle */}
-        <rect
-          x="0"
-          y="146"
-          width="400"
-          height="86"
-          fill="url(#approach-mist-far)"></rect>
+        <g class="ink">
+          {/* left wing */}
+          <path class="wall" d="M96 272 L96 216 L152 216 L152 272 Z"></path>
+          <path class="line" d="M90 218 L124 188 L158 218"></path>
+          <path class="tile" d={wingRoofTiles}></path>
+          <path class="course" d={wingWall}></path>
 
-        {
-          /* ---------- PLANE 2: the castle ----------
-          Asymmetric on purpose: the keep is off-centre, the towers are
-          three different heights, and the silhouette is broken at the
-          right so it does not close into a shape. */
-        }
-        <g class="keep">
-          {/* left curtain wall, crenellated */}
+          {/* the keep: steep gable, coursed stone, three lancets */}
+          <path class="wall" d="M150 272 L150 150 L242 150 L242 272 Z"></path>
+          <path class="line" d="M142 152 L196 106 L250 152"></path>
+          <path class="tile" d={keepRoofTiles}></path>
+          <path class="course" d={keepWall}></path>
+          <path class="void" d={keepWindows.shape}></path>
+          <path class="bar" d={keepWindows.bars}></path>
+
+          {/* chimneys, off-centre and unequal */}
+          <path class="wall" d="M172 124 L172 96 L182 96 L182 132 Z"></path>
+          <path class="line" d="M169 96 L185 96"></path>
+          <path class="wall" d="M212 136 L212 114 L220 114 L220 142 Z"></path>
+          <path class="line" d="M209 114 L223 114"></path>
+
+          {/* the tower — tallest, off to one side, tiled spire */}
+          <path class="wall" d="M322 272 L322 96 L376 96 L376 272 Z"></path>
+          <path class="line" d="M316 98 L349 40 L382 98"></path>
+          <path class="tile" d={towerSpireTiles}></path>
+          <path class="course" d={towerWall}></path>
+          <path class="void" d={towerWindows.shape}></path>
+          <path class="bar" d={towerWindows.bars}></path>
+          <path class="line" d="M318 118 L380 118 M318 122 L380 122"></path>
+
+          {/* the gatehouse: the destination */}
+          <path class="wall" d="M250 272 L250 214 L324 214 L324 272 Z"></path>
+          <path class="course" d={gateWall}></path>
+          <path class="void" d={gateRose.shape}></path>
+          <path class="bar" d={gateRose.bars}></path>
           <path
-            d="M96 252 L96 206 L104 206 L104 199 L112 199 L112 206 L120 206 L120 199
-             L128 199 L128 206 L136 206 L136 199 L144 199 L144 206 L152 206 L152 252 Z"
+            class="wall"
+            d="M250 214 L250 204 L260 204 L260 212 L270 212 L270 203 L281 203
+               L281 212 L291 212 L291 204 L302 204 L302 212 L312 212 L312 203
+               L324 203 L324 214 Z"
           ></path>
-
-          {/* the keep */}
-          <path d="M152 252 L152 116 L216 116 L216 252 Z"></path>
           <path
-            d="M152 116 L152 105 L162 105 L162 113 L172 113 L172 105 L182 105
-             L182 113 L192 113 L192 105 L202 105 L202 113 L212 113 L212 105
-             L216 105 L216 116 Z"
+            class="void"
+            d="M274 272 L274 246 Q274 228 287 224 Q300 228 300 246 L300 272 Z"
+          ></path>
+          <path
+            class="line"
+            d="M271 272 L271 245 Q271 225 287 221 Q303 225 303 245 L303 272"
           ></path>
 
-          {/* the tall tower — the highest thing, and off to one side */}
-          <path d="M300 252 L300 96 L332 96 L332 252 Z"></path>
-          <path d="M298 96 L316 44 L334 96 Z"></path>
-
-          {/* the broken flank, so the mass does not end in a clean line */}
-          <path d="M332 252 L332 168 L346 172 L350 196 L362 200 L366 252 Z"
-          ></path>
+          {/* the broken flank, so the mass does not close into a shape */}
+          <path
+            class="wall"
+            d="M376 272 L376 190 L392 195 L397 224 L410 229 L414 272 Z"></path>
+          <path class="course" d={flankWall}></path>
         </g>
 
-        {
-          /* The two structures nearest the road, on their own plane. A
-          castle drawn as one flat cutout has no mass; a step in value
-          between what is near and what is behind is what gives it any. */
-        }
-        <g class="keep-fore">
-          <path d="M216 252 L216 148 L244 148 L244 252 Z"></path>
-          <path d="M214 148 L230 112 L246 148 Z"></path>
-          <path d="M244 252 L244 178 L300 178 L300 252 Z"></path>
-          <path
-            d="M244 178 L244 170 L253 170 L253 176 L262 176 L262 170 L271 170
-               L271 176 L280 176 L280 170 L289 170 L289 176 L300 176 L300 178 Z"
-          ></path>
+        {/* shadow is hatched, not filled — a pen has no grey */}
+        <g class="shade">
+          <path d={keepShade} clip-path="url(#clip-keep-shade)"></path>
+          <path d={towerShade} clip-path="url(#clip-tower-shade)"></path>
         </g>
 
-        {
-          /* The gate itself — an ogive cut out of the gatehouse. Drawn in the
-          page's own ground colour so it reads as an opening rather than as
-          a darker stone. */
-        }
+        {/* the one gold: a lit window in the gatehouse */}
+        <rect class="lit" x="283" y="230" width="8" height="10" rx="1.5"></rect>
+
         <path
-          class="gate"
-          d="M262 252 L262 218 Q262 202 272 199 Q282 202 282 218 L282 252 Z"
+          class="ground"
+          d="M0 400 L0 300 C 60 292 120 298 176 288 C 232 278 288 286 344 280
+             C 400 274 460 280 520 272 L520 400 Z"
         ></path>
+        <g mask="url(#approach-road-fade)">
+          <path class="cobble" d={road}></path>
+        </g>
 
-        {
-          /* The one gold. A lit window above the gate: the only warm thing in
-          the picture, and the whole reason the road is worth walking. */
-        }
-        <rect class="lit" x="268" y="186" width="8" height="9" rx="1.5"></rect>
+        {/* Trees stand on the near ground, in front of everything. */}
+        <g class="bough">
+          <path d={treeFar} opacity="0.5"></path>
+          <path d={treeMid} opacity="0.78"></path>
+          <path d={treeNear}></path>
+        </g>
 
-        {
-          /* mist at the foot of the walls, separating the castle from the
-          ground you stand on */
-        }
+        <rect x="0" y="196" width="520" height="108" fill="url(#approach-mist)"
+        ></rect>
         <rect
           x="0"
-          y="224"
-          width="400"
-          height="62"
-          fill="url(#approach-mist-near)"></rect>
-
-        {
-          /* ---------- PLANE 3: the ground ----------
-          Darkest, because it is nearest. The road converges on the gate,
-          which is what makes the gate the subject rather than the tower. */
-        }
-        <g class="near">
-          <path
-            d="M0 300 L0 268 C 44 260 92 266 140 258 C 190 250 232 256 276 251
-             C 320 246 360 252 400 247 L400 300 Z"
-          ></path>
-        </g>
-
-        {
-          /* the road: a quadrilateral narrowing toward the gate, with courses
-          of brick laid across it. Perspective, not decoration — the lines
-          shorten and crowd as they recede. */
-        }
-        <g class="road">
-          <path d="M0 300 L118 300 L272 252 L262 252 Z"></path>
-          <g class="course">
-            <path d="M28 300 L146 300"></path>
-            <path d="M92 282 L188 282"></path>
-            <path d="M140 268 L216 268"></path>
-            <path d="M176 259 L238 259"></path>
-            <path d="M204 254 L252 254"></path>
-          </g>
-        </g>
+          y="256"
+          width="520"
+          height="86"
+          fill="url(#approach-mist)"
+          opacity="0.6"></rect>
       </g>
     </g>
   </svg>
 </div>
 
 <style>
-  /* The art. Everything is one colour at different opacities, so the whole
-     scene follows `color` and needs no second asset for the light world. */
   .scene-approach svg {
     color: var(--scene-ink);
   }
 
-  /* The value stack, back to front. The MIST is the brightest thing —
-     the light is behind the castle, so the stone is a silhouette against
-     lit air rather than a lit object itself. Getting this backwards is
-     what made the first version read flat: stone at 0.82 against mist at
-     0.22 is a bright castle in clear weather. */
-  .far {
+  /* A pen drawing is line, not fill. Walls take a very light wash so the
+     building sits forward of the sky; everything reading as detail is
+     stroked. */
+  .wall {
     fill: currentColor;
-    opacity: 0.18;
+    fill-opacity: 0.14;
+    stroke: currentColor;
+    stroke-width: 1.1;
+    stroke-linejoin: round;
   }
 
-  .keep {
-    fill: currentColor;
-    opacity: 0.52;
-  }
-
-  .keep-fore {
-    fill: currentColor;
-    opacity: 0.68;
-  }
-
-  .near {
-    fill: currentColor;
-    opacity: 0.78;
-  }
-
-  /* The road is the lightest thing on the ground, because wet stone under
-     a cold sky catches what little light there is — and because it has to
-     pull the eye to the gate. */
-  .road {
-    fill: currentColor;
-    opacity: 0.95;
+  .line {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.1;
+    stroke-linejoin: round;
+    stroke-linecap: round;
   }
 
   .course {
     fill: none;
-    stroke: var(--ground);
-    stroke-width: 1.4;
-    opacity: 0.5;
+    stroke: currentColor;
+    stroke-width: 0.5;
+    opacity: 0.55;
   }
 
-  /* The gate is a hole, not a shape: it takes the page's ground so the
-     wall reads as opened rather than as painted a darker colour. */
-  .gate {
+  .tile {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 0.55;
+    opacity: 0.7;
+    stroke-linecap: round;
+  }
+
+  .bar {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 0.6;
+    opacity: 0.8;
+  }
+
+  /* Windows and the gate are voids: the page's ground shows through, which
+     is how ink makes a hole rather than by painting it darker. */
+  .void {
     fill: var(--ground);
+    stroke: currentColor;
+    stroke-width: 0.9;
+  }
+
+  .shade {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 0.5;
+    opacity: 0.38;
+  }
+
+  .far {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 0.9;
+    opacity: 0.34;
+    stroke-linejoin: round;
+  }
+
+  .ground {
+    fill: currentColor;
+    fill-opacity: 0.07;
+    stroke: currentColor;
+    stroke-width: 0.7;
+    stroke-opacity: 0.45;
+  }
+
+  .cobble {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 0.45;
+    opacity: 0.22;
+  }
+
+  .bough {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 0.85;
+    stroke-linecap: round;
+    opacity: 0.7;
   }
 
   .lit {

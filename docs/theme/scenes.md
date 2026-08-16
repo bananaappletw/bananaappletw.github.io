@@ -100,11 +100,30 @@ one fire throwing light on three surfaces is one gold.
 > Castle exterior. Faint mist drifting. The castle's silhouette is readable
 > through it. A stone-brick road runs from the foreground to the gate.
 
-Shipped as `src/components/scenes/Approach.astro`, drawn in SVG rather than
-painted. Three depth planes — far ridge, castle, ground — separated by two
-bands of mist, all in **one colour at different opacities**, so the whole
-scene follows a single `color` declaration and needs no second asset for the
-light world.
+Shipped as `src/components/scenes/Approach.astro` as a **pen drawing**, not a
+silhouette: coursed stone, roof tiles, lancet windows with mullions and
+transoms, crenellations, hatched shadow, a cobbled road in perspective and
+bare trees.
+
+**The repeating geometry is generated, not hand-authored** — that is the only
+reason this much detail is affordable in a component. `courses()`, `tiles()`,
+`hatch()`, `lancet()`, `cobbles()` and a recursive `tree()` emit path data in
+the frontmatter. Repetition is where code beats a hand: a loop draws a hundred
+tile arcs instantly and perfectly evenly, and _evenness is then the enemy_,
+which is what the seeded jitter at every node is for.
+
+Three things the drawing depends on:
+
+- **The road converges on the gate, not on the frame's centre.** Its first
+  version used evenly spaced full-width courses and read as a flight of steps.
+  Spacing has to ease so near courses are far apart and distant ones crowd, and
+  the joints must run along the lines of sight.
+- **Shadow is hatched, never filled.** A pen has no grey.
+- **Something organic has to stand against the masonry.** Without the trees the
+  drawing reads as a technical elevation rather than a place.
+
+Everything takes `currentColor`, so the scene recolours with the world from one
+declaration and needs no second asset.
 
 You are outside and you have not gone in. Seen once per visit, which is the
 right frequency for the most illustrative of the five.

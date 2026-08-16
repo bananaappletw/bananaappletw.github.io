@@ -24,7 +24,7 @@
   --grain: 0.035;
   --shaft: rgba(201, 160, 106, 0.11);
   --scene-ink: #8a7c64;
-  --scene-opacity: 0.5;
+  --scene-opacity: 0.62;
   --syn-keyword: #a07d4d;
   --syn-string: #659091;
   --syn-comment: #6d5f4c;
@@ -56,7 +56,7 @@
     --grain: 0.012;
     --shaft: rgba(255, 233, 178, 0.42);
     --scene-ink: #9c8f74;
-    --scene-opacity: 0.3;
+    --scene-opacity: 0.4;
     --syn-keyword: #96631a;
     --syn-string: #2f5296;
     --syn-comment: #948d79;
@@ -89,7 +89,7 @@
   --grain: 0.012;
   --shaft: rgba(255, 233, 178, 0.42);
   --scene-ink: #9c8f74;
-  --scene-opacity: 0.3;
+  --scene-opacity: 0.4;
   --syn-keyword: #96631a;
   --syn-string: #2f5296;
   --syn-comment: #948d79;
