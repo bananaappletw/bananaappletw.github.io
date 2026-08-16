@@ -286,7 +286,11 @@ Drop caps, section marks on headings, corner-bracketed frames, parchment texture
 
 ## 8. Components
 
-**HUD** (`Header.astro`) — Display 11px at `0.24em` in `--text-4`, flame first, nav pushed right, the world control last as a text button. No icons, no mobile menu, no logo lockup.
+**HUD** (`Header.astro`) — Display 13px at `0.14em` in `--text-4`, the soul first, nav pushed right, the world control last. No mobile menu, no logo lockup.
+
+Two icons, and they are deliberately from different families. The **soul** is the site's mark: a solid teardrop with a bright core, `--torch` at two opacities, and the page's one ambient animation. The **world control** is a moon when hollowed and a sun when kindled — chosen over a torch precisely because a torch is also a flame, and two gold flames in one header read as two marks rather than as a mark and a control. The moon carries the HUD's own ink, so hollowed spends no gold on the control at all.
+
+Both are drawn at 15–17px, which is the size that decides them: earlier versions failed not on taste but on geometry — thin wisps and a 1.25px stroke fall below the pixel grid and dissolve.
 
 **Gate** — every page type opens with one: eyebrow label, large Display title, then metadata. Home gets up to 230px of clearance above the title, posts 180px, section pages 140px.
 

@@ -1,0 +1,410 @@
+<title>Toggle Icons</title>
+<style>
+  /*FONTS*/
+
+  /* The real HUD, at real size, with each candidate toggle beside the
+     real soul mark. Sizes, weights and colours match src/ exactly —
+     this is the only way to judge a 13px icon. */
+
+  :root {
+    --display: Cinzel, Optima, "Palatino Linotype", Palatino, serif;
+    --body: Spectral, Charter, Georgia, serif;
+    --mono: GSCode, ui-monospace, Menlo, monospace;
+
+    --ui-bg: #121110;
+    --ui-fg: #cfc7b6;
+    --ui-dim: #7d7365;
+    --ui-line: #2e2a24;
+    --ui-mark: #cda76b;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    background: var(--ui-bg);
+    color: var(--ui-fg);
+    font-family: var(--body);
+    margin: 0;
+    padding: 0 0 70px;
+  }
+
+  .lede {
+    padding: 26px clamp(16px, 4vw, 32px) 0;
+    max-width: 74ch;
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--ui-dim);
+  }
+  .lede b {
+    color: var(--ui-fg);
+    font-weight: 600;
+  }
+  .lede p {
+    margin: 0 0 14px;
+  }
+
+  h2.sec {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ui-dim);
+    margin: 34px clamp(16px, 4vw, 32px) 12px;
+  }
+
+  /* ---- the HUD, copied from Header.astro ---- */
+  .world {
+    padding: 0 clamp(16px, 4vw, 32px);
+  }
+  .frame {
+    border: 1px solid var(--ui-line);
+    margin-bottom: 14px;
+  }
+  .frame .cap {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ui-dim);
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--ui-line);
+  }
+  .stage {
+    padding: 4px 22px 26px;
+  }
+
+  /* hollowed and kindled, matching tokens.json exactly */
+  .hollowed {
+    --ground: #100f0d;
+    --text-2: #a99e8a;
+    --text-4: #6d5f4c;
+    --torch: #cda76b;
+  }
+  .kindled {
+    --ground: #ffffff;
+    --text-2: #524c3d;
+    --text-4: #948d79;
+    --torch: #96631a;
+  }
+  .stage {
+    background: var(--ground);
+  }
+
+  .hud {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 10px 18px;
+    padding-top: 26px;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-4);
+  }
+  .hud-home {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    color: var(--text-4);
+    text-decoration: none;
+  }
+  .hud nav {
+    margin-inline-start: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    align-items: baseline;
+  }
+  .hud nav a {
+    color: var(--text-4);
+    text-decoration: none;
+  }
+  .hud nav a:hover {
+    color: var(--text-2);
+  }
+
+  .hud .soul {
+    align-self: center;
+  }
+  .soul-veil {
+    fill: var(--torch);
+    opacity: 0.55;
+  }
+  .soul-core {
+    fill: var(--torch);
+  }
+
+  .btn {
+    background: none;
+    border: 0;
+    padding: 0;
+    color: var(--text-4);
+    display: flex;
+    align-items: center;
+    align-self: center;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .btn:hover {
+    color: var(--text-2);
+  }
+
+  /* ---- A. the disc ---- */
+  .disc-ring {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+  }
+  .disc-full {
+    fill: var(--torch);
+  }
+
+  /* ---- B. sun and moon ---- */
+  .moon {
+    fill: currentColor;
+  }
+  .sun-core {
+    fill: var(--torch);
+  }
+  .sun-ray {
+    stroke: var(--torch);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+  }
+
+  .note {
+    padding: 0 clamp(16px, 4vw, 32px);
+    max-width: 74ch;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--ui-dim);
+    margin: 6px 0 0;
+  }
+  .note b {
+    color: var(--ui-fg);
+    font-weight: 600;
+  }
+</style>
+
+<div class="lede">
+  <p>
+    <b>The soul is fixed and shown here as it now ships</b> — a solid teardrop
+    at 17px with a larger core. Judge the toggles against it, not on their own:
+    the question is whether the pair reads as one mark and one control, or as
+    two marks fighting.
+  </p>
+  <p>
+    Everything below is at true size — 13px HUD, 15px icon — because that is the
+    only size at which the decision is real.
+  </p>
+</div>
+
+<h2 class="sec">A &mdash; The disc</h2>
+<div class="world">
+  <div class="frame">
+    <div class="cap">Hollowed &mdash; the ring is empty</div>
+    <div class="stage hollowed">
+      <div class="hud">
+        <a class="hud-home" href="#">
+          <svg
+            class="soul"
+            viewBox="0 0 16 16"
+            width="17"
+            height="17"
+            aria-hidden="true"
+          >
+            <path
+              class="soul-veil"
+              d="M8 15.3c-2.5 0-4.5-1.9-4.5-4.4 0-3.4 2.9-5.7 4.5-10.4 1.6 4.7 4.5 7 4.5 10.4 0 2.5-2 4.4-4.5 4.4z"
+            ></path>
+            <ellipse
+              class="soul-core"
+              cx="8"
+              cy="11"
+              rx="2.3"
+              ry="2.4"
+            ></ellipse>
+          </svg>
+          <span>Weibo&rsquo;s Home</span>
+        </a>
+        <nav>
+          <a href="#">Posts</a><a href="#">Tags</a><a href="#">Archives</a>
+          <a href="#">Search</a><a href="#">About</a>
+          <button
+            class="btn"
+            type="button"
+            aria-label="Dark theme. Switch to light."
+          >
+            <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">
+              <circle class="disc-ring" cx="8" cy="8" r="5.4"></circle>
+            </svg>
+          </button>
+        </nav>
+      </div>
+    </div>
+  </div>
+
+  <div class="frame">
+    <div class="cap">Kindled &mdash; the disc is full</div>
+    <div class="stage kindled">
+      <div class="hud">
+        <a class="hud-home" href="#">
+          <svg
+            class="soul"
+            viewBox="0 0 16 16"
+            width="17"
+            height="17"
+            aria-hidden="true"
+          >
+            <path
+              class="soul-veil"
+              d="M8 15.3c-2.5 0-4.5-1.9-4.5-4.4 0-3.4 2.9-5.7 4.5-10.4 1.6 4.7 4.5 7 4.5 10.4 0 2.5-2 4.4-4.5 4.4z"
+            ></path>
+            <ellipse
+              class="soul-core"
+              cx="8"
+              cy="11"
+              rx="2.3"
+              ry="2.4"
+            ></ellipse>
+          </svg>
+          <span>Weibo&rsquo;s Home</span>
+        </a>
+        <nav>
+          <a href="#">Posts</a><a href="#">Tags</a><a href="#">Archives</a>
+          <a href="#">Search</a><a href="#">About</a>
+          <button
+            class="btn"
+            type="button"
+            aria-label="Light theme. Switch to dark."
+          >
+            <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">
+              <circle class="disc-full" cx="8" cy="8" r="5.4"></circle>
+            </svg>
+          </button>
+        </nav>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="note">
+  <b>A.</b> The naming made literal: hollow versus full. Nothing competes with
+  the soul, because a circle and a flame are not the same family. The whole
+  signal is carried by one large simple shape, which is why it survives 15px
+  where the torch did not. Its weakness is legibility of <i>purpose</i> — it is
+  a state, not a verb, and a first-time visitor learns what it does by hovering.
+</p>
+
+<h2 class="sec">B &mdash; Sun and moon</h2>
+<div class="world">
+  <div class="frame">
+    <div class="cap">Hollowed &mdash; the moon</div>
+    <div class="stage hollowed">
+      <div class="hud">
+        <a class="hud-home" href="#">
+          <svg
+            class="soul"
+            viewBox="0 0 16 16"
+            width="17"
+            height="17"
+            aria-hidden="true"
+          >
+            <path
+              class="soul-veil"
+              d="M8 15.3c-2.5 0-4.5-1.9-4.5-4.4 0-3.4 2.9-5.7 4.5-10.4 1.6 4.7 4.5 7 4.5 10.4 0 2.5-2 4.4-4.5 4.4z"
+            ></path>
+            <ellipse
+              class="soul-core"
+              cx="8"
+              cy="11"
+              rx="2.3"
+              ry="2.4"
+            ></ellipse>
+          </svg>
+          <span>Weibo&rsquo;s Home</span>
+        </a>
+        <nav>
+          <a href="#">Posts</a><a href="#">Tags</a><a href="#">Archives</a>
+          <a href="#">Search</a><a href="#">About</a>
+          <button
+            class="btn"
+            type="button"
+            aria-label="Dark theme. Switch to light."
+          >
+            <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">
+              <path
+                class="moon"
+                d="M13.4 10.3A6.1 6.1 0 0 1 5.7 2.6a6.1 6.1 0 1 0 7.7 7.7z"
+              ></path>
+            </svg>
+          </button>
+        </nav>
+      </div>
+    </div>
+  </div>
+
+  <div class="frame">
+    <div class="cap">Kindled &mdash; the sun</div>
+    <div class="stage kindled">
+      <div class="hud">
+        <a class="hud-home" href="#">
+          <svg
+            class="soul"
+            viewBox="0 0 16 16"
+            width="17"
+            height="17"
+            aria-hidden="true"
+          >
+            <path
+              class="soul-veil"
+              d="M8 15.3c-2.5 0-4.5-1.9-4.5-4.4 0-3.4 2.9-5.7 4.5-10.4 1.6 4.7 4.5 7 4.5 10.4 0 2.5-2 4.4-4.5 4.4z"
+            ></path>
+            <ellipse
+              class="soul-core"
+              cx="8"
+              cy="11"
+              rx="2.3"
+              ry="2.4"
+            ></ellipse>
+          </svg>
+          <span>Weibo&rsquo;s Home</span>
+        </a>
+        <nav>
+          <a href="#">Posts</a><a href="#">Tags</a><a href="#">Archives</a>
+          <a href="#">Search</a><a href="#">About</a>
+          <button
+            class="btn"
+            type="button"
+            aria-label="Light theme. Switch to dark."
+          >
+            <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">
+              <circle class="sun-core" cx="8" cy="8" r="3.2"></circle>
+              <g class="sun-ray">
+                <line x1="8" y1="1" x2="8" y2="2.6"></line>
+                <line x1="8" y1="13.4" x2="8" y2="15"></line>
+                <line x1="1" y1="8" x2="2.6" y2="8"></line>
+                <line x1="13.4" y1="8" x2="15" y2="8"></line>
+                <line x1="3.1" y1="3.1" x2="4.2" y2="4.2"></line>
+                <line x1="11.8" y1="11.8" x2="12.9" y2="12.9"></line>
+                <line x1="3.1" y1="12.9" x2="4.2" y2="11.8"></line>
+                <line x1="11.8" y1="4.2" x2="12.9" y2="3.1"></line>
+              </g>
+            </svg>
+          </button>
+        </nav>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="note">
+  <b>B.</b> Nobody has to learn it. That is the entire case for it, and it is a
+  strong one. The costs are real too: eight rays at 15px is the most detail of
+  any option here and the first to go muddy on a low-DPI screen, and the pairing
+  states plainly that this is a light/dark mode — which is the one thing
+  <code>design.md</code> §3 says these two worlds are not.
+</p>
