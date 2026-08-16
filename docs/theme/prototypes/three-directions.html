@@ -1,0 +1,860 @@
+<title>Three Torchlights</title>
+<style>
+  /*FONTS*/
+
+  /* ============================================================
+   THREE PROTOTYPES — same content, same fonts, same post.
+   Only the design language differs. Dark world only; the light
+   world follows whichever you pick.
+   ============================================================ */
+
+  :root {
+    --display: Cinzel, Optima, Palatino, serif;
+    --body: Spectral, Charter, Georgia, serif;
+    --mono: GSCode, ui-monospace, Menlo, monospace;
+    --ui-bg: #121110;
+    --ui-fg: #cfc7b6;
+    --ui-dim: #7d7365;
+    --ui-line: #2e2a24;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    background: var(--ui-bg);
+    color: var(--ui-fg);
+    font-family: var(--body);
+    margin: 0;
+  }
+
+  /* ---------- chooser ---------- */
+  .chooser {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--ui-bg);
+    border-bottom: 1px solid var(--ui-line);
+    padding: 14px clamp(16px, 4vw, 32px);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 10px 22px;
+  }
+  .chooser .who {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ui-dim);
+    margin-right: auto;
+  }
+  .tab {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: none;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    padding: 4px 0;
+    color: var(--ui-dim);
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+  .tab:hover {
+    color: var(--ui-fg);
+  }
+  .tab[aria-selected="true"] {
+    color: #d7ae72;
+    border-bottom-color: #d7ae72;
+  }
+  .tab:focus-visible {
+    outline: 2px solid #d7ae72;
+    outline-offset: 3px;
+  }
+
+  .note {
+    padding: 18px clamp(16px, 4vw, 32px) 0;
+    max-width: 74ch;
+    font-size: 14.5px;
+    line-height: 1.75;
+    color: var(--ui-dim);
+  }
+  .note b {
+    color: var(--ui-fg);
+    font-weight: 600;
+  }
+
+  .stage > section {
+    display: none;
+  }
+  .stage > section.on {
+    display: block;
+  }
+
+  /* ============================================================
+   A — ITEM DESCRIPTION
+   The page is a Souls menu panel: you are reading an item entry.
+   Framed, translucent, hairline-ruled, flavour text last.
+   ============================================================ */
+  .vA {
+    --ground: #15130f;
+    --panel: rgba(8, 7, 6, 0.62);
+    --line: #3a3429;
+    --edge: rgba(214, 198, 168, 0.08);
+    --ink: #cabda2;
+    --ink-2: #a9997c;
+    --ink-3: #85765c;
+    --gold: #d7ae72;
+    background: var(--ground);
+    padding: clamp(28px, 6vw, 64px) clamp(16px, 4vw, 40px) 90px;
+    position: relative;
+  }
+  .vA::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(
+        60% 45% at 50% 0%,
+        rgba(215, 174, 114, 0.09),
+        transparent 70%
+      ),
+      radial-gradient(
+        120% 90% at 50% 45%,
+        transparent 40%,
+        rgba(0, 0, 0, 0.5) 100%
+      );
+  }
+  .vA .frame {
+    position: relative;
+    max-width: 46rem;
+    margin: 0 auto;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    box-shadow:
+      inset 0 1px 0 0 var(--edge),
+      0 18px 60px rgba(0, 0, 0, 0.5);
+    padding: clamp(26px, 4vw, 48px);
+  }
+  .vA .frame::before,
+  .vA .frame::after {
+    content: "";
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-style: solid;
+    border-color: var(--gold);
+    opacity: 0.55;
+  }
+  .vA .frame::before {
+    top: -1px;
+    left: -1px;
+    border-width: 2px 0 0 2px;
+  }
+  .vA .frame::after {
+    bottom: -1px;
+    right: -1px;
+    border-width: 0 2px 2px 0;
+  }
+
+  .vA .kicker {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10.5px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 14px;
+  }
+  .vA h1 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(24px, 3.4vw, 34px);
+    letter-spacing: 0.06em;
+    font-variant-caps: small-caps;
+    color: var(--gold);
+    margin: 0 0 16px;
+    line-height: 1.2;
+  }
+  .vA .stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 26px;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    padding-bottom: 16px;
+  }
+  .vA hr {
+    border: 0;
+    height: 1px;
+    background: var(--line);
+    margin: 0 0 22px;
+  }
+  .vA p {
+    color: var(--ink-2);
+    font-size: 16px;
+    line-height: 1.8;
+    margin: 0 0 20px;
+  }
+  .vA .lead {
+    color: var(--ink);
+    font-size: 17.5px;
+  }
+  .vA h2 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 34px 0 12px;
+  }
+  .vA ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 20px;
+  }
+  .vA li {
+    position: relative;
+    padding-left: 20px;
+    color: var(--ink-2);
+    font-size: 16px;
+    line-height: 1.8;
+  }
+  .vA li::before {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: 0.8em;
+    width: 4px;
+    height: 4px;
+    background: var(--ink-3);
+    transform: rotate(45deg);
+  }
+  .vA pre {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--line);
+    padding: 16px 18px;
+    overflow-x: auto;
+    margin: 0 0 22px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--ink-2);
+  }
+  .vA code {
+    font-family: var(--mono);
+    color: #7fa3a2;
+    font-size: 0.85em;
+  }
+  .vA .flavour {
+    border-top: 1px solid var(--line);
+    margin-top: 26px;
+    padding-top: 18px;
+    font-style: italic;
+    color: var(--ink-3);
+    font-size: 15.5px;
+    line-height: 1.8;
+  }
+  .vA a {
+    color: var(--ink);
+    text-decoration: underline;
+    text-decoration-color: var(--ink-3);
+    text-underline-offset: 4px;
+  }
+  .vA a:hover {
+    color: var(--gold);
+  }
+
+  /* ============================================================
+   B — ASH
+   Almost nothing. No panels, no borders, no chrome. A column of
+   text in a dark room, lit from above. Reading by firelight.
+   ============================================================ */
+  .vB {
+    --ground: #100f0d;
+    --ink: #c6bca8;
+    --ink-2: #a99e8a;
+    --ink-3: #7e7361;
+    --gold: #cda76b;
+    background: var(--ground);
+    padding: clamp(56px, 12vh, 130px) clamp(20px, 5vw, 40px) 120px;
+    position: relative;
+  }
+  .vB::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(
+        42% 34% at 50% -4%,
+        rgba(205, 167, 107, 0.1),
+        transparent 72%
+      ),
+      radial-gradient(
+        130% 95% at 50% 42%,
+        transparent 36%,
+        rgba(0, 0, 0, 0.42) 100%
+      );
+  }
+  .vB .col {
+    position: relative;
+    max-width: 34rem;
+    margin: 0 auto;
+  }
+  .vB .mark {
+    color: var(--gold);
+    font-size: 13px;
+    letter-spacing: 0.2em;
+  }
+  .vB .kicker {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10.5px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 26px 0 18px;
+  }
+  .vB h1 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(27px, 4vw, 38px);
+    line-height: 1.25;
+    letter-spacing: 0.04em;
+    font-variant-caps: small-caps;
+    color: var(--ink);
+    margin: 0 0 26px;
+    max-width: 20ch;
+  }
+  .vB .stats {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 54px;
+  }
+  .vB p {
+    color: var(--ink-2);
+    font-size: 17.5px;
+    line-height: 1.9;
+    margin: 0 0 26px;
+  }
+  .vB .lead {
+    color: var(--ink);
+    font-size: 19px;
+  }
+  .vB h2 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 19px;
+    letter-spacing: 0.06em;
+    font-variant-caps: small-caps;
+    color: var(--ink-3);
+    margin: 62px 0 16px;
+  }
+  .vB ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 26px;
+  }
+  .vB li {
+    position: relative;
+    padding-left: 22px;
+    color: var(--ink-2);
+    font-size: 17px;
+    line-height: 1.9;
+  }
+  .vB li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.85em;
+    width: 4px;
+    height: 4px;
+    background: var(--ink-3);
+    transform: rotate(45deg);
+  }
+  .vB pre {
+    background: rgba(0, 0, 0, 0.34);
+    border: 0;
+    border-left: 1px solid #33302a;
+    padding: 16px 0 16px 20px;
+    overflow-x: auto;
+    margin: 0 0 26px;
+    font-family: var(--mono);
+    font-size: 13.5px;
+    line-height: 1.75;
+    color: var(--ink-2);
+  }
+  .vB code {
+    font-family: var(--mono);
+    color: #7ea3a1;
+    font-size: 0.85em;
+  }
+  .vB blockquote {
+    margin: 0 0 26px;
+    padding-left: 22px;
+    border-left: 1px solid #33302a;
+    font-style: italic;
+    color: var(--ink-3);
+    font-size: 16.5px;
+    line-height: 1.85;
+  }
+  .vB a {
+    color: var(--ink);
+    text-decoration: underline;
+    text-decoration-color: #4e483d;
+    text-underline-offset: 4px;
+  }
+  .vB a:hover {
+    color: var(--gold);
+    text-decoration-color: var(--gold);
+  }
+
+  /* ============================================================
+   C — ILLUMINATED
+   The manuscript. Warmer ground, gold rules, a drop cap, denser
+   setting. A book copied by hand rather than a game menu.
+   ============================================================ */
+  .vC {
+    --ground: #1c1813;
+    --ink: #ddd0b4;
+    --ink-2: #bfae8f;
+    --ink-3: #948468;
+    --gold: #cfa758;
+    --rule: #3d3527;
+    background: var(--ground);
+    padding: clamp(34px, 6vw, 70px) clamp(18px, 4vw, 40px) 100px;
+    position: relative;
+  }
+  .vC::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      120% 80% at 50% 0%,
+      rgba(207, 167, 88, 0.07),
+      transparent 65%
+    );
+  }
+  .vC .page {
+    position: relative;
+    max-width: 40rem;
+    margin: 0 auto;
+  }
+  .vC .band {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .vC .band .r {
+    flex: 1;
+    height: 1px;
+    background: var(--rule);
+  }
+  .vC .band .d {
+    color: var(--gold);
+    font-size: 11px;
+  }
+  .vC .kicker {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10.5px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--gold);
+    text-align: center;
+    margin: 0 0 12px;
+  }
+  .vC h1 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(26px, 3.8vw, 38px);
+    line-height: 1.22;
+    letter-spacing: 0.05em;
+    font-variant-caps: small-caps;
+    color: var(--ink);
+    text-align: center;
+    margin: 0 0 14px;
+  }
+  .vC .stats {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    text-align: center;
+    margin: 0 0 30px;
+  }
+  .vC .drop::first-letter {
+    font-family: var(--display);
+    font-weight: 600;
+    color: var(--gold);
+    float: left;
+    font-size: 3.4em;
+    line-height: 0.82;
+    padding: 6px 12px 0 0;
+  }
+  .vC p {
+    color: var(--ink-2);
+    font-size: 16.5px;
+    line-height: 1.78;
+    margin: 0 0 18px;
+  }
+  .vC .lead {
+    color: var(--ink);
+  }
+  .vC h2 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin: 40px 0 6px;
+  }
+  .vC h2 + .hr {
+    height: 1px;
+    background: linear-gradient(
+      to right,
+      var(--gold),
+      var(--rule) 40%,
+      transparent
+    );
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+  .vC ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 18px;
+  }
+  .vC li {
+    position: relative;
+    padding-left: 22px;
+    color: var(--ink-2);
+    font-size: 16.5px;
+    line-height: 1.78;
+  }
+  .vC li::before {
+    content: "\2767";
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--gold);
+    font-size: 12px;
+    opacity: 0.8;
+  }
+  .vC pre {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--rule);
+    padding: 15px 18px;
+    overflow-x: auto;
+    margin: 0 0 20px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--ink-2);
+  }
+  .vC code {
+    font-family: var(--mono);
+    color: #86a6a0;
+    font-size: 0.85em;
+  }
+  .vC blockquote {
+    margin: 0 0 20px;
+    padding: 14px 20px;
+    border-left: 2px solid var(--gold);
+    background: rgba(0, 0, 0, 0.2);
+    font-style: italic;
+    color: var(--ink-3);
+    font-size: 16px;
+    line-height: 1.8;
+  }
+  .vC a {
+    color: var(--gold);
+    text-decoration: underline;
+    text-decoration-color: rgba(207, 167, 88, 0.4);
+    text-underline-offset: 4px;
+  }
+  .vC a:hover {
+    text-decoration-color: var(--gold);
+  }
+  .vC .colophon {
+    margin-top: 34px;
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+    text-align: center;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+</style>
+
+<div class="chooser">
+  <span class="who">Torchlight &middot; three directions</span>
+  <button class="tab" data-v="A" aria-selected="true">
+    A &mdash; Item Description
+  </button>
+  <button class="tab" data-v="B" aria-selected="false">B &mdash; Ash</button>
+  <button class="tab" data-v="C" aria-selected="false">
+    C &mdash; Illuminated
+  </button>
+</div>
+
+<p class="note" id="note"></p>
+
+<div class="stage">
+  <!-- ============ A ============ -->
+  <section class="vA on" data-v="A">
+    <div class="frame">
+      <p class="kicker">Program Analysis</p>
+      <h1>Symbolic Execution</h1>
+      <div class="stats">
+        <span>02 June 2026</span><span>Nine minutes</span><span>Archive</span>
+      </div>
+      <hr />
+
+      <p class="lead">
+        Symbolic execution is a means of analyzing a program to determine what
+        inputs cause each part of it to execute. Instead of running the code on
+        real values, an interpreter walks it while holding every input as a
+        symbol.
+      </p>
+
+      <p>
+        It arrives at expressions written in terms of those symbols, and at
+        constraints for the outcome of each conditional branch. Where concrete
+        execution answers what a program does with 5, symbolic execution answers
+        what it would take to reach a place at all.
+      </p>
+
+      <h2>A worked example</h2>
+      <pre>
+int f() {
+  y = read();
+  z = y * 2;
+  if (z == 12) fail();
+  else printf("OK");
+}</pre
+      >
+      <p>
+        During symbolic execution the program reads a symbol,
+        <code>&lambda;</code>, and the branch condition becomes the constraint
+        <code>&lambda; * 2 == 12</code>. Execution <strong>forks</strong>, and a
+        solver later returns <code>6</code> to reach <code>fail()</code>.
+      </p>
+
+      <h2>Limitations</h2>
+      <ul>
+        <li>
+          Merge states that differ only in irrelevant ways, and accept weaker
+          constraints.
+        </li>
+        <li>
+          Bound loop iterations, and accept incompleteness past the bound.
+        </li>
+        <li>
+          Prioritize paths heuristically, and accept that the interesting one
+          may be starved.
+        </li>
+      </ul>
+      <p>
+        Engines worth reading next: <a href="#">KLEE</a> and
+        <a href="#">angr</a>.
+      </p>
+
+      <p class="flavour">
+        A record of every turn taken, kept in case the way back is ever needed.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ B ============ -->
+  <section class="vB" data-v="B">
+    <div class="col">
+      <span class="mark">&#9670;</span>
+      <p class="kicker">Program Analysis</p>
+      <h1>Symbolic Execution</h1>
+      <div class="stats">02 June 2026 &middot; Nine minutes</div>
+
+      <p class="lead">
+        Symbolic execution is a means of analyzing a program to determine what
+        inputs cause each part of it to execute. Instead of running the code on
+        real values, an interpreter walks it while holding every input as a
+        symbol.
+      </p>
+
+      <p>
+        It arrives at expressions written in terms of those symbols, and at
+        constraints for the outcome of each conditional branch. Where concrete
+        execution answers what a program does with 5, symbolic execution answers
+        what it would take to reach a place at all.
+      </p>
+
+      <h2>A worked example</h2>
+      <pre>
+int f() {
+  y = read();
+  z = y * 2;
+  if (z == 12) fail();
+  else printf("OK");
+}</pre
+      >
+      <p>
+        During symbolic execution the program reads a symbol,
+        <code>&lambda;</code>, and the branch condition becomes the constraint
+        <code>&lambda; * 2 == 12</code>. Execution forks, and a solver later
+        returns <code>6</code> to reach <code>fail()</code>.
+      </p>
+
+      <h2>Limitations</h2>
+      <ul>
+        <li>
+          Merge states that differ only in irrelevant ways, and accept weaker
+          constraints.
+        </li>
+        <li>
+          Bound loop iterations, and accept incompleteness past the bound.
+        </li>
+        <li>
+          Prioritize paths heuristically, and accept that the interesting one
+          may be starved.
+        </li>
+      </ul>
+
+      <blockquote>
+        Program testing can be used to show the presence of bugs, but never to
+        show their absence.
+      </blockquote>
+
+      <p>
+        Engines worth reading next: <a href="#">KLEE</a> and
+        <a href="#">angr</a>.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ C ============ -->
+  <section class="vC" data-v="C">
+    <div class="page">
+      <div class="band">
+        <span class="r"></span><span class="d">&#10087;</span
+        ><span class="r"></span>
+      </div>
+      <p class="kicker">Program Analysis</p>
+      <h1>Symbolic Execution</h1>
+      <div class="stats">02 June 2026 &middot; Nine minutes</div>
+
+      <p class="lead drop">
+        Symbolic execution is a means of analyzing a program to determine what
+        inputs cause each part of it to execute. Instead of running the code on
+        real values, an interpreter walks it while holding every input as a
+        symbol.
+      </p>
+
+      <p>
+        It arrives at expressions written in terms of those symbols, and at
+        constraints for the outcome of each conditional branch. Where concrete
+        execution answers what a program does with 5, symbolic execution answers
+        what it would take to reach a place at all.
+      </p>
+
+      <h2>A worked example</h2>
+      <div class="hr"></div>
+      <pre>
+int f() {
+  y = read();
+  z = y * 2;
+  if (z == 12) fail();
+  else printf("OK");
+}</pre
+      >
+      <p>
+        During symbolic execution the program reads a symbol,
+        <code>&lambda;</code>, and the branch condition becomes the constraint
+        <code>&lambda; * 2 == 12</code>. Execution forks, and a solver later
+        returns <code>6</code> to reach <code>fail()</code>.
+      </p>
+
+      <h2>Limitations</h2>
+      <div class="hr"></div>
+      <ul>
+        <li>
+          Merge states that differ only in irrelevant ways, and accept weaker
+          constraints.
+        </li>
+        <li>
+          Bound loop iterations, and accept incompleteness past the bound.
+        </li>
+        <li>
+          Prioritize paths heuristically, and accept that the interesting one
+          may be starved.
+        </li>
+      </ul>
+
+      <blockquote>
+        Program testing can be used to show the presence of bugs, but never to
+        show their absence.
+      </blockquote>
+
+      <p>
+        Engines worth reading next: <a href="#">KLEE</a> and
+        <a href="#">angr</a>.
+      </p>
+
+      <p class="colophon">Weibo&rsquo;s Home</p>
+    </div>
+  </section>
+</div>
+
+<script>
+  (function () {
+    var notes = {
+      A: "<b>A — Item Description.</b> The page is a Souls menu panel: framed, translucent, floating over the world, with hairline rules and the flavour line last. Most literally Dark Souls. Strongest identity, and the frame costs horizontal room on every page.",
+      B: "<b>B — Ash.</b> No panels, no borders, no chrome at all — a narrow column of text in a dark room, lit from above. Gold appears only under the cursor. Quietest and the easiest to read for long posts; the least obviously themed at a glance.",
+      C: "<b>C — Illuminated.</b> The manuscript rather than the menu: warmer ground, gold rules under headings, a drop cap, centred title, denser setting. Closest to Anor Londo and to your fairy-tale note. Most decorated, so it dates fastest if the ornament is overdone.",
+    };
+    var tabs = document.querySelectorAll(".tab");
+    var stage = document.querySelectorAll(".stage > section");
+    var note = document.getElementById("note");
+
+    function show(v) {
+      tabs.forEach(function (t) {
+        t.setAttribute("aria-selected", String(t.dataset.v === v));
+      });
+      stage.forEach(function (s) {
+        s.classList.toggle("on", s.dataset.v === v);
+      });
+      note.innerHTML = notes[v];
+      window.scrollTo({ top: 0 });
+    }
+
+    tabs.forEach(function (t) {
+      t.addEventListener("click", function () {
+        show(t.dataset.v);
+      });
+    });
+    show("A");
+  })();
+</script>

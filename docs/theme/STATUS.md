@@ -1,7 +1,7 @@
 # Torchlight — status and handoff
 
 **Last updated:** 16 August 2026
-**Branch:** `torchlight-theme` (17 commits ahead of `main`; `main` untouched)
+**Branch:** `torchlight-theme` (20 commits ahead of `main`; `main` untouched)
 **State:** implemented and working, but **a design decision is pending** — see §1.
 
 Read this first, then [`design.md`](./design.md) for the spec and [`tokens.json`](./tokens.json) for colour.
@@ -13,7 +13,7 @@ Read this first, then [`design.md`](./design.md) for the spec and [`tokens.json`
 The theme was built, then rebuilt on FromSoftware's design language, then iterated several times on vague feedback ("looks weird", "doesn't feel natural", "looks dirty"). That was inefficient, so the work paused and **three prototypes were made instead, for a pick:**
 
 **Prototype page:** https://claude.ai/code/artifact/bd4b36c1-8304-4ee3-8d4c-8f5c65184ba6
-Source: `scratchpad/proto-src.html` is gone with the session; rebuild from the artifact if needed.
+**Source, committed:** [`prototypes/three-directions.html`](./prototypes/three-directions.html) — open it directly in a browser. Fonts are not inlined in the committed copy, so it falls back to Georgia; run the site's build and inline `dist/_astro/fonts/*.woff2` if you need Cinzel and Spectral exactly.
 
 |       | Direction        | Character                                                                              | Trade-off                                                                 |
 | ----- | ---------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
