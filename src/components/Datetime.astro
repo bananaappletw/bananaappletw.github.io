@@ -31,9 +31,18 @@ const datetime = dayjs(isModified ? modDatetime : pubDatetime).tz(
 );
 ---
 
-<div class:list={["label", className]}>
+<div class:list={["label", "stamp", className]}>
   {isModified && <span>{t.post.updatedAt}</span>}
   <time datetime={datetime.toISOString()}>
     {datetime.format("D MMMM YYYY")}
   </time>
 </div>
+
+<style>
+  /* A date is the quietest thing on a page — smaller than the labels that
+     name a section, and tracked a little tighter so it reads as one mark. */
+  .stamp {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+  }
+</style>

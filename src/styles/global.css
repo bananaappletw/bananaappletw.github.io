@@ -40,7 +40,8 @@
        --text is reserved for the lead and for emphasis. */
     color: var(--text-2);
     font-family: var(--font-body);
-    font-size: 20px;
+    /* fluid: 16.5px at 375, 20px at the hall's full 960 */
+    font-size: clamp(16.5px, 0.6vw + 14.25px, 20px);
     line-height: 1.8;
     -webkit-font-smoothing: antialiased;
   }
