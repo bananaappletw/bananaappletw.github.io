@@ -19,14 +19,20 @@ and rejected; §7 records why.
 A scene is **one small painting in the bottom-right corner of a page, behind
 the text**. It is atmosphere, not illustration of the content.
 
-|             |                                   |
-| ----------- | --------------------------------- |
-| Position    | bottom-right, flush to both edges |
-| Size        | `clamp(200px, 30vw, 420px)` wide  |
-| Opacity     | ~0.55 hollowed, ~0.3 kindled      |
-| Stacking    | behind all content (`z-index: 0`) |
-| Below 900px | removed entirely, not faded       |
-| Per page    | exactly one, or none              |
+|             |                                       |
+| ----------- | ------------------------------------- |
+| Position    | foot of the DOCUMENT, right-hand side |
+| Size        | `clamp(200px, 30vw, 420px)` wide      |
+| Opacity     | ~0.55 hollowed, ~0.3 kindled          |
+| Stacking    | behind all content (`z-index: 0`)     |
+| Below 900px | removed entirely, not faded           |
+| Per page    | exactly one, or none                  |
+
+**It is absolute, not fixed.** The scene sits at the foot of the page and is
+reached by scrolling, like anything else. It was pinned to the viewport at
+first, and that is what made it read as a watermark stuck to the glass: the
+drawing hung motionless in the corner while the text slid past it. A picture
+that never moves relative to the window is not part of the page.
 
 **The consequence that governs every brief below:** the reader sees this small,
 dim, and partly behind a paragraph. It must read as a **shape first**. Interior

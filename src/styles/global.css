@@ -38,12 +38,16 @@
   }
 
   body {
+    /* `relative` is applied as a utility in Layout.astro — Tailwind hoists
+       position out of hand-written rules, and without body as the
+       containing block the scene resolves against the viewport and lands
+       near the top of a long page instead of at its foot. */
     background: var(--ground);
     /* Body copy sits a step down from --text. You are reading in low light;
        --text is reserved for the lead and for emphasis. */
     color: var(--text-2);
     font-family: var(--font-body);
-    /* fluid: 16.5px at 375, 20px at the hall's full 960 */
+    /* fluid: 23px at 375, 27.5px at the hall's full width */
     font-size: clamp(23px, 0.77vw + 20.12px, 27.5px);
     line-height: 1.8;
     -webkit-font-smoothing: antialiased;
@@ -123,17 +127,24 @@
 /* Borderless: only the falloff in .air marks where the content ends.
    Vertical rules at the hall's edges were tried and removed. */
 
-/* The scene layer — one vignette per page type, low in the bottom-right
-   corner, behind the text. Placement lives here rather than in each
+/* The scene layer — one vignette per page type, at the FOOT of the
+   document, right-hand side. Placement lives here rather than in each
    scene so all five share it; see docs/theme/scenes.md §1.
 
-   The reader sees this small, dim and partly behind a paragraph, so a
-   scene has to read as a SHAPE. That is a constraint on the art, and
-   the reason none of them carry fine interior detail. */
+   It is reached by scrolling, like anything else on the page, and it is
+   the last thing under the text rather than a companion to it. A scene
+   still has to read as a SHAPE — it is dim and partly behind the footer —
+   which is why none of them carry fine interior detail. */
 .scene {
-  /* position:fixed is applied as a utility in the component, because
-     Tailwind hoists that declaration out of hand-written rules — the same
-     trap that once shipped the whole atmosphere unpositioned. */
+  /* position:absolute is applied as a utility in the component, because
+     Tailwind hoists positioning out of hand-written rules — the same trap
+     that once shipped the whole atmosphere unpositioned.
+
+     ABSOLUTE, not fixed. Fixed pinned the drawing to the viewport, so it
+     hung motionless in the corner while the text slid past it — which is
+     what made it read as a watermark stuck to the glass rather than as
+     part of the page. It now sits at the foot of the document and scrolls
+     away like everything else. */
   inset-block-end: 0;
   inset-inline-end: 0;
   z-index: 0;
