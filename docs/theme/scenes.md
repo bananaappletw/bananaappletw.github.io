@@ -149,9 +149,43 @@ needed splitting into two planes as well — one flat mass has no depth of its
 own, and a step in value between the gatehouse and the keep is what gives it
 any.
 
-### 3.2 Clerestory → **listings** (posts, tags, archive)
+### 3.2 Clerestory → **listings** (posts, tags, archive) — **built**
 
 > Castle interior. Light coming through the windows.
+
+Shipped as `src/components/scenes/Clerestory.astro`, on the four listing
+pages: `posts/[...page]`, `tags/index`, `tags/[tag]/[...page]` and
+`archives/index`.
+
+**Built in one-point perspective, which is what makes it affordable.** With
+the picture plane parallel to the walls, verticals stay vertical — so a
+window is two plumb jambs and an arch rather than a general quadrilateral —
+and a horizontal plane's constant-depth lines stay horizontal, so the floor
+at any depth is one horizontal line. The hall is therefore written **once**,
+as a set of foreground heights (`TOP`, `IMPOST`, `SILL`, `FLOOR`), and each
+bay is that same bay projected through a depth. An arcade is the same arch
+at six distances, and it costs one multiply.
+
+Three things it turned out to depend on:
+
+- **The arch radius has a formula, and guessing it costs the period.** A
+  two-centre arch of span `w` and rise `R` has radius `(w²/4 + R²)/w`. The
+  first version carried a stray factor, which made the radius too small,
+  which pulled both halves into a semicircle — and a round arch reads
+  romanesque. Nothing else in the drawing signals gothic half as hard.
+- **Windows have to be lancets.** The first proportions were as wide as they
+  were tall and read as a barn. Narrowing the opening to under half the bay
+  and letting the arch rise 80 foreground units fixed it.
+- **The shafts have to be the only shapes with area.** Everything else is a
+  line, and that alone is what makes the light read as the subject rather
+  than as the brightest thing present.
+
+**The tone inverts in the kindled world, and §5 is still open.** The beams
+are ink, so on the near-black hollowed ground they read as light and on white
+paper they read as shade. The geometry rescues it — beams leaving windows in
+one consistent direction read as sun whichever way the tone runs — but this
+is the clearest evidence yet for §5's option 1. It ships to both worlds only
+because Approach does, and the two scenes should not disagree.
 
 You are inside now. This is the page returned to most often, so it is the
 quietest of the five — it has to survive being seen a hundred times.

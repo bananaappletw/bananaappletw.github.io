@@ -1,0 +1,441 @@
+---
+/**
+ * Clerestory — the scene behind the listing pages. See docs/theme/scenes.md §3.2.
+ *
+ * You are inside now. Approach is the castle from the road; this is the hall
+ * it leads into, and it sits behind the pages a reader returns to a hundred
+ * times, so it is the quietest of the five: no gold, no incident, one idea.
+ *
+ * The idea is that THE SHAFTS ARE THE SUBJECT. Everything else — wall,
+ * windows, piers, floor — exists to be the dark that light is visible
+ * against. The drawing is built so the beams are the only shapes with any
+ * area; every other mark is a line.
+ *
+ * ── how it is constructed ────────────────────────────────────────────────
+ *
+ * One-point perspective, with the hall running away to a vanishing point at
+ * the left. That choice does most of the work here: with the picture plane
+ * parallel to the walls, VERTICALS STAY VERTICAL, so a window is two plumb
+ * jambs and an arch rather than a general quadrilateral, and a horizontal
+ * plane's constant-depth lines stay horizontal, so the floor at any depth is
+ * simply a horizontal line.
+ *
+ * Everything below is therefore written once, in FOREGROUND coordinates — a
+ * single set of heights for sill, impost and floor that describes the hall as
+ * if it were flat against the frame — and then projected by depth. Every bay
+ * is the same bay at a different distance, which is what makes an arcade an
+ * arcade, and it costs one multiply.
+ *
+ * Gothic means the arch is POINTED. A round arch reads romanesque and the
+ * scene loses its period, so the heads are two-centre arches: each half is a
+ * circular arc struck from a centre on the impost line, and they meet at an
+ * angle rather than a tangent. Nothing else in the drawing signals the
+ * period as hard as that one detail does.
+ *
+ * Everything takes `currentColor`, so the scene recolours with the world.
+ */
+
+/** deterministic jitter — a drawn line is never mechanically straight */
+let seed = 20260817;
+const rnd = () => {
+  seed = (seed * 1664525 + 1013904223) >>> 0;
+  return seed / 4294967296;
+};
+const j = (n: number) => (rnd() - 0.5) * n;
+const n2 = (v: number) => Math.round(v * 100) / 100;
+
+const W = 520;
+const H = 400;
+
+/** the vanishing point — left of centre, so the hall recedes into the fade */
+const VPX = 174;
+const VPY = 232;
+
+/**
+ * Depth → scale. `d` counts bays from the viewer, and everything is placed by
+ * projecting a foreground coordinate through it.
+ */
+const S = (d: number) => 1 / (1 + 0.46 * d);
+/** x on the right wall at depth d */
+const wx = (d: number) => VPX + (W - VPX) * S(d);
+/** y of a foreground height yF at depth d */
+const wy = (d: number, yF: number) => VPY + (yF - VPY) * S(d);
+
+/* the hall, described once in foreground heights */
+const TOP = 58; // where the wall stops and the vault springs
+const IMPOST = 158; // where the window arches spring
+const SILL = 268;
+const FLOOR = 352;
+/** how far the arch apex stands above its springing, in foreground units */
+const RISE = 80;
+/** the left wall, off the frame in the near bays */
+const LEFTF = -60;
+const lx = (d: number) => VPX + (LEFTF - VPX) * S(d);
+
+/** light falls from the windows down and to the left, one direction for all */
+const RAKE = 0.72;
+/** where a point at depth d lands on the floor, following the light */
+const toFloor = (x: number, y: number, d: number): [number, number] => {
+  const dy = wy(d, FLOOR) - y;
+  return [x - RAKE * dy, y + dy];
+};
+
+/**
+ * The radius of a two-centre pointed arch of span `w` and rise `R`.
+ *
+ * Both centres sit on the impost line, inset `c` from the midpoint, and each
+ * half is struck from the centre on the FAR side, so r = w/2 + c and the
+ * apex stands sqrt(r² − c²) above the springing. Eliminating c gives this,
+ * and getting it wrong is not a subtle error: too small a radius pulls the
+ * two halves into a semicircle, and a round arch reads romanesque — the one
+ * thing §3.2 says would cost the scene its period.
+ */
+const archRadius = (w: number, R: number) => (w * w * 0.25 + R * R) / w;
+
+/**
+ * A two-centre pointed arch between two springings, apex at the middle.
+ * `rise` is in foreground units so every bay's arch is the same real arch.
+ */
+function ogive(
+  dNear: number,
+  dFar: number,
+  springF: number,
+  rise: number,
+): string {
+  const xN = wx(dNear);
+  const xF = wx(dFar);
+  const dM = (dNear + dFar) / 2;
+  const ax = wx(dM);
+  const ay = wy(dM, springF - rise);
+  const span = xN - xF;
+  const r = archRadius(span, rise * S(dM));
+  return (
+    `M${n2(xN)} ${n2(wy(dNear, springF))}` +
+    `A${n2(r)} ${n2(r)} 0 0 0 ${n2(ax)} ${n2(ay)}` +
+    `A${n2(r)} ${n2(r)} 0 0 0 ${n2(xF)} ${n2(wy(dFar, springF))}`
+  );
+}
+
+/** the arcade: one window per bay, shrinking away down the hall */
+type Bay = {
+  d: number;
+  xN: number;
+  xF: number;
+  head: string;
+  jambs: string;
+  sill: string;
+  shaft: string;
+  pool: string;
+  tracery: string;
+};
+
+const BAYS: Bay[] = [];
+for (let i = 0; i < 6; i++) {
+  const dN = i + 0.28;
+  const dF = i + 0.72;
+  const xN = wx(dN);
+  const xF = wx(dF);
+
+  const impN = wy(dN, IMPOST);
+  const impF = wy(dF, IMPOST);
+  const silN = wy(dN, SILL);
+  const silF = wy(dF, SILL);
+
+  // the beam, from the window's head down to the floor, and the pool it
+  // makes when it gets there. These are the only filled shapes in the scene.
+  const A = toFloor(xN, impN, dN);
+  const B = toFloor(xF, impF, dF);
+  const C = toFloor(xF, silF, dF);
+  const D = toFloor(xN, silN, dN);
+
+  // tracery is affordable on the two nearest bays only — below about ten
+  // units in this box it is noise at the size the scene is actually seen
+  const span = xN - xF;
+  let tracery = "";
+  if (span > 26) {
+    const mid = (xN + xF) / 2;
+    const mImp = (impN + impF) / 2;
+    const mSil = (silN + silF) / 2;
+    tracery =
+      `M${n2(mid + j(0.6))} ${n2(mSil)}L${n2(mid + j(0.6))} ${n2(mImp - span * 0.34)}` +
+      `M${n2(xN - span * 0.12)} ${n2(silN - (silN - impN) * 0.42)}` +
+      `L${n2(xF + span * 0.12)} ${n2(silF - (silF - impF) * 0.42)}`;
+  }
+
+  BAYS.push({
+    d: i,
+    xN,
+    xF,
+    head: ogive(dN, dF, IMPOST, RISE),
+    jambs:
+      `M${n2(xN + j(0.5))} ${n2(impN)}L${n2(xN + j(0.5))} ${n2(silN)}` +
+      `M${n2(xF + j(0.4))} ${n2(impF)}L${n2(xF + j(0.4))} ${n2(silF)}`,
+    sill: `M${n2(xN + 2)} ${n2(silN + j(0.6))}L${n2(xF - 2)} ${n2(silF + j(0.6))}`,
+    shaft:
+      `M${n2(xN)} ${n2(impN)}L${n2(xF)} ${n2(impF)}` +
+      `L${n2(B[0])} ${n2(B[1])}L${n2(A[0])} ${n2(A[1])}Z`,
+    pool:
+      `M${n2(A[0])} ${n2(A[1])}L${n2(B[0])} ${n2(B[1])}` +
+      `L${n2(C[0])} ${n2(C[1])}L${n2(D[0])} ${n2(D[1])}Z`,
+    tracery,
+  });
+}
+
+/** the piers between the bays, floor to vault */
+const PIERS = Array.from({ length: 7 }, (_, i) => {
+  const d = i;
+  const x = wx(d);
+  return `M${n2(x + j(0.5))} ${n2(wy(d, FLOOR))}L${n2(x + j(0.5))} ${n2(wy(d, TOP))}`;
+}).join("");
+
+/**
+ * The floor. Transverse joints stay horizontal — that is the whole gift of
+ * one-point perspective — and the longitudinal ones run to the vanishing
+ * point. Spacing eases with depth on its own because it is projected.
+ */
+const FLOOR_LINES = (() => {
+  const d: string[] = [];
+  for (let i = 0; i <= 12; i++) {
+    const dd = i * 0.55;
+    const y = wy(dd, FLOOR);
+    d.push(
+      `M${n2(Math.max(0, lx(dd)))} ${n2(y + j(0.5))}L${n2(wx(dd))} ${n2(y + j(0.5))}`,
+    );
+  }
+  // longitudinal joints, converging
+  for (let i = 0; i < 5; i++) {
+    const x0 = 40 + i * 118;
+    d.push(
+      `M${n2(x0)} ${H}L${n2(VPX + (x0 - VPX) * 0.13)} ${n2(wy(6.5, FLOOR))}`,
+    );
+  }
+  return d.join("");
+})();
+
+/**
+ * The vault: transverse arches spanning the hall, springing from the wall top.
+ * Only the near three are drawn — the rest of the ceiling is inside the top
+ * fade, where ink is wasted.
+ */
+const VAULT = [0.4, 1.35, 2.5, 3.8]
+  .map(d => {
+    const xr = wx(d);
+    const xl = lx(d);
+    const y = wy(d, TOP);
+    const span = xr - xl;
+    const ax = (xr + xl) / 2;
+    // the same pointed profile as the windows, so the vault belongs to them
+    const rise = span * 0.66;
+    const ay = y - rise;
+    const r = archRadius(span, rise);
+    return (
+      `M${n2(xr)} ${n2(y)}A${n2(r)} ${n2(r)} 0 0 0 ${n2(ax)} ${n2(ay)}` +
+      `A${n2(r)} ${n2(r)} 0 0 0 ${n2(xl)} ${n2(y)}`
+    );
+  })
+  .join("");
+
+/** the wall head, running away to the vanishing point */
+const WALL_TOP = `M${n2(wx(0))} ${n2(wy(0, TOP))}L${n2(wx(6.5))} ${n2(wy(6.5, TOP))}`;
+const WALL_FOOT = `M${n2(wx(0))} ${n2(wy(0, FLOOR))}L${n2(wx(6.5))} ${n2(wy(6.5, FLOOR))}`;
+
+/**
+ * Hatching on the wall below the sills. A pen has no grey, so the shaded
+ * band under the windows is drawn as lines and not as a wash — the same rule
+ * the Approach drawing settled.
+ */
+const HATCH = (() => {
+  const d: string[] = [];
+  for (let i = 0; i < 46; i++) {
+    const dd = i * 0.14;
+    const x = wx(dd);
+    const y0 = wy(dd, SILL + 8);
+    const y1 = wy(dd, FLOOR - 4);
+    d.push(
+      `M${n2(x)} ${n2(y0 + j(1.2))}L${n2(x - 9 * S(dd))} ${n2(y1 + j(1.2))}`,
+    );
+  }
+  return d.join("");
+})();
+---
+
+<div class="scene scene-clerestory fixed" aria-hidden="true">
+  <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} focusable="false">
+    <defs>
+      {
+        /* The same pen as the Approach drawing: a small displacement so no
+          ruled line is mechanically straight. The region is widened because
+          displacement pushes pixels outward and would clip its own edges. */
+      }
+      <filter
+        id="clerestory-pen"
+        x="-6%"
+        y="-6%"
+        width="112%"
+        height="112%"
+        color-interpolation-filters="sRGB"
+      >
+        <feTurbulence
+          type="fractalNoise"
+          baseFrequency="0.03"
+          numOctaves="3"
+          seed="23"
+          result="pen"></feTurbulence>
+        <feDisplacementMap
+          in="SourceGraphic"
+          in2="pen"
+          scale="1.5"
+          xChannelSelector="R"
+          yChannelSelector="G"></feDisplacementMap>
+      </filter>
+
+      {
+        /* SVG masks are LUMINANCE by default — white reveals, black hides.
+          Written with the black stops that are correct for a CSS
+          mask-image, this hides the entire drawing. */
+      }
+      <linearGradient id="clerestory-fade-x" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="white" stop-opacity="0"></stop>
+        <stop offset="34%" stop-color="white" stop-opacity="1"></stop>
+      </linearGradient>
+      <linearGradient id="clerestory-fade-y" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="white" stop-opacity="0"></stop>
+        <stop offset="26%" stop-color="white" stop-opacity="1"></stop>
+      </linearGradient>
+      <mask id="clerestory-fade-left">
+        <rect width={W} height={H} fill="url(#clerestory-fade-x)"></rect>
+      </mask>
+      <mask id="clerestory-fade-top">
+        <rect width={W} height={H} fill="url(#clerestory-fade-y)"></rect>
+      </mask>
+
+      {
+        /* A shaft is brightest where it lands and weakest in the air, which
+          is the opposite of how a gradient wants to be written. */
+      }
+      <linearGradient id="clerestory-beam" x1="0.35" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="currentColor" stop-opacity="0.07"></stop>
+        <stop offset="100%" stop-color="currentColor" stop-opacity="0.34"
+        ></stop>
+      </linearGradient>
+    </defs>
+
+    <g mask="url(#clerestory-fade-top)">
+      <g mask="url(#clerestory-fade-left)" filter="url(#clerestory-pen)">
+        {/* the floor, first, so everything stands on it */}
+        <path class="joint" d={FLOOR_LINES}></path>
+
+        {
+          /* the light. Drawn before the linework so the wall reads through it */
+        }
+        <g class="light">
+          {BAYS.map(b => <path class="shaft" d={b.shaft} />)}
+          {BAYS.map(b => <path class="pool" d={b.pool} />)}
+        </g>
+
+        {/* the vault, high and faint — most of it is inside the top fade */}
+        <path class="rib" d={VAULT}></path>
+
+        {/* the wall */}
+        <path class="line" d={WALL_TOP}></path>
+        <path class="line" d={WALL_FOOT}></path>
+        <path class="pier" d={PIERS}></path>
+        <path class="hatch" d={HATCH}></path>
+
+        {/* the arcade */}
+        {
+          BAYS.map(b => (
+            <g class={b.d >= 4 ? "far" : "near"}>
+              <path class="head" d={b.head} />
+              <path class="jamb" d={b.jambs} />
+              <path class="jamb" d={b.sill} />
+              {b.tracery && <path class="bar" d={b.tracery} />}
+            </g>
+          ))
+        }
+      </g>
+    </g>
+  </svg>
+</div>
+
+<style>
+  .scene-clerestory svg {
+    color: var(--scene-ink);
+  }
+
+  /* Everything structural is a line. The shafts are the only shapes in the
+     drawing with any area, which is what makes them the subject rather than
+     merely the brightest thing. */
+  .line {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1;
+    stroke-linecap: round;
+    opacity: 0.85;
+  }
+
+  .pier {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 0.9;
+    opacity: 0.6;
+  }
+
+  .head,
+  .jamb {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .bar {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 0.6;
+    opacity: 0.75;
+  }
+
+  /* distance is drawn with less ink, not with a paler colour */
+  .far {
+    opacity: 0.4;
+  }
+
+  .rib {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 0.8;
+    opacity: 0.4;
+    stroke-linecap: round;
+  }
+
+  .joint {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 0.5;
+    opacity: 0.2;
+  }
+
+  .hatch {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 0.45;
+    opacity: 0.18;
+  }
+
+  .shaft {
+    fill: url(#clerestory-beam);
+    stroke: currentColor;
+    stroke-width: 0.4;
+    stroke-opacity: 0.3;
+  }
+
+  /* Brightest where it lands. A shaft in the air is only the dust in it;
+     the floor is what is actually lit, so the pool carries the scene. */
+  .pool {
+    fill: currentColor;
+    fill-opacity: 0.46;
+    stroke: none;
+  }
+</style>

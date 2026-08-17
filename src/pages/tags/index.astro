@@ -2,6 +2,7 @@
 import { getCollection } from "astro:content";
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
+import Clerestory from "@/components/scenes/Clerestory.astro";
 import Breadcrumb from "@/components/Breadcrumb.astro";
 import Main from "@/components/Main.astro";
 import Footer from "@/components/Footer.astro";
@@ -19,6 +20,8 @@ const t = useTranslations(locale);
 
 <Layout title={`${t.pages.tagsTitle} | ${config.site.title}`}>
   <Header />
+
+  <Clerestory />
 
   <Breadcrumb />
 

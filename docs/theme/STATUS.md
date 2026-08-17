@@ -144,14 +144,14 @@ Only defects and unreviewed surfaces. No new devices.
 Each of these has a working prototype and a written decision behind it. None
 blocks the release.
 
-| Deferred                   | Where it stands                                                                             |
-| -------------------------- | ------------------------------------------------------------------------------------------- |
-| **The five page scenes**   | Briefs complete in [`scenes.md`](./scenes.md); no art. Two decisions open there             |
-| **Ash variations**         | Soot ground, ruled headings, mincho, spec block — all prototyped, none chosen               |
-| **The stain texture**      | Must ship un-tiled: a repeat is visible on a wide screen. Dials in `stain-calibration.html` |
-| **The lake footer**        | Working, for the 404. Keep the ripple static — §11 permits one ambient animation            |
-| **Post header image rule** | `design.md` §15, still undecided                                                            |
-| **`eslint.config.js`**     | Pre-existing failure, unrelated to the theme                                                |
+| Deferred                   | Where it stands                                                                                                    |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| **The five page scenes**   | Approach (home) and Clerestory (listings) are built. Court, Rest and Drowned are briefs only; §4 and §5 still open |
+| **Ash variations**         | Soot ground, ruled headings, mincho, spec block — all prototyped, none chosen                                      |
+| **The stain texture**      | Must ship un-tiled: a repeat is visible on a wide screen. Dials in `stain-calibration.html`                        |
+| **The lake footer**        | Working, for the 404. Keep the ripple static — §11 permits one ambient animation                                   |
+| **Post header image rule** | `design.md` §15, still undecided                                                                                   |
+| **`eslint.config.js`**     | Pre-existing failure, unrelated to the theme                                                                       |
 
 ---
 
