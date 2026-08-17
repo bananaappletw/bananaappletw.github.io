@@ -41,7 +41,7 @@
     color: var(--text-2);
     font-family: var(--font-body);
     /* fluid: 16.5px at 375, 20px at the hall's full 960 */
-    font-size: clamp(16.5px, 0.6vw + 14.25px, 20px);
+    font-size: clamp(19px, 0.68vw + 16.44px, 23px);
     line-height: 1.8;
     -webkit-font-smoothing: antialiased;
   }

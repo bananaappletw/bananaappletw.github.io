@@ -1,8 +1,9 @@
 # Torchlight — status and handoff
 
-**Last updated:** 16 August 2026
-**Branch:** `torchlight-theme` (20 commits ahead of `main`; `main` untouched)
-**State:** implemented and working. **The direction is settled: B — Ash** (§1).
+**Last updated:** 17 August 2026
+**Branch:** `main` — work goes straight to `main` and a push is the deploy.
+**State:** **released and live** at <https://bananaappletw.github.io/>. The
+direction is settled: B — Ash (§1).
 
 Read this first, then [`design.md`](./design.md) for the spec, [`tokens.json`](./tokens.json) for colour, and [`scenes.md`](./scenes.md) for the five per-page vignettes (briefs written, art not made).
 
@@ -29,7 +30,7 @@ The theme was built, then rebuilt on FromSoftware's design language, then iterat
 
 ## 2. What is built and working
 
-Everything below is on `torchlight-theme`, builds clean, and is verified:
+Everything below is on `main`, live, builds clean, and is verified:
 
 - `npm run build` — succeeds
 - `npx astro check` — 0 errors, 0 warnings
@@ -78,12 +79,13 @@ tests/tokens.test.ts        ← enforces contrast floors, the ceiling,
 Each of these was reached the hard way. Reasons are in `design.md`; summarised so a fresh session does not undo them.
 
 1. **Gold appears at most three times per viewport.** A count, not a percentage. An earlier 8%-area budget was permissive enough to allow gold on every link, tag and nav item and still pass. Links are neutral until hovered.
-2. **Hollowed is warm sepia, not cold ash.** Built on the Dark Souls Remastered ramp `#1b1a17 / #38322b / #695442 / #a78a6d / #f4efde`. Souls _looks_ cold, so cold blue-grey feels right and is wrong — the series is desaturated _brown_.
+2. **Hollowed is warm sepia, not cold ash.** Built on the Dark Souls Remastered ramp; the ground sits a step below its darkest value, at `#100f0d`. Souls _looks_ cold, so cold blue-grey feels right and is wrong — the series is desaturated _brown_.
 3. **Contrast has a ceiling as well as a floor.** `--text` targets 8–13:1, never above 14:1. Maximum-contrast text detaches and reads as glowing rather than printed. Borders sit near 1.3:1 for the same reason.
 4. **Ornament reads `--ornament`, never `--torch`** — so it goes to bone when the world hollows. Asserted by test.
 5. **Drop caps, section marks and carved frames were cut.** With two ornaments per viewport, space and light do the work better.
 6. **The roguelike/terminal direction was considered and declined** (`design.md` §14). The escape hatch, if ever wanted, is a single `>` for "read more".
-7. **Cinzel is deliberate.** Dark Souls uses Optimus Princeps, a serif on 15th-century Italian inscriptional lettering; Cinzel is the closest OFL relative. Titles are set in **small caps** because the real post titles are lowercase and Cinzel's lowercase sprawls at display size.
+7. **One family, no capitals.** Cardo sets everything — display and body. Cinzel was the obvious pick (Dark Souls uses Optimus Princeps, and Cinzel is the closest OFL relative) and it was wrong: it is a capitals face whose lowercase sprawls, which forced every title into small caps to hide it. Nothing on the site is set in capitals now, because capitals are slower to read. See `design.md` §5 for the full history.
+8. **Check the weights a face actually ships.** Asking for a weight a family does not have gets you a synthesised fake bold — and breaks the build outright, because `ogTemplate.ts` resolves fonts _by weight_. That generator names its families by role rather than by typeface for the same reason.
 
 ---
 
@@ -94,7 +96,10 @@ These cost real time. All are recorded in `design.md` §13 as anti-patterns.
 - **Tailwind hoists `position: fixed` and `inset: 0` into utilities and strips them from hand-written rules.** The entire atmosphere shipped unpositioned before this was caught. `.air` / `.grain` apply them as classes in `Layout.astro` instead.
 - **`body > * { z-index: 1 }` is load-bearing.** `.air` and `.grain` are positioned, so they paint above any _non-positioned_ content.
 - **Grain must sit behind the content.** At `z-index: 2` it rendered every glyph through noise — that is what read as "dirty".
-- **Write `-webkit-backdrop-filter` before the unprefixed property**, or minification keeps only the prefixed one and panels blur in WebKit alone.
+- **An SVG `<mask>` is luminance by default; CSS `mask-image` is alpha.** Black stops are correct in CSS and mean "hide everything" in an SVG mask. The first build of the Approach scene rendered as a blank rectangle.
+- **The DOM is not the source of truth for the world.** Astro's ClientRouter replaces `<html>`'s attributes on every client-side navigation and inline head scripts do not re-run, so reading `data-theme` reset the reader's choice on every click. localStorage is authoritative.
+- **Anything that re-runs on navigation may restore state but must never bind listeners.** Binding inside `astro:after-swap` stacked one listener per page visited.
+- **Font sizes are a property of the face.** The scale went up 15% when the family changed, with no design intent changing — Cardo's x-height is shorter than Spectral's, so identical numbers render visibly smaller.
 - **`getFontPathByWeight` was broken** (now fixed): Astro emits one `FontData` entry per (weight, style, format), so `.find()` matched woff2 then looked for truetype inside it. OG generation could not have worked.
 - **12 of 25 posts use `# ` for section headings**, not titles. `h1` and `h2` are styled identically in prose; without that, posts render as several stacked giant titles.
 - **All 25 posts have `description === title`**, so `Card.astro` suppresses the description when it matches.
@@ -113,43 +118,53 @@ These cost real time. All are recorded in `design.md` §13 as anti-patterns.
 
 ## 7. Roadmap
 
-The plan is to **ship v1 and improve on it**, not to land everything at once.
-Anything not needed to make the theme correct and coherent is deferred, on
-purpose — the prototypes are committed so nothing is lost by waiting.
+v1 is **shipped**. The theme was squash-merged to `main` on 16 August 2026 and
+deploys automatically on every push. Work continues directly on `main`; there
+is no feature branch.
 
-### Done
+### Shipped since the release
 
-1. ~~Get a letter.~~ **B — Ash.**
-2. ~~Strip the other directions' devices.~~ `.panel`, `Inscription.astro`, the
-   `--blur` / `--edge` / `--shadow` tokens and the framed code block are gone;
-   search results are no longer gold.
+- **The palette settled.** Ground dropped to `#100f0d`, a step below the Dark
+  Souls ramp's darkest value — every ink level gains about a point of contrast.
+- **One type family: Cardo**, for display and body alike, replacing
+  Cinzel → Marcellus → Cardo and dropping Spectral entirely. **No capitals
+  anywhere.** See `design.md` §5 for why each face was replaced.
+- **The scale is fluid**, solved at 375px and 960px, and was raised 15% when
+  the family changed — Cardo's x-height is shorter than Spectral's, so the same
+  numbers read smaller.
+- **The hall is 60rem**, and the atmosphere's geometry now tracks the column
+  rather than the viewport.
+- **The world flip is instant** — the veil is gone.
+- **Three marks**: a carved sigil for the site, a sun and moon for the world
+  control, a rune for the edit link.
+- **The Approach scene** on the home page: a generated pen drawing.
+- **Breadcrumbs** replaced the back link on posts; the gate leads with the title.
 
-### v1 — what is left before merging
+### Open, in the order worth taking them
 
-Only defects and unreviewed surfaces. No new devices.
+1. **Give the kindled world a real pass.** Still never done, and now several
+   rounds deep — a new ground, a new family, a rebuilt scale, three new marks
+   and a scene. It is structurally sound (no colour literals outside tokens,
+   contrast floors enforced by test) but nobody has _looked_ at it. **Highest
+   risk item, because it is invisible to every automated check.**
+2. **The remaining four scenes** — Clerestory, Court, Rest, Drowned. Briefs in
+   `scenes.md`; Drowned is the natural next one and Rest is the hard one.
+3. **Ash variations and the stain texture.** Prototyped, undecided. The stain
+   must ship un-tiled: a repeat is visible on a wide screen.
+4. **The lake footer** on the 404.
+5. **`eslint.config.js`** — `npm run lint` still fails, pre-existing.
+6. **The post header image rule** (`design.md` §15).
+7. **A real site description.** `torchlight.config.ts` duplicates the title, so
+   search results and social cards read "Weibo's Home" twice.
+8. **Review the `about` page prose** against the measure. Never checked.
 
-3. **Give the kindled world a real pass.** It was built against the hedged
-   design and has never been looked at on its own. The strip moved it along
-   automatically (`--panel` is `#faf7ef` there now so code still reads against
-   white), but a real post, the listings, search and the 404 have not been
-   checked in the light world.
-4. **Review the `about` page prose against the measure.** Never checked.
-5. **Merge to `main`.** Deployment is automatic from `main` via GitHub Actions,
-   so this step is the release.
-
-### After v1
-
-Each of these has a working prototype and a written decision behind it. None
-blocks the release.
-
-| Deferred                   | Where it stands                                                                             |
-| -------------------------- | ------------------------------------------------------------------------------------------- |
-| **The five page scenes**   | Briefs complete in [`scenes.md`](./scenes.md); no art. Two decisions open there             |
-| **Ash variations**         | Soot ground, ruled headings, mincho, spec block — all prototyped, none chosen               |
-| **The stain texture**      | Must ship un-tiled: a repeat is visible on a wide screen. Dials in `stain-calibration.html` |
-| **The lake footer**        | Working, for the 404. Keep the ripple static — §11 permits one ambient animation            |
-| **Post header image rule** | `design.md` §15, still undecided                                                            |
-| **`eslint.config.js`**     | Pre-existing failure, unrelated to the theme                                                |
+-------------------------- | ------------------------------------------------------------------------------------------- |
+| **The five page scenes** | Briefs complete in [`scenes.md`](./scenes.md); no art. Two decisions open there |
+| **Ash variations** | Soot ground, ruled headings, mincho, spec block — all prototyped, none chosen |
+| **The stain texture** | Must ship un-tiled: a repeat is visible on a wide screen. Dials in `stain-calibration.html` |
+| **The lake footer** | Working, for the 404. Keep the ripple static — §11 permits one ambient animation |
+| **Post header image rule** | `design.md` §15, still undecided |
+| **`eslint.config.js`** | Pre-existing failure, unrelated to the theme |
 
 ---
 

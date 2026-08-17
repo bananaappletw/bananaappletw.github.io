@@ -219,21 +219,28 @@ Every step is fluid, solved for two anchors: a 375px phone and the hall's full
 cleanly below it, so the min and max below are what you actually see at those
 two widths.
 
-| Role           | 375px | 960px | Face    | Tracking |
-| -------------- | ----- | ----- | ------- | -------- |
-| Home title     | 29    | 42    | Display | +0.03em  |
-| Post title     | 30    | 44    | Display | +0.03em  |
-| Lead paragraph | 19    | 24    | Body    | 0        |
-| Prose          | 17    | 22    | Body    | 0        |
-| Body (chrome)  | 16.5  | 20    | Body    | 0        |
-| H1 / H2        | 22    | 29    | Display | +0.06em  |
-| H3             | 19    | 23    | Body    | +0.01em  |
-| H4             | 16    | 18.5  | Display | +0.05em  |
-| Listing title  | 20    | 24    | Display | +0.03em  |
-| Label / HUD    | 11.5  | 13    | Display | +0.06em  |
-| Eyebrow        | 11.5  | 13    | Display | +0.09em  |
-| Date           | 11    | 11    | Display | +0.1em   |
-| Code           | 13.5  | 16    | Mono    | 0        |
+| Role           | 375px | 960px | Tracking |
+| -------------- | ----- | ----- | -------- |
+| Home title     | 33    | 48    | +0.03em  |
+| Post title     | 34    | 50    | +0.03em  |
+| Lead paragraph | 22    | 27.5  | 0        |
+| Prose          | 19.5  | 25    | 0        |
+| Body (chrome)  | 19    | 23    | 0        |
+| H1 / H2        | 25    | 33    | +0.06em  |
+| H3             | 21.5  | 26    | +0.01em  |
+| H4             | 18    | 21    | +0.05em  |
+| Listing title  | 23    | 27.5  | +0.03em  |
+| Label / HUD    | 13    | 14.5  | +0.06em  |
+| Date           | 12.5  | 12.5  | +0.1em   |
+| Code           | 15    | 17.5  | 0        |
+
+The Face column is gone because there is only one now (§5).
+
+**Sizes are a property of the face, not of the design.** The whole scale went
+up 15% when the family changed from Spectral to Cardo, without a single design
+intent changing: Cardo's x-height is shorter, so identical numbers render
+visibly smaller. Any future change of family must re-measure rather than
+inherit these.
 
 **The measure never grows with the page.** Prose stays capped at 66ch and
 centres inside the hall, so a wider window buys room around the text rather
