@@ -2,6 +2,7 @@
 import type { CollectionEntry } from "astro:content";
 import { useTranslations } from "@/i18n";
 import config from "@/config";
+import { rune } from "@/utils/marks";
 
 type Props = {
   hideEditPost?: CollectionEntry<"posts">["data"]["hideEditPost"];
@@ -42,16 +43,15 @@ const t = useTranslations(Astro.currentLocale);
       class:list={["edit-rune", className]}
     >
       <svg
-        viewBox="0 0 16 16"
+        viewBox="0 0 64 64"
         width="14"
         height="14"
         aria-hidden="true"
         focusable="false"
       >
-        <path d="M8 1.6V14" />
-        <path d="M8 5.4 3.4 9.2" />
-        <path d="M8 7.8l4.6 3.8" />
-        <path d="M5.6 12.2h4.8" />
+        {rune.map(d => (
+          <path d={d} />
+        ))}
       </svg>
     </a>
   )
@@ -71,11 +71,9 @@ const t = useTranslations(Astro.currentLocale);
     color: var(--text-2);
   }
 
+  /* filled, not stroked — the mark is the outline of a pen stroke, so its
+     width varies along its length. See src/utils/nib.ts. */
   .edit-rune svg {
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.3;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+    fill: currentColor;
   }
 </style>

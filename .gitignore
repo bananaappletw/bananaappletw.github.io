@@ -5,6 +5,9 @@
 npm-debug.log
 /public/pagefind
 
+# scripts/render-marks.mjs output — proofs of the marks, regenerate on demand
+/.marks
+
 # Environment
 .env
 .env.local

@@ -3,6 +3,7 @@ import { getRelativeLocaleUrl } from "astro:i18n";
 import { stripBase, stripLocale } from "@/utils/withBase";
 import { useTranslations } from "@/i18n";
 import config from "@/config";
+import { sigil, moon, sunCore, sunRays } from "@/utils/marks";
 
 const { site, features } = config;
 
@@ -54,22 +55,24 @@ const links = [
   <div class="hud">
     <a href={getRelativeLocaleUrl(locale, "")} class="hud-home">
       {
-        /* The sigil: the site's mark, cut rather than drawn. Same family as
-           the edit rune, and deliberately unlike it — this one is centred
-           and closed where that one is asymmetric and open, so two runes on
-           a page cannot be confused. It does not flicker: stone does not. */
+        /* The sigil: the site's mark, drawn rather than constructed. Same
+           family as the edit rune, and deliberately unlike it — this one is
+           centred and closed where that one is asymmetric and open, so two
+           runes on a page cannot be confused. It does not flicker: stone
+           does not.
+
+           Geometry comes from src/utils/marks.ts, where the lozenge is two
+           crossing pen strokes rather than one mitred path. */
       }
       <svg
         class="sigil"
-        viewBox="0 0 16 16"
+        viewBox="0 0 64 64"
         width="17"
         height="17"
         aria-hidden="true"
         focusable="false"
       >
-        <path d="M8 1.4V14.6"></path>
-        <path d="M8 3.4 11.1 6.6 8 9.8 4.9 6.6Z"></path>
-        <path d="M5.2 12.9h5.6"></path>
+        {sigil.map(d => <path d={d} />)}
       </svg>
       <span>{site.title}</span>
     </a>
@@ -96,28 +99,18 @@ const links = [
                 the tree's paint; the other is display:none. */}
             <svg
               class="world-icon"
-              viewBox="0 0 16 16"
+              viewBox="0 0 64 64"
               width="15"
               height="15"
               aria-hidden="true"
               focusable="false"
             >
-              <path
-                class="moon"
-                d="M13.4 10.3A6.1 6.1 0 0 1 5.7 2.6a6.1 6.1 0 1 0 7.7 7.7z"
-              />
+              <path class="moon" d={moon} />
               <g class="sun">
-                <circle class="sun-core" cx="8" cy="8" r="3.2" />
-                <g class="sun-ray">
-                  <line x1="8" y1="1" x2="8" y2="2.6" />
-                  <line x1="8" y1="13.4" x2="8" y2="15" />
-                  <line x1="1" y1="8" x2="2.6" y2="8" />
-                  <line x1="13.4" y1="8" x2="15" y2="8" />
-                  <line x1="3.1" y1="3.1" x2="4.2" y2="4.2" />
-                  <line x1="11.8" y1="11.8" x2="12.9" y2="12.9" />
-                  <line x1="3.1" y1="12.9" x2="4.2" y2="11.8" />
-                  <line x1="11.8" y1="4.2" x2="12.9" y2="3.1" />
-                </g>
+                <path d={sunCore} />
+                {sunRays.map(d => (
+                  <path d={d} />
+                ))}
               </g>
             </svg>
           </button>
@@ -153,15 +146,12 @@ const links = [
     color: var(--text-2);
   }
 
-  /* Stroked, not filled — a cut mark, matching the edit rune. One gold,
-     spent once (§4). */
+  /* Filled, not stroked. The marks are outlines of a pen stroke rather than
+     stroked paths, because a stroke has exactly one width and a drawn line
+     never does — see src/utils/nib.ts. One gold, spent once (§4). */
   .sigil {
     align-self: center;
-    fill: none;
-    stroke: var(--torch);
-    stroke-width: 1.5;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+    fill: var(--torch);
   }
 
   nav {
@@ -208,16 +198,7 @@ const links = [
 
   .sun {
     display: none;
-  }
-
-  .sun-core {
     fill: var(--torch);
-  }
-
-  .sun-ray {
-    stroke: var(--torch);
-    stroke-width: 1.5;
-    stroke-linecap: round;
   }
 
   :root[data-theme="kindled"] .moon,
