@@ -196,7 +196,11 @@ Four levels per world. `--text-4` sits near 3.0:1 on ground and is legal for orn
 
 ### Faces
 
-**Display is Cardo**, a Bembo descendant cut for medievalists and classicists to set old texts with all their odd glyphs. It reads as easily as any book face and carries the air of an academic edition of something much older — good reading with a little mystery. It is set at **400**: Cardo at regular weight is already substantial at title size, and the theme's own rule is that space and size carry hierarchy, not weight. **Body is Spectral**, a face drawn for screen reading. Mono appears only inside code. All are self-hosted through Astro's font pipeline — no CDN, no runtime fetch, no silent fallback.
+**One family: Cardo**, for display and for body alike. It is a Bembo descendant cut for medievalists and classicists to set old texts with all their odd glyphs — it reads as easily as any book face and carries the air of an academic edition of something much older. Good reading with a little mystery.
+
+Display sits at **400**: Cardo at regular weight is already substantial at title size, and the theme's own rule is that space and size carry hierarchy, not weight. Bold is **700**, the only other weight the family ships — Tailwind's prose defaults `strong` to 600, which Cardo does not have, so that is overridden rather than left to synthesise.
+
+Dropping the second family is deliberate rather than thrifty. A display face exists to contrast with a body face; this theme argues that _space_ creates hierarchy, and running two faces to say what clearance already says is the same duplication as putting a rule under a heading that has 90px above it. Mono still appears, but only inside code.
 
 **Nothing on this site is set in capitals.** Not titles, not the HUD, not eyebrows, dates or footers. This replaced a scheme where titles were small caps and every label was uppercase at `0.14em`, and it was decided on one criterion: reading. Capitals are slower to read than lowercase because word shapes collapse to rectangles, and a blog is a thing to read rather than a thing to look at.
 

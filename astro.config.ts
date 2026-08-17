@@ -126,11 +126,18 @@ export default defineConfig({
       formats: ["woff2", "ttf"],
     },
     {
-      name: "Spectral",
+      // Body is Cardo too — one family for the whole site. Cardo was drawn
+      // for setting long scholarly text, so it can carry running copy as
+      // well as titles, and a single voice suits a theme whose argument is
+      // that space and size carry hierarchy rather than contrast between
+      // faces. Registered separately from --font-display because the OG
+      // image generator resolves both variables through astro:fonts; the
+      // pipeline shares the underlying files.
+      name: "Cardo",
       cssVariable: "--font-body",
       provider: fontProviders.google(),
-      fallbacks: ["Charter", "Georgia", "serif"],
-      weights: [400, 600],
+      fallbacks: ["Palatino", "Georgia", "serif"],
+      weights: [400, 700],
       styles: ["normal", "italic"],
       formats: ["woff2", "ttf"],
     },

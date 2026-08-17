@@ -29,6 +29,13 @@
       margin-block: 0 30px;
     }
 
+    /* Cardo's bold is 700. Tailwind's prose sets strong to 600, which this
+       family does not ship — the browser would synthesise it. */
+    strong,
+    b {
+      font-weight: 700;
+    }
+
     /* Twelve of the posts in this collection use `# ` for section headings
        rather than for a title, so h1 and h2 are styled identically here.
        Without this, content h1s fall through to prose's display size and
@@ -46,7 +53,7 @@
 
     h3 {
       font-family: var(--font-body);
-      font-weight: 600;
+      font-weight: 700;
       font-size: clamp(19px, 0.68vw + 16.45px, 23px);
       font-style: normal;
       letter-spacing: 0.01em;
