@@ -19,17 +19,63 @@ const t = useTranslations(Astro.currentLocale);
 ---
 
 {
+  /**
+   * A rune, not a pencil. This link is for the author — a reader almost
+   * never clicks it — so the goal is not discoverability but getting out
+   * of the way, and an icon that explains itself is explaining to an
+   * audience that does not need it. Four cut strokes, asymmetric: the
+   * mark carved beside a door to say the place is tended.
+   *
+   * Its opacity costs nothing here and would be unaffordable on the world
+   * control, which everyone uses. The words survive as the accessible
+   * name and as the tooltip.
+   */
+}
+{
   showEditPost && (
     <a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      class:list={[
-        "label hover:text-text-2 flex justify-baseline gap-1.5",
-        className,
-      ]}
+      title={t.post.editPage}
+      aria-label={t.post.editPage}
+      class:list={["edit-rune", className]}
     >
-      <span>{t.post.editPage}</span>
+      <svg
+        viewBox="0 0 16 16"
+        width="14"
+        height="14"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path d="M8 1.6V14" />
+        <path d="M8 5.4 3.4 9.2" />
+        <path d="M8 7.8l4.6 3.8" />
+        <path d="M5.6 12.2h4.8" />
+      </svg>
     </a>
   )
 }
+
+<style>
+  .edit-rune {
+    display: flex;
+    align-items: center;
+    color: var(--text-4);
+    /* the row is baseline-aligned; a glyph-less mark is not */
+    align-self: center;
+    line-height: 1;
+  }
+
+  .edit-rune:hover {
+    color: var(--text-2);
+  }
+
+  .edit-rune svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+</style>

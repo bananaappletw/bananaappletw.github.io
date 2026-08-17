@@ -292,6 +292,10 @@ Two icons, and they are deliberately from different families. The **soul** is th
 
 Both are drawn at 15–17px, which is the size that decides them: earlier versions failed not on taste but on geometry — thin wisps and a 1.25px stroke fall below the pixel grid and dissolve.
 
+**Edit link** (`EditPost.astro`) — a **rune**: four cut strokes, asymmetric, the mark carved beside a door to say the place is tended. It replaces the words "Edit page".
+
+The reasoning generalises. An icon costs the reader a thing to learn, and that cost is paid for by how often they use the control — which is why the world toggle gets a sun and a moon that need no explaining, and why this one can afford to be opaque. **Almost nobody but the author clicks it**, so the goal is not discoverability but getting out of the way, and an icon that explains itself is explaining to an audience that does not need it. The words survive as the accessible name and the tooltip.
+
 **Gate** — every page type opens with one: eyebrow label, large Display title, then metadata. Home gets up to 230px of clearance above the title, posts 180px, section pages 140px.
 
 **Listing entry** (`Card.astro`) — Display 19px in `--text-3`, rising to `--text` on hover. Never gold. Date and description below in `--text-4`, separated by a 1px border.

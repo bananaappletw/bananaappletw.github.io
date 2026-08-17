@@ -1,0 +1,309 @@
+<title>Edit Marks</title>
+<style>
+  /*FONTS*/
+
+  /* Three candidate marks for the "edit this page" link, shown in the real
+     post metadata row at real size, in both worlds. */
+
+  :root {
+    --display: Cinzel, Optima, "Palatino Linotype", Palatino, serif;
+    --body: Spectral, Charter, Georgia, serif;
+    --mono: GSCode, ui-monospace, Menlo, monospace;
+
+    --ui-bg: #121110;
+    --ui-fg: #cfc7b6;
+    --ui-dim: #7d7365;
+    --ui-line: #2e2a24;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    background: var(--ui-bg);
+    color: var(--ui-fg);
+    font-family: var(--body);
+    margin: 0;
+    padding-bottom: 70px;
+  }
+
+  .lede {
+    padding: 26px clamp(16px, 4vw, 32px) 0;
+    max-width: 76ch;
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--ui-dim);
+  }
+  .lede p {
+    margin: 0 0 14px;
+  }
+  .lede b {
+    color: var(--ui-fg);
+    font-weight: 600;
+  }
+
+  h2.sec {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ui-dim);
+    margin: 32px clamp(16px, 4vw, 32px) 10px;
+  }
+
+  .pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 0 clamp(16px, 4vw, 32px);
+  }
+  @media (max-width: 780px) {
+    .pair {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .stage {
+    border: 1px solid var(--ui-line);
+    padding: 26px 24px 30px;
+  }
+  .hollowed {
+    --ground: #100f0d;
+    --text: #c6bca8;
+    --text-3: #968873;
+    --text-4: #6d5f4c;
+    --torch: #cda76b;
+    --border: #33302a;
+  }
+  .kindled {
+    --ground: #ffffff;
+    --text: #39352a;
+    --text-3: #6c6553;
+    --text-4: #948d79;
+    --torch: #96631a;
+    --border: #e7e1d1;
+  }
+  .stage {
+    background: var(--ground);
+  }
+
+  /* the real post gate metadata row */
+  .title {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 30px;
+    letter-spacing: 0.03em;
+    font-variant-caps: small-caps;
+    color: var(--text);
+    margin: 0 0 22px;
+  }
+  .below {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 22px;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-4);
+  }
+  .stamp {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+  }
+  .edit {
+    display: flex;
+    align-items: center;
+    color: var(--text-4);
+    cursor: pointer;
+  }
+  .edit:hover {
+    color: var(--text-3);
+  }
+
+  .mark {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .mark-fill {
+    fill: currentColor;
+    stroke: none;
+  }
+
+  .note {
+    padding: 10px clamp(16px, 4vw, 32px) 0;
+    max-width: 76ch;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--ui-dim);
+  }
+  .note b {
+    color: var(--ui-fg);
+    font-weight: 600;
+  }
+</style>
+
+<div class="lede">
+  <p>
+    <b>The link is for you, not for a reader.</b> Almost nobody else clicks it,
+    so the goal is not discoverability — it is getting out of the way while
+    staying findable by the one person who already knows it is there. That is
+    the argument for a mark rather than a tool: an icon of a pencil explains
+    itself to an audience that does not need explaining to.
+  </p>
+  <p>
+    All three sit in the real metadata row at real size, next to a real date.
+    Hover each.
+  </p>
+</div>
+
+<h2 class="sec">A &mdash; The soapstone</h2>
+<div class="pair">
+  <div class="stage hollowed">
+    <p class="title">Symbolic Execution</p>
+    <div class="below">
+      <span>Program Analysis</span>
+      <span class="stamp">02 June 2026</span>
+      <a class="edit" title="Edit this page" aria-label="Edit this page">
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+          <path
+            class="mark"
+            d="M2.6 11.4c1.6.6 3-.4 2.3-1.6-.6-1-2.2-.2-1.7 1.2.5 1.5 3 2.2 4.6 1.2"
+          />
+          <path
+            class="mark"
+            d="M9 12.6c1.6-.5 2.4-2 1.5-2.8-.8-.7-1.9.3-1.2 1.3"
+          />
+          <path class="mark" d="M12.2 10.4c1.1-.6 1.6-1.9.8-2.5" />
+        </svg>
+      </a>
+    </div>
+  </div>
+  <div class="stage kindled">
+    <p class="title">Symbolic Execution</p>
+    <div class="below">
+      <span>Program Analysis</span>
+      <span class="stamp">02 June 2026</span>
+      <a class="edit" title="Edit this page" aria-label="Edit this page">
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+          <path
+            class="mark"
+            d="M2.6 11.4c1.6.6 3-.4 2.3-1.6-.6-1-2.2-.2-1.7 1.2.5 1.5 3 2.2 4.6 1.2"
+          />
+          <path
+            class="mark"
+            d="M9 12.6c1.6-.5 2.4-2 1.5-2.8-.8-.7-1.9.3-1.2 1.3"
+          />
+          <path class="mark" d="M12.2 10.4c1.1-.6 1.6-1.9.8-2.5" />
+        </svg>
+      </a>
+    </div>
+  </div>
+</div>
+<p class="note">
+  <b>A. The soapstone.</b> A scrawl left on the ground — the Souls message, and
+  the only one of the three that means
+  <i>someone wrote here and you may too</i> rather than <i>here is a tool</i>.
+  It is handwriting, so it is the most mysterious and the least likely to be
+  mistaken for a control. Its weakness is that at 14px a loose scrawl can read
+  as a smudge rather than as a mark.
+</p>
+
+<h2 class="sec">B &mdash; The rune</h2>
+<div class="pair">
+  <div class="stage hollowed">
+    <p class="title">Symbolic Execution</p>
+    <div class="below">
+      <span>Program Analysis</span>
+      <span class="stamp">02 June 2026</span>
+      <a class="edit" title="Edit this page" aria-label="Edit this page">
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+          <path class="mark" d="M8 1.6V14" />
+          <path class="mark" d="M8 5.4 3.4 9.2" />
+          <path class="mark" d="M8 7.8l4.6 3.8" />
+          <path class="mark" d="M5.6 12.2h4.8" />
+        </svg>
+      </a>
+    </div>
+  </div>
+  <div class="stage kindled">
+    <p class="title">Symbolic Execution</p>
+    <div class="below">
+      <span>Program Analysis</span>
+      <span class="stamp">02 June 2026</span>
+      <a class="edit" title="Edit this page" aria-label="Edit this page">
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+          <path class="mark" d="M8 1.6V14" />
+          <path class="mark" d="M8 5.4 3.4 9.2" />
+          <path class="mark" d="M8 7.8l4.6 3.8" />
+          <path class="mark" d="M5.6 12.2h4.8" />
+        </svg>
+      </a>
+    </div>
+  </div>
+</div>
+<p class="note">
+  <b>B. The rune.</b> Cut, not written: four straight strokes, asymmetric, the
+  kind of thing carved into a doorpost. It matches the theme's inscriptional
+  type more exactly than anything else here and it holds its shape at any size,
+  because straight strokes always do. It is also the most opaque — it means
+  nothing until you are told, which on a link only you use is a cost of exactly
+  zero.
+</p>
+
+<h2 class="sec">C &mdash; The feather</h2>
+<div class="pair">
+  <div class="stage hollowed">
+    <p class="title">Symbolic Execution</p>
+    <div class="below">
+      <span>Program Analysis</span>
+      <span class="stamp">02 June 2026</span>
+      <a class="edit" title="Edit this page" aria-label="Edit this page">
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+          <path
+            class="mark"
+            d="M13.4 2.4C9.6 2 5.4 4.2 4.6 8.2c-.3 1.5 0 2.6.5 3.3"
+          />
+          <path
+            class="mark"
+            d="M13.4 2.4c.6 3.8-1.2 8-5.1 9-1.5.4-2.6.2-3.2-.3"
+          />
+          <path class="mark" d="M13.4 2.4 2.6 13.6" />
+        </svg>
+      </a>
+    </div>
+  </div>
+  <div class="stage kindled">
+    <p class="title">Symbolic Execution</p>
+    <div class="below">
+      <span>Program Analysis</span>
+      <span class="stamp">02 June 2026</span>
+      <a class="edit" title="Edit this page" aria-label="Edit this page">
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+          <path
+            class="mark"
+            d="M13.4 2.4C9.6 2 5.4 4.2 4.6 8.2c-.3 1.5 0 2.6.5 3.3"
+          />
+          <path
+            class="mark"
+            d="M13.4 2.4c.6 3.8-1.2 8-5.1 9-1.5.4-2.6.2-3.2-.3"
+          />
+          <path class="mark" d="M13.4 2.4 2.6 13.6" />
+        </svg>
+      </a>
+    </div>
+  </div>
+</div>
+<p class="note">
+  <b>C. The feather.</b> A quill with the pen taken out of it — writing implied
+  rather than depicted, which is the difference between mysterious and
+  instructional. Reads instantly, sits comfortably in the metadata row, and is
+  the safest of the three. It is also the least strange: a feather is a shape
+  everyone has seen on a website before.
+</p>
