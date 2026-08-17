@@ -288,9 +288,9 @@ Drop caps, section marks on headings, corner-bracketed frames, parchment texture
 
 **HUD** (`Header.astro`) — Display 13px at `0.14em` in `--text-4`, the soul first, nav pushed right, the world control last. No mobile menu, no logo lockup.
 
-Two icons, and they are deliberately from different families. The **soul** is the site's mark: a solid teardrop with a bright core, `--torch` at two opacities, and the page's one ambient animation. The **world control** is a moon when hollowed and a sun when kindled — chosen over a torch precisely because a torch is also a flame, and two gold flames in one header read as two marks rather than as a mark and a control. The moon carries the HUD's own ink, so hollowed spends no gold on the control at all.
+Three marks, and the families are deliberate. The **sigil** is the site's mark: a stem, a lozenge and a foot, cut rather than drawn, in `--torch`. It is the same vocabulary as the edit rune (below) and deliberately unlike it — centred and closed where that one is asymmetric and open, so two runes on one page cannot be confused. The **world control** is a moon when hollowed and a sun when kindled — chosen over a torch precisely because a torch is also a flame, and two gold flames in one header read as two marks rather than as a mark and a control. The moon carries the HUD's own ink, so hollowed spends no gold on the control at all.
 
-Both are drawn at 15–17px, which is the size that decides them: earlier versions failed not on taste but on geometry — thin wisps and a 1.25px stroke fall below the pixel grid and dissolve.
+All are drawn at 14–17px, which is the size that decides them. Two earlier versions failed on geometry rather than taste: thin wisps and a 1.25px stroke fall below the pixel grid and dissolve. A third failed on **family** — a smooth symmetrical teardrop reads as water, belongs to no other mark on the page, and is the shape an icon set would have given you.
 
 **Edit link** (`EditPost.astro`) — a **rune**: four cut strokes, asymmetric, the mark carved beside a door to say the place is tended. It replaces the words "Edit page".
 
@@ -367,7 +367,7 @@ The shaft and vignette remain the one exception to "no gradients": they are the 
 
 ## 11. Motion
 
-- **One ambient animation:** the HUD flame, a 5.5s irregular flicker (100% → 72% → 93%). Irregular because a clean sine reads as a pulsing UI element rather than as fire.
+- **One ambient animation:** the bonfire's flame on post pages, an irregular flicker. Irregular because a clean sine reads as a pulsing UI element rather than as fire. It moved here from the HUD when the site's mark became a carved sigil — **fire flickers and stone does not**, and a mark that pulses for no reason is a tic. The budget is unchanged; what spends it did.
 - **No flourish.** The world flip used to be one and was removed (§3): it is a control, and controls answer instantly.
 - Hover and focus: 180ms `ease-out`, colour only. Never transform, never scale.
 - No scroll-triggered reveals. Content that appears only on scroll fails without JavaScript.

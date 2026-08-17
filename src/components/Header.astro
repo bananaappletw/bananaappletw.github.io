@@ -53,20 +53,23 @@ const links = [
 <header class="app-layout">
   <div class="hud">
     <a href={getRelativeLocaleUrl(locale, "")} class="hud-home">
-      {/* The soul: the site's mark, and the page's one moving thing (§11). */}
+      {
+        /* The sigil: the site's mark, cut rather than drawn. Same family as
+           the edit rune, and deliberately unlike it — this one is centred
+           and closed where that one is asymmetric and open, so two runes on
+           a page cannot be confused. It does not flicker: stone does not. */
+      }
       <svg
-        class="soul flame"
+        class="sigil"
         viewBox="0 0 16 16"
         width="17"
         height="17"
         aria-hidden="true"
         focusable="false"
       >
-        <path
-          class="soul-veil"
-          d="M8 15.3c-2.5 0-4.5-1.9-4.5-4.4 0-3.4 2.9-5.7 4.5-10.4 1.6 4.7 4.5 7 4.5 10.4 0 2.5-2 4.4-4.5 4.4z"
-        ></path>
-        <ellipse class="soul-core" cx="8" cy="11" rx="2.3" ry="2.4"></ellipse>
+        <path d="M8 1.4V14.6"></path>
+        <path d="M8 3.4 11.1 6.6 8 9.8 4.9 6.6Z"></path>
+        <path d="M5.2 12.9h5.6"></path>
       </svg>
       <span>{site.title}</span>
     </a>
@@ -151,19 +154,15 @@ const links = [
     color: var(--text-2);
   }
 
-  /* One colour at two opacities — veil is the glow, core is the soul.
-     Two tones, one gold: the accent is still spent once (§4). */
-  .hud .soul {
+  /* Stroked, not filled — a cut mark, matching the edit rune. One gold,
+     spent once (§4). */
+  .sigil {
     align-self: center;
-  }
-
-  .soul-veil {
-    fill: var(--torch);
-    opacity: 0.55;
-  }
-
-  .soul-core {
-    fill: var(--torch);
+    fill: none;
+    stroke: var(--torch);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
   nav {
