@@ -196,36 +196,47 @@ Four levels per world. `--text-4` sits near 3.0:1 on ground and is legal for orn
 
 ### Faces
 
-| Role    | Stack                                       | Licence |
-| ------- | ------------------------------------------- | ------- |
-| Display | `Cinzel, Optima, Palatino, serif`           | OFL     |
-| Body    | `Spectral, Charter, Georgia, serif`         | OFL     |
-| Mono    | `Google Sans Code, ui-monospace, monospace` | —       |
+**Display is Marcellus**, Roman inscriptional capitals with a humanist hand — and, unlike its predecessor, cut with real lowercase that holds at display size. **Body is Spectral**, a face drawn for screen reading. Mono appears only inside code. All are self-hosted through Astro's font pipeline — no CDN, no runtime fetch, no silent fallback.
 
-Dark Souls uses **Optimus Princeps**, a serif built on 15th-century Italian inscriptional lettering. Cinzel is Roman inscriptional from the same lineage and is the closest open-licensed equivalent. All faces are self-hosted through Astro's font pipeline — no CDN, no runtime fetch, no silent fallback.
+**Nothing on this site is set in capitals.** Not titles, not the HUD, not eyebrows, dates or footers. This replaced a scheme where titles were small caps and every label was uppercase at `0.14em`, and it was decided on one criterion: reading. Capitals are slower to read than lowercase because word shapes collapse to rectangles, and a blog is a thing to read rather than a thing to look at.
+
+The previous face was Cinzel, the open relative of Trajan and the closest thing to what Dark Souls uses. It was replaced because it is a **capitals** face: its lowercase sprawls at display size, which is why every title had to be forced into small caps to hide it. **A workaround that load-bearing is a sign the face is wrong for the job**, not a sign the job needs a workaround.
+
+Tracking came down with the capitals — `0.14em` is spacing drawn for capitals and is far too loose for lowercase, where it breaks words apart. Labels now sit near `0.06em` and are told apart from body copy by size, weight and a dimmer ink instead.
+
+One exception, and it is deliberate: the OG social card still sets its label in capitals. A card in a timeline is glanced at, not read.
 
 ### Scale
 
-| Role           | Size                 | Face    | Tracking            |
-| -------------- | -------------------- | ------- | ------------------- |
-| Home title     | clamp(32, 6.5vw, 60) | Display | +0.015em            |
-| Post title     | clamp(34, 7.5vw, 68) | Display | +0.015em            |
-| Section title  | clamp(30, 6vw, 52)   | Display | +0.015em            |
-| Lead paragraph | 20                   | Body    | 0                   |
-| Prose          | 18.5 / 1.8           | Body    | 0                   |
-| Body (chrome)  | 17.5 / 1.85          | Body    | 0                   |
-| H1 / H2        | 24                   | Display | +0.06em, small caps |
-| H3             | 19                   | Body    | +0.01em             |
-| Listing title  | 19                   | Display | +0.06em             |
-| Label / HUD    | 11                   | Display | +0.24em, uppercase  |
-| Eyebrow        | 11                   | Display | +0.34em, uppercase  |
-| Code           | 14.5 / 1.75          | Mono    | 0                   |
+Every step is fluid, solved for two anchors: a 375px phone and the hall's full
+960px. The scale reaches its designed size exactly at full width and steps down
+cleanly below it, so the min and max below are what you actually see at those
+two widths.
 
-Body is **restrained rather than small**. It ran at 16.5px through most of the
-build, on the theory that a little text in a large dark space is the point —
-but read on a real screen it was simply hard work, and the space reads as
-generous at 18.5px too. The whole scale moved together in August 2026 rather
-than the body alone, because bumping one step flattens the hierarchy.
+| Role           | 375px | 960px | Face    | Tracking |
+| -------------- | ----- | ----- | ------- | -------- |
+| Home title     | 29    | 42    | Display | +0.03em  |
+| Post title     | 30    | 44    | Display | +0.03em  |
+| Lead paragraph | 19    | 24    | Body    | 0        |
+| Prose          | 17    | 22    | Body    | 0        |
+| Body (chrome)  | 16.5  | 20    | Body    | 0        |
+| H1 / H2        | 22    | 29    | Display | +0.06em  |
+| H3             | 19    | 23    | Body    | +0.01em  |
+| H4             | 16    | 18.5  | Display | +0.05em  |
+| Listing title  | 20    | 24    | Display | +0.03em  |
+| Label / HUD    | 11.5  | 13    | Display | +0.06em  |
+| Eyebrow        | 11.5  | 13    | Display | +0.09em  |
+| Date           | 11    | 11    | Display | +0.1em   |
+| Code           | 13.5  | 16    | Mono    | 0        |
+
+**The measure never grows with the page.** Prose stays capped at 66ch and
+centres inside the hall, so a wider window buys room around the text rather
+than longer lines — 39 characters a line on a phone, 66 at full width.
+
+Body was 16.5px for most of the build, on the theory that a little text in a
+large dark space is the point. Read on a real screen it was simply hard work.
+It moved as a whole rather than one step at a time, because raising body alone
+flattens the hierarchy.
 
 Section headings stay _smaller than the lead_ and dimmer than the text: a
 marker you pass, not a banner. The clearance above them carries the hierarchy

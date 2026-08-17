@@ -109,9 +109,11 @@ export default defineConfig({
   },
   fonts: [
     {
-      // Cinzel is Roman inscriptional lettering — the closest open-licensed
-      // relative of Optimus Princeps, the face Dark Souls actually uses.
-      name: "Cinzel",
+      // Marcellus: Roman inscriptional capitals with a humanist hand, and —
+      // unlike Cinzel — cut with real lowercase that holds at display size.
+      // Cinzel is a capitals face, which forced every title into small caps
+      // to hide a sprawling lowercase; this needs no such workaround.
+      name: "Marcellus",
       cssVariable: "--font-display",
       provider: fontProviders.google(),
       fallbacks: ["Optima", "Palatino", "serif"],

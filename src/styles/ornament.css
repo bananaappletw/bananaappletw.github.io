@@ -16,19 +16,19 @@
     );
   }
 
-  /* Small caps label. The HUD voice: metadata, eyebrows, footers. */
+  /* The label voice: metadata, eyebrows, footers. Set in sentence case —
+     size, tracking and a dim ink carry it, not capitals. */
   .label {
     font-family: var(--font-display);
     font-weight: 600;
     font-size: clamp(11.5px, 0.26vw + 10.5px, 13px);
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
+    letter-spacing: 0.06em;
     color: var(--text-4);
     font-variant-numeric: tabular-nums;
   }
 
   .label-wide {
-    letter-spacing: 0.2em;
+    letter-spacing: 0.09em;
   }
 
   /* Rotated square bullet, cut from the same stock as the flame mark. */
