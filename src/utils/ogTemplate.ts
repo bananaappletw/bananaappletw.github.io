@@ -29,7 +29,9 @@ export async function renderOgImage(
   hostname: string,
   url: URL,
 ): Promise<Response> {
-  const displayPath = getFontPathByWeight(fontData["--font-display"], 600);
+  // 400, because that is the weight the display face actually ships. This
+  // lookup silently fails the whole build if the requested weight is absent.
+  const displayPath = getFontPathByWeight(fontData["--font-display"], 400);
   const bodyPath = getFontPathByWeight(fontData["--font-body"], 400);
 
   if (displayPath === undefined || bodyPath === undefined) {
@@ -82,7 +84,7 @@ export async function renderOgImage(
               },
               children: [
                 text(title, {
-                  fontFamily: "Cinzel",
+                  fontFamily: "Display",
                   fontSize: 62,
                   lineHeight: 1.12,
                   letterSpacing: "0.015em",
@@ -107,7 +109,7 @@ export async function renderOgImage(
               },
               children: [
                 text(hostname, {
-                  fontFamily: "Cinzel",
+                  fontFamily: "Display",
                   fontSize: 20,
                   letterSpacing: "0.24em",
                   textTransform: "uppercase",
@@ -126,7 +128,7 @@ export async function renderOgImage(
       height: 630,
       embedFont: true,
       fonts: [
-        { name: "Cinzel", data: displayData, weight: 600, style: "normal" },
+        { name: "Display", data: displayData, weight: 400, style: "normal" },
         { name: "Spectral", data: bodyData, weight: 400, style: "normal" },
       ],
     },

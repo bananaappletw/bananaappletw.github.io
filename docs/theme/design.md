@@ -196,11 +196,13 @@ Four levels per world. `--text-4` sits near 3.0:1 on ground and is legal for orn
 
 ### Faces
 
-**Display is Marcellus**, Roman inscriptional capitals with a humanist hand — and, unlike its predecessor, cut with real lowercase that holds at display size. **Body is Spectral**, a face drawn for screen reading. Mono appears only inside code. All are self-hosted through Astro's font pipeline — no CDN, no runtime fetch, no silent fallback.
+**Display is Cardo**, a Bembo descendant cut for medievalists and classicists to set old texts with all their odd glyphs. It reads as easily as any book face and carries the air of an academic edition of something much older — good reading with a little mystery. It is set at **400**: Cardo at regular weight is already substantial at title size, and the theme's own rule is that space and size carry hierarchy, not weight. **Body is Spectral**, a face drawn for screen reading. Mono appears only inside code. All are self-hosted through Astro's font pipeline — no CDN, no runtime fetch, no silent fallback.
 
 **Nothing on this site is set in capitals.** Not titles, not the HUD, not eyebrows, dates or footers. This replaced a scheme where titles were small caps and every label was uppercase at `0.14em`, and it was decided on one criterion: reading. Capitals are slower to read than lowercase because word shapes collapse to rectangles, and a blog is a thing to read rather than a thing to look at.
 
-The previous face was Cinzel, the open relative of Trajan and the closest thing to what Dark Souls uses. It was replaced because it is a **capitals** face: its lowercase sprawls at display size, which is why every title had to be forced into small caps to hide it. **A workaround that load-bearing is a sign the face is wrong for the job**, not a sign the job needs a workaround.
+Two faces preceded it. **Cinzel** — the open relative of Trajan, and the closest thing to what Dark Souls uses — was replaced because it is a **capitals** face: its lowercase sprawls at display size, which is why every title had to be forced into small caps to hide it. **A workaround that load-bearing is a sign the face is wrong for the job**, not a sign the job needs a workaround. **Marcellus** replaced it briefly and reads well, but is architectural where this blog wanted something scholarly.
+
+**Check the weights a face actually ships.** Marcellus was configured asking for 600, a weight it does not have, so the browser synthesised a fake bold for a day. The same mistake broke the build outright when the face changed: `ogTemplate.ts` looks the display font up _by weight_, and a missing weight throws. That generator now names its families by **role** rather than by typeface, so it cannot go stale the next time this changes.
 
 Tracking came down with the capitals — `0.14em` is spacing drawn for capitals and is far too loose for lowercase, where it breaks words apart. Labels now sit near `0.06em` and are told apart from body copy by size, weight and a dimmer ink instead.
 

@@ -20,7 +20,7 @@
      size, tracking and a dim ink carry it, not capitals. */
   .label {
     font-family: var(--font-display);
-    font-weight: 600;
+    font-weight: 400;
     font-size: clamp(11.5px, 0.26vw + 10.5px, 13px);
     letter-spacing: 0.06em;
     color: var(--text-4);

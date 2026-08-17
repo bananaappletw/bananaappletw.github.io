@@ -109,15 +109,19 @@ export default defineConfig({
   },
   fonts: [
     {
-      // Marcellus: Roman inscriptional capitals with a humanist hand, and —
-      // unlike Cinzel — cut with real lowercase that holds at display size.
-      // Cinzel is a capitals face, which forced every title into small caps
-      // to hide a sprawling lowercase; this needs no such workaround.
-      name: "Marcellus",
+      // Cardo: a Bembo descendant cut for medievalists and classicists, to
+      // set old texts with all their odd glyphs. It reads as easily as any
+      // book face and carries the air of an academic edition of something
+      // much older — good reading with a little mystery, which is the brief.
+      //
+      // Weights are 400 and 700 because those are the two Cardo actually
+      // has. The previous entry asked Marcellus for 600, a weight it does
+      // not ship, so the browser was synthesising a fake bold.
+      name: "Cardo",
       cssVariable: "--font-display",
       provider: fontProviders.google(),
-      fallbacks: ["Optima", "Palatino", "serif"],
-      weights: [600],
+      fallbacks: ["Palatino", "Georgia", "serif"],
+      weights: [400, 700],
       styles: ["normal"],
       formats: ["woff2", "ttf"],
     },
