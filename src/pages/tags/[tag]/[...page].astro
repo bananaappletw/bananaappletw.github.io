@@ -3,6 +3,7 @@ import { getCollection } from "astro:content";
 import type { GetStaticPathsOptions } from "astro";
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
+import Clerestory from "@/components/scenes/Clerestory.astro";
 import Main from "@/components/Main.astro";
 import Breadcrumb from "@/components/Breadcrumb.astro";
 import Card from "@/components/Card.astro";
@@ -39,6 +40,8 @@ const t = useTranslations(locale);
 
 <Layout title={`${t.pages.tagTitle}: ${tagName} | ${config.site.title}`}>
   <Header />
+
+  <Clerestory />
 
   <Breadcrumb />
 

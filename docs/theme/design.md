@@ -452,6 +452,10 @@ Listed so they can be caught in review. Several were committed during this theme
 | Category colours (movie / anime / manga)      | Four decorative hues, and colour as the only signal                                 |
 | Drop caps and section marks                   | Cut: with two ornaments per viewport, space and light do it better                  |
 | A second ambient animation                    | §11 permits exactly one, and it is the flame                                        |
+| A mark built from primitives                  | An exact circle and eight identical rays read as clip art beside a pen drawing      |
+| Taper measured as a fraction of stroke length | A short stroke becomes all taper — rays turn into petals; taper over a distance     |
+| A filled flame                                | Fire reads through the dark gaps between tongues, not through the gold              |
+| Judging a 15px mark from its path data        | Rasterise it at delivered size over the real ground, or you are guessing            |
 
 ---
 

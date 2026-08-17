@@ -103,6 +103,8 @@ These cost real time. All are recorded in `design.md` §13 as anti-patterns.
 - **`getFontPathByWeight` was broken** (now fixed): Astro emits one `FontData` entry per (weight, style, format), so `.find()` matched woff2 then looked for truetype inside it. OG generation could not have worked.
 - **12 of 25 posts use `# ` for section headings**, not titles. `h1` and `h2` are styled identically in prose; without that, posts render as several stacked giant titles.
 - **All 25 posts have `description === title`**, so `Card.astro` suppresses the description when it matches.
+- **An SVG arc cap's sweep flag is `0`, not `1`.** The sweep flag is a positive-angle direction in a y-down system, so `1` bends the cap the wrong way and takes a bite _out_ of the end of every stroke. On a long stroke it is a subtle notch; on a short one it dominates, and the sun's rays rendered as ragged slabs until it was found.
+- **Google Fonts is blocked on the sandbox this branch was last built in.** `fonts.google.com/metadata/fonts` returns 403 through the egress proxy, so `unifont` resolves zero files, `fontData` comes back as empty arrays, and `npm run build` dies in the OG template with "Cannot find the font path". Nothing in the repo is wrong — it builds on a machine that can reach Google. Do not "fix" `getFontPathByWeight` in response to this error.
 
 ---
 
@@ -137,7 +139,14 @@ is no feature branch.
 - **The world flip is instant** — the veil is gone.
 - **Three marks**: a carved sigil for the site, a sun and moon for the world
   control, a rune for the edit link.
-- **The Approach scene** on the home page: a generated pen drawing.
+- **Two scenes**: **Approach** on the home page and **Clerestory** behind the
+  four listing pages, both generated pen drawings. Clerestory is built in
+  one-point perspective, which is what makes that much architecture affordable.
+- **The four marks are drawn, not stroked.** `src/utils/nib.ts` takes a spine
+  and a pressure profile and returns the outline a nib would have left, so the
+  sigil, world control, edit rune and bonfire are filled shapes with varying
+  width rather than uniform strokes. Geometric exactness was what read as cheap
+  next to the scene drawings — not the shapes, the evenness of the line.
 - **Breadcrumbs** replaced the back link on posts; the gate leads with the title.
 
 ### Open, in the order worth taking them
@@ -147,7 +156,7 @@ is no feature branch.
    and a scene. It is structurally sound (no colour literals outside tokens,
    contrast floors enforced by test) but nobody has _looked_ at it. **Highest
    risk item, because it is invisible to every automated check.**
-2. **The remaining four scenes** — Clerestory, Court, Rest, Drowned. Briefs in
+2. **The remaining three scenes** — Court, Rest, Drowned. Briefs in
    `scenes.md`; Drowned is the natural next one and Rest is the hard one.
 3. **Ash variations and the stain texture.** Prototyped, undecided. The stain
    must ship un-tiled: a repeat is visible on a wide screen.
