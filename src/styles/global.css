@@ -25,11 +25,13 @@
 @layer base {
   :root {
     /* Content width, and the width the atmosphere is built around —
-       `app-layout` and `.air` both read it so they cannot drift.
+       `app-layout` and `.air` both read it so they cannot drift. The
+       reading measure does NOT follow it: see typography.css.
 
-       64rem, not 60: at 30px prose a 66ch line needs about 930px, and a
-       60rem hall offers only ~880 usable. The container would have become
-       the measure. The ch cap must stay the thing that limits the line. */
+       It stayed at 64rem when the scale came back down, so the smaller
+       type reads as more room around the column rather than as a page
+       that shrank with it. The ch cap still governs the line: 66ch of
+       25px prose is about 780px, and the hall offers ~944 usable. */
     --hall: 64rem;
   }
 
@@ -47,8 +49,8 @@
        --text is reserved for the lead and for emphasis. */
     color: var(--text-2);
     font-family: var(--font-body);
-    /* fluid: 23px at 375, 27.5px at the hall's full width */
-    font-size: clamp(23px, 0.77vw + 20.12px, 27.5px);
+    /* fluid: 19px at 375, 23px at the hall's full width */
+    font-size: clamp(19px, 0.68vw + 16.44px, 23px);
     line-height: 1.8;
     -webkit-font-smoothing: antialiased;
   }

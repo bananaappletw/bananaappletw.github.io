@@ -140,7 +140,11 @@ is no feature branch.
   anywhere.** See `design.md` §5 for why each face was replaced.
 - **The scale is fluid**, solved at 375px and 960px, and was raised 15% when
   the family changed — Cardo's x-height is shorter than Spectral's, so the same
-  numbers read smaller.
+  numbers read smaller. A further 20% went on top of that and came back off on
+  19 August: at 30px the prose filled the hall and the post had no air in it.
+  The hall stayed at 64rem, so the smaller type reads as more room around the
+  column. Prose is **left-aligned** in the hall now, not centred — at 66ch it is
+  narrower than the hall, and centring it alone gave the page two left margins.
 - **The hall is 60rem**, and the atmosphere's geometry now tracks the column
   rather than the viewport.
 - **The world flip is instant** — the veil is gone.
