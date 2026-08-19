@@ -64,7 +64,10 @@ const monthFormatter = new Intl.DateTimeFormat(locale, { month: "long" });
                     </span>
                     <sup class="text-text-4 text-xs">{monthGroup.length}</sup>
                   </div>
-                  <ul>
+                  {/* flex-1 so every entry's rule ends at the hall's edge.
+                      Shrink-to-fit sized each month's list to its longest
+                      title, and the page read as a ragged stack of rules. */}
+                  <ul class="min-w-0 flex-1">
                     {monthGroup
                       .sort(
                         (a, b) =>

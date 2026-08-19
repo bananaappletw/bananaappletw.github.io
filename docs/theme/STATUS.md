@@ -115,6 +115,13 @@ These cost real time. All are recorded in `design.md` §13 as anti-patterns.
 - The List page lost its nav entry during the header rebuild; restored.
 - `list.astro` referenced three removed custom properties and carried a four-colour category palette.
 - The repo had no prettier config, so `npm run format` reformatted untouched files. Conventions pinned in `.prettierrc.json`; `tokens.css` is in `.prettierignore` because the generator owns it.
+- The kindled scene was four points of lightness from the paper at
+  `--scene-opacity: 0.4` — the same drawing in the dark carries twenty — so
+  the whole vignette read as a smudge. It is 0.66 now, near hollowed's 0.62.
+  Ink on paper needs about the weight light needs in the dark.
+- Archive entries were shrink-to-fit, so each month's rules ended at that
+  month's longest title and the page read as a ragged stack. The list is
+  `flex-1` now and every rule ends at the hall's edge.
 - `npm run lint` had no config to read. `eslint.config.js` is flat config now:
   ESLint's recommended set, `eslint-plugin-astro`, and the TypeScript-aware
   `no-unused-vars` in place of the core rule, which reads a parameter name in
@@ -162,11 +169,17 @@ is no feature branch.
 
 ### Open, in the order worth taking them
 
-1. **Give the kindled world a real pass.** Still never done, and now several
-   rounds deep — a new ground, a new family, a rebuilt scale, three new marks
-   and a scene. It is structurally sound (no colour literals outside tokens,
-   contrast floors enforced by test) but nobody has _looked_ at it. **Highest
-   risk item, because it is invisible to every automated check.**
+1. **The kindled world had its pass** on 19 August, page by page at 1440 and
+   390 against the same page hollowed. Two things came out of it: the scene
+   was invisible on paper (§6) and the archive rules were ragged (§6). What
+   the pass also established, so nobody re-opens it: gold stays inside its
+   budget in both worlds — the only torch paint on a page is the sigil and the
+   world control, both marks; the mottling that appears on a white page in a
+   screenshot is the viewer's compression, not the grain, which measures 253
+   to 255 across an empty region; and `pre` scrolls rather than clips, which
+   is invisible in a headless shot because the overlay scrollbar does not
+   render. Still open there: **the kindled world has never been looked at on a
+   real screen**, only in captures.
 2. **The remaining three scenes** — Court, Rest, Drowned. Briefs in
    [`scenes.md`](./scenes.md), which also carries two open decisions; Drowned
    is the natural next one and Rest is the hard one.
