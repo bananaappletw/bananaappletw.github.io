@@ -7,9 +7,10 @@ generated or drawn by someone who has never seen the theme, and still come back
 usable. Read [`design.md`](./design.md) for the system the scenes have to live
 inside; §0 (Ash), §4 (gold budget) and §11 (motion) all constrain what follows.
 
-**Status: three of five built** — Approach, Clerestory and Drowned, all as SVG
-pen drawings rather than as the raster assets §2 specifies. Court and Rest are
-still briefs, and the decisions in §4 and §5 are still open. Nothing here blocks the release — see
+**Status: four of five built** — Approach, Clerestory, Drowned and Court, all
+as SVG pen drawings rather than as the raster assets §2 specifies. Rest is the
+one left, and §7 is why it is last. §4 is decided; §5 was settled by the way
+the drawings are made. Nothing here blocks the release — see
 [`STATUS.md`](./STATUS.md) §7. Painting these programmatically was attempted
 and rejected; §7 records why.
 
@@ -209,15 +210,40 @@ quietest of the five — it has to survive being seen a hundred times.
 - **Avoid:** stained glass colour; dust motes rendered as individual specks;
   any figure.
 
-### 3.3 Court → **archive / tags**
+### 3.3 Court → **archive** — **built**
 
 > Gothic castle interior, solemn. Deep crimson banners, aged and worn, marking
 > the decline of a royal house — but the feeling is still and dignified, not
 > ruined.
 
-Banners are heraldry, and tags are heraldry: this is the page where things are
-sorted under standards. Read §4 before painting this one — the crimson is a
-deliberate exception to a rule, not a free choice.
+Banners are heraldry, and an archive is heraldry: this is the page where things
+are sorted under the standard they belong to. §4's crimson is a deliberate
+exception to a rule, and it was taken — see below.
+
+**The page assignment moved.** This brief said "archive / tags", and §3.2 had
+already given Clerestory all four listing pages. The archive is the half that
+earns Court, so Court has that page alone and Clerestory keeps posts and tags.
+
+Shipped as `src/components/scenes/Court.astro`. Three things it turned on:
+
+- **The hem is the whole silhouette.** Straight-cut, a banner reads as a blind,
+  and no amount of fold, fray or dye rescues it — the first version was three
+  vertical bars. A point on the outer two and a swallow-tail on the middle one
+  is what makes them banners, and it is the only part of the drawing that still
+  reads at 200px.
+- **Then fray the shaped hem, not a straight line.** The loose warp hangs from
+  wherever the cloth actually ends, longest at the point, which is where a real
+  banner gives out first.
+- **One charge, on the middle banner.** Three hanging cloths are laundry; a
+  cross on one of them is heraldry. Drawn in line at half opacity like
+  everything else, and not in gold.
+
+- **Gold:** none. §3.3 offered a single thread in the device; the archive is a
+  page of links and the same argument that kept Clerestory at zero applies.
+- **The dye is halved in the kindled world.** Paper takes a wash far harder
+  than a dark ground does: the same crimson that reads as brick when hollowed
+  reads as salmon on white, and it would have been the only saturated thing on
+  the page.
 
 - **Composition:** banners hanging vertically, two or three, in a hall. They
   are the vertical rhythm; the architecture is secondary and can be barely
@@ -311,7 +337,11 @@ Four things it turned out to depend on:
 A crimson banner is decorative use of `--blood`. It does not add a fourth hue,
 so `design.md` §2 invariant 3 is safe — but it does break the role.
 
-**Recommendation: allow it, scoped to the scene layer only.** The reasoning:
+**Decided 20 August 2026: allowed, scoped to the scene layer only**, on the
+reasoning below. The amendment is in `design.md` §4. In practice it is a wash
+under a gradient rather than a fill — `--blood` at 0.2 opacity at the head of
+the banner and 0.03 at the hem, halved again in the kindled world — so the
+cloth reads as dyed and faded rather than as painted red. The reasoning:
 
 1. A royal house's colour going from blood to brick is _the theme's own subject_
    — decline, and light going out of things. Refusing it protects the letter of
@@ -337,11 +367,21 @@ refusal better than most would.
 The scenes are night scenes lit by one source. The kindled world is Anor Londo
 at noon and has no equivalent, which is a real problem and not a detail.
 
-Three options, in the order I would try them:
+**Settled by construction: one drawing, both worlds.** Every scene is line in
+`currentColor` reading `--scene-ink`, so it recolours with the world from one
+declaration and there is no second asset to keep. What the three options below
+were weighing — how to pay for a bright-world version — turned out not to be a
+cost at all once the scenes were drawings rather than paintings. What it does
+cost is tone: the line means light on the dark ground and shade on paper, which
+Clerestory feels most. Geometry carries it, and the kindled opacity is tuned
+separately (0.66 against hollowed's 0.62, and Court's dye halved again).
+
+The three options as they stood, kept because a raster scene would face them
+again:
 
 1. **Hollowed only.** Kindled gets no scenes. Cheapest, honest, and defensible:
    the vignettes are the dark world's atmosphere, and the bright world does not
-   need atmosphere because it has light. **Recommended for the first pass.**
+   need atmosphere because it has light.
 2. **A second painting per scene**, lit from a window instead of a fire. Twice
    the art, and the Rest scene has no daylight version that means anything — a
    knight resting by a fire at noon is a man sitting on the floor.

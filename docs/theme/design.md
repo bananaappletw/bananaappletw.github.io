@@ -186,6 +186,8 @@ The 8% area budget an earlier draft used was too permissive: it allowed gold on 
 
 **Gold appears at most three times in a viewport.** On a post page that is the flame in the HUD, an inscription heading, and whatever link the cursor happens to be over. Everything else — listing titles, tags, breadcrumbs, pagination, section headings, rules, bullets — is a neutral.
 
+**Amendment, 20 August 2026 — `--blood` in the scene layer.** `--blood` is semantic in the interface and never decorative: danger, removed, deprecated, breaking. Inside a scene it carries no state, because nothing in that layer is clickable, labelled or live, so the question the rule protects against — does red mean danger here — cannot arise. It is therefore free in the scene layer and **no scene but Court may use it** (`scenes.md` §4). A royal house's colour going from blood to brick is this theme's own subject; refusing it would protect the letter of the rule at the cost of its point.
+
 Links are the sharp edge of this. They sit in `--text` with a `--text-4` underline and only turn gold on hover. A page of gold links is the failure mode: Anor Londo's sunlight lands because Lordran is brown.
 
 ### Text levels

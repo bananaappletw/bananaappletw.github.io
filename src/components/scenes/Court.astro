@@ -1,0 +1,466 @@
+---
+/**
+ * Court — the scene behind the archive. See docs/theme/scenes.md §3.3.
+ *
+ * Banners are heraldry and an archive is heraldry: it is the page where
+ * things hang under the standard they belong to. §3.3 assigned this scene to
+ * "archive / tags", which Clerestory already had; the archive is the half
+ * that earns it, so Court takes that page alone and Clerestory keeps posts
+ * and tags.
+ *
+ * ── what the drawing depends on ──────────────────────────────────────────
+ *
+ * FADED, NOT DESTROYED. That is the entire brief. The cloth is worn thin,
+ * the hems are frayed to threads, the dye has gone from blood to brick — and
+ * nothing is torn down. Every banner still hangs from its rail, square to it,
+ * at full length. Dignity is the difference between this scene and a ruin,
+ * and Drowned is already the ruin.
+ *
+ * THE BANNERS ARE THE VERTICAL RHYTHM. The architecture is barely implied —
+ * one arch, one floor, two piers running off the top of the frame — because
+ * three long verticals hanging in a row IS the composition. Drawing the hall
+ * properly would put a second rhythm against the first and lose it.
+ *
+ * NO DRAMATIC LIGHT. It is the only scene of the five with no source in it:
+ * flat, from high and behind, a hall nobody is standing in. Stillness is the
+ * subject, so the value range is narrow on purpose. There is no gold either.
+ * §3.3 allows one thread of it in a device; the archive is a page of links,
+ * and the same argument that kept Clerestory at zero applies here.
+ *
+ * THE CRIMSON IS A DECIDED EXCEPTION, not a free choice — scenes.md §4 and
+ * design.md §4. `--blood` is semantic in the interface and never decorative;
+ * inside a painting behind the text it carries no state, and a royal house's
+ * colour going from blood to brick is the theme's own subject. It is scoped:
+ * this scene, and no other.
+ */
+
+/** deterministic jitter — a drawn line is never mechanically straight */
+let seed = 20260820;
+const rnd = () => {
+  seed = (seed * 1664525 + 1013904223) >>> 0;
+  return seed / 4294967296;
+};
+const j = (n: number) => (rnd() - 0.5) * n;
+const n2 = (v: number) => Math.round(v * 100) / 100;
+
+const W = 520;
+const H = 400;
+
+/** the rail the banners hang from, and the floor they hang above */
+const RAIL = 74;
+const FLOOR = 356;
+
+/* ── the hall, barely ──────────────────────────────────────────────────────
+   One pointed arch at the back and two piers, all of it faint. It exists to
+   say "interior" and to stop the banners floating in a void; anything more
+   competes with them. The arch is two-centre for the same reason Clerestory's
+   are: a round head reads romanesque and the period goes with it. */
+const archRadius = (w: number, R: number) => (w * w * 0.25 + R * R) / w;
+
+const ARCH = (() => {
+  const xl = 196;
+  const xr = 344;
+  const spring = 210;
+  const rise = 66;
+  const r = archRadius(xr - xl, rise);
+  return (
+    `M${xl} ${FLOOR}L${xl} ${spring}` +
+    `A${n2(r)} ${n2(r)} 0 0 1 ${(xl + xr) / 2} ${spring - rise}` +
+    `A${n2(r)} ${n2(r)} 0 0 1 ${xr} ${spring}` +
+    `L${xr} ${FLOOR}`
+  );
+})();
+
+const PIERS = `M118 0L118 ${FLOOR}M470 0L470 ${FLOOR}`;
+const FLOOR_LINE = `M0 ${FLOOR}L${W} ${FLOOR}`;
+
+/* the rail: one beam, with a short bracket where each banner hangs */
+type Banner = {
+  cx: number;
+  w: number;
+  bottom: number;
+  /** how far the hem swings out of plumb — cloth, not board */
+  sway: number;
+  /** 0..1, how much ink this one carries; the middle one is nearest the light */
+  value: number;
+  /** the cut of the hem: a single point, or a swallow-tail */
+  hem: "point" | "tail";
+};
+
+const BANNERS: Banner[] = [
+  { cx: 178, w: 62, bottom: 296, sway: -9, value: 0.8, hem: "point" },
+  { cx: 272, w: 54, bottom: 262, sway: 5, value: 1, hem: "tail" },
+  { cx: 372, w: 66, bottom: 320, sway: 11, value: 0.72, hem: "point" },
+];
+
+/**
+ * The hem, as a polyline from the left corner to the right. THIS is the mark
+ * that says banner: a straight-cut bottom reads as a blind, and no amount of
+ * fraying or folding rescues it. A point or a swallow-tail, both of them
+ * period, and each one drops well below the corners so the shape is legible
+ * at 200px where the folds are not.
+ */
+const hemPoints = (b: Banner): [number, number][] => {
+  const c = swayAt(b, b.bottom);
+  const h = halfAt(b, b.bottom);
+  if (b.hem === "tail") {
+    return [
+      [c - h, b.bottom + 20],
+      [c - h * 0.5, b.bottom + 6],
+      [c, b.bottom - 8],
+      [c + h * 0.5, b.bottom + 6],
+      [c + h, b.bottom + 20],
+    ];
+  }
+  return [
+    [c - h, b.bottom - 6],
+    [c - h * 0.4, b.bottom + 10],
+    [c, b.bottom + 24],
+    [c + h * 0.4, b.bottom + 10],
+    [c + h, b.bottom - 6],
+  ];
+};
+
+/** x of a banner's centre at height y — the sway eases in toward the hem */
+const swayAt = (b: Banner, y: number) => {
+  const t = (y - RAIL) / (b.bottom - RAIL);
+  return b.cx + b.sway * t * t;
+};
+
+/** half-width at height y: cloth narrows very slightly as it hangs */
+const halfAt = (b: Banner, y: number) => {
+  const t = (y - RAIL) / (b.bottom - RAIL);
+  return (b.w / 2) * (1 - 0.06 * t);
+};
+
+/**
+ * The body of a banner, as a closed path. Both long edges are drawn as
+ * polylines with a little jitter rather than as straight lines: a hanging
+ * cloth has no straight edge anywhere, and two ruled verticals is what makes
+ * a banner read as a painted board.
+ */
+const cloth = (b: Banner) => {
+  const step = 14;
+  const left: string[] = [];
+  const right: string[] = [];
+  for (let y = RAIL; y <= b.bottom; y += step) {
+    const c = swayAt(b, y);
+    const h = halfAt(b, y);
+    left.push(`${n2(c - h + j(1.3))} ${n2(y)}`);
+    right.push(`${n2(c + h + j(1.3))} ${n2(y)}`);
+  }
+  const hem = hemPoints(b).map(([x, y]) => `${n2(x)} ${n2(y + j(1))}`);
+  return `M${left.join("L")}L${hem.join("L")}L${right.reverse().join("L")}Z`;
+};
+
+/**
+ * The hem, frayed to threads. A worn banner ends in a ragged edge and then in
+ * loose warp hanging below it — that detail is small, but it is the one that
+ * says worn rather than cut, and it is the only place in the drawing where
+ * anything is allowed to be broken.
+ */
+const fray = (b: Banner) => {
+  const d: string[] = [];
+  const pts = hemPoints(b);
+
+  /* walk the hem and hang a loose thread every few units along it, longest
+     where the cloth hangs lowest — the warp gives out at the point first */
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [x0, y0] = pts[i];
+    const [x1, y1] = pts[i + 1];
+    const span = Math.hypot(x1 - x0, y1 - y0);
+    const n = Math.max(2, Math.round(span / 5));
+    for (let k = 0; k <= n; k++) {
+      if (rnd() < 0.3) continue;
+      const t = k / n;
+      const x = x0 + (x1 - x0) * t;
+      const y = y0 + (y1 - y0) * t;
+      const len = 3 + rnd() * 8 * (0.4 + (y - b.bottom + 10) / 34);
+      d.push(`M${n2(x)} ${n2(y)}L${n2(x + j(2.5))} ${n2(y + len)}`);
+    }
+  }
+  return d.join("");
+};
+
+/**
+ * One charge, on the middle banner only. A cross, drawn as line and worn
+ * through like everything else — it is what turns three hanging cloths into
+ * heraldry, and it is the reason this scene is on the archive at all. Not
+ * gold: §3.3 offers a thread of it and the archive is a page of links, so it
+ * spends nothing, as Clerestory does.
+ */
+const DEVICE = (() => {
+  const b = BANNERS[1];
+  const y = RAIL + (b.bottom - RAIL) * 0.34;
+  const c = swayAt(b, y);
+  const arm = b.w * 0.3;
+  const d: string[] = [];
+  /* the four arms, each flared at the end so it reads as a charge rather
+     than as a fold that happens to cross another */
+  d.push(`M${n2(c)} ${n2(y - arm * 1.25)}L${n2(c)} ${n2(y + arm * 1.25)}`);
+  d.push(`M${n2(c - arm)} ${n2(y)}L${n2(c + arm)} ${n2(y)}`);
+  for (const [dx, dy] of [
+    [0, -arm * 1.25],
+    [0, arm * 1.25],
+    [-arm, 0],
+    [arm, 0],
+  ]) {
+    const px = c + dx;
+    const py = y + dy;
+    const ox = dx === 0 ? 4 : 0;
+    const oy = dy === 0 ? 4 : 0;
+    d.push(`M${n2(px - ox)} ${n2(py - oy)}L${n2(px + ox)} ${n2(py + oy)}`);
+  }
+  return d.join("");
+})();
+
+/**
+ * Folds. Two or three per banner, running the full drop and easing with the
+ * sway, plus the horizontal creases where the cloth has hung long enough to
+ * remember them. Folds are what give a flat shape a surface.
+ */
+const folds = (b: Banner) => {
+  const d: string[] = [];
+  const n = 2 + Math.floor(rnd() * 2);
+  for (let i = 0; i < n; i++) {
+    const off = (-0.5 + (i + 1) / (n + 1)) * b.w * 0.82;
+    const pts: string[] = [];
+    for (let y = RAIL + 6; y <= b.bottom - 6; y += 16) {
+      pts.push(`${n2(swayAt(b, y) + off + j(1.1))} ${n2(y)}`);
+    }
+    d.push(`M${pts.join("L")}`);
+  }
+  for (let k = 0; k < 3; k++) {
+    const y = RAIL + 20 + rnd() * (b.bottom - RAIL - 40);
+    const c = swayAt(b, y);
+    const h = halfAt(b, y) * (0.5 + rnd() * 0.4);
+    d.push(`M${n2(c - h)} ${n2(y)}L${n2(c + h)} ${n2(y + j(2))}`);
+  }
+  return d.join("");
+};
+
+/**
+ * Wear: the cloth thins where it has been hanging longest. Drawn as a hatch
+ * that only appears in the lower third, never as a hole — §3.3's "faded, not
+ * destroyed". A hole would make this a ruin, and the ruin is on the 404.
+ */
+const wear = (b: Banner) => {
+  const d: string[] = [];
+  const from = RAIL + (b.bottom - RAIL) * 0.62;
+  for (let y = from; y < b.bottom - 4; y += 3.6) {
+    if (rnd() < 0.35) continue;
+    const c = swayAt(b, y);
+    const h = halfAt(b, y) - 2;
+    const x0 = c - h + rnd() * h * 0.7;
+    const x1 = Math.min(c + h, x0 + 6 + rnd() * (h * 1.1));
+    d.push(`M${n2(x0)} ${n2(y + j(0.6))}L${n2(x1)} ${n2(y + j(0.6))}`);
+  }
+  return d.join("");
+};
+
+/** the head of each banner: the rod it hangs on, and its two rings */
+const heading = (b: Banner) => {
+  const h = b.w / 2 + 5;
+  const d = [`M${n2(b.cx - h)} ${RAIL}L${n2(b.cx + h)} ${RAIL}`];
+  for (const s of [-0.55, 0.55]) {
+    const x = b.cx + b.w * s;
+    d.push(`M${n2(x)} ${RAIL - 5}L${n2(x)} ${RAIL + 3}`);
+  }
+  return d.join("");
+};
+
+const RAIL_LINE = `M96 ${RAIL}L${W} ${RAIL}`;
+
+const CLOTH = BANNERS.map(cloth);
+const FRAY = BANNERS.map(fray);
+const FOLDS = BANNERS.map(folds);
+const WEAR = BANNERS.map(wear);
+const HEADS = BANNERS.map(heading).join("");
+---
+
+<div class="scene scene-court absolute" aria-hidden="true">
+  <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} focusable="false">
+    <defs>
+      {
+        /* The same pen as the other three scenes: a small displacement so no
+          ruled line is mechanically straight. The region is widened because
+          displacement pushes pixels outward and would clip its own edges. */
+      }
+      <filter
+        id="court-pen"
+        x="-6%"
+        y="-6%"
+        width="112%"
+        height="112%"
+        color-interpolation-filters="sRGB"
+      >
+        <feTurbulence
+          type="fractalNoise"
+          baseFrequency="0.032"
+          numOctaves="3"
+          seed="17"
+          result="pen"></feTurbulence>
+        <feDisplacementMap
+          in="SourceGraphic"
+          in2="pen"
+          scale="1.5"
+          xChannelSelector="R"
+          yChannelSelector="G"></feDisplacementMap>
+      </filter>
+
+      {
+        /* SVG masks are LUMINANCE by default — white reveals, black hides.
+          Written with the black stops that are correct for a CSS mask-image,
+          this hides the entire drawing. */
+      }
+      <linearGradient id="court-fade-x" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="white" stop-opacity="0"></stop>
+        <stop offset="30%" stop-color="white" stop-opacity="1"></stop>
+      </linearGradient>
+      <linearGradient id="court-fade-y" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="white" stop-opacity="0"></stop>
+        <stop offset="22%" stop-color="white" stop-opacity="1"></stop>
+      </linearGradient>
+      <mask id="court-fade-left">
+        <rect width={W} height={H} fill="url(#court-fade-x)"></rect>
+      </mask>
+      <mask id="court-fade-top">
+        <rect width={W} height={H} fill="url(#court-fade-y)"></rect>
+      </mask>
+
+      {
+        /* The dye is strongest where the cloth is newest — under the rail,
+          out of the light. By the hem it has gone. */
+      }
+      <linearGradient id="court-dye" x1="0" y1="0" x2="0" y2="1">
+        <stop
+          offset="0%"
+          stop-color="var(--blood)"
+          style="stop-opacity: var(--dye-head)"></stop>
+        <stop
+          offset="100%"
+          stop-color="var(--blood)"
+          style="stop-opacity: var(--dye-hem)"></stop>
+      </linearGradient>
+    </defs>
+
+    <g mask="url(#court-fade-top)">
+      <g mask="url(#court-fade-left)" filter="url(#court-pen)">
+        {/* the hall, barely */}
+        <path class="stone" d={PIERS}></path>
+        <path class="stone" d={ARCH}></path>
+        <path class="floor" d={FLOOR_LINE}></path>
+
+        {/* the rail */}
+        <path class="rail" d={RAIL_LINE}></path>
+        <path class="rail" d={HEADS}></path>
+
+        {
+          BANNERS.map((b, i) => (
+            <g style={`opacity:${b.value}`}>
+              <path class="cloth" d={CLOTH[i]} />
+              <path class="edge" d={CLOTH[i]} />
+              <path class="fold" d={FOLDS[i]} />
+              <path class="wear" d={WEAR[i]} />
+              {i === 1 && <path class="device" d={DEVICE} />}
+              <path class="hem" d={FRAY[i]} />
+            </g>
+          ))
+        }
+      </g>
+    </g>
+  </svg>
+</div>
+
+<style>
+  .scene-court {
+    /* How much dye is left. Two numbers rather than one, because the wash
+       runs out down the drop — strongest under the rail, gone at the hem. */
+    --dye-head: 0.2;
+    --dye-hem: 0.03;
+  }
+
+  /* Paper takes a dye far harder than a dark ground does: the same wash that
+     reads as brick in the hollowed world reads as salmon on white, and it
+     would be the only saturated thing on the page. Half of it there. */
+  :global(:root[data-theme="kindled"]) .scene-court,
+  :global(:root[data-theme="light"]) .scene-court {
+    --dye-head: 0.1;
+    --dye-hem: 0.02;
+  }
+
+  .scene-court svg {
+    color: var(--scene-ink);
+  }
+
+  /* The one place in the system where --blood is decorative — scoped to this
+     scene by design.md §4. It is a wash, not a fill: the cloth reads as dyed
+     rather than as painted, which is the difference between faded and flat. */
+  .cloth {
+    fill: url(#court-dye);
+    stroke: none;
+  }
+
+  .edge {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 0.9;
+    stroke-linejoin: round;
+    opacity: 0.7;
+  }
+
+  .fold {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 0.6;
+    stroke-linecap: round;
+    opacity: 0.4;
+  }
+
+  .wear {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 0.5;
+    stroke-linecap: round;
+    opacity: 0.24;
+  }
+
+  .hem {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 0.7;
+    stroke-linecap: round;
+    opacity: 0.55;
+  }
+
+  .device {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.1;
+    stroke-linecap: round;
+    opacity: 0.5;
+  }
+
+  .rail {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1;
+    stroke-linecap: round;
+    opacity: 0.6;
+  }
+
+  /* The architecture is the quietest thing here: present, and not looked at */
+  .stone {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 0.8;
+    opacity: 0.22;
+  }
+
+  .floor {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 0.6;
+    opacity: 0.3;
+  }
+</style>

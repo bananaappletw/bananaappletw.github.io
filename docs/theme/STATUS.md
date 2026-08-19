@@ -117,6 +117,16 @@ These cost real time. All are recorded in `design.md` §13 as anti-patterns.
 - The repo had no prettier config, so `npm run format` reformatted untouched files. Conventions pinned in `.prettierrc.json`; `tokens.css` is in `.prettierignore` because the generator owns it.
 - The site description was the title again, so every search result and social
   card read "Weibo's Home" twice. It says what the site is about now.
+- **Court** shipped to the archive — three faded banners on a rail, one
+  charged with a cross. Two things it turned on: the hem is the whole
+  silhouette (straight-cut, a banner reads as a blind, and the first version
+  was three vertical bars), and the crimson is halved in the kindled world,
+  because paper takes a dye far harder than a dark ground does. It also moved
+  Clerestory off the archive: `scenes.md` §3.3 had assigned Court to "archive /
+  tags", which §3.2 had already given away.
+- **`--blood` is now allowed in the scene layer**, Court only — `design.md` §4
+  carries the amendment and `scenes.md` §4 the reasoning. It is semantic in the
+  interface and free in a painting, because nothing in a painting has a state.
 - **Drowned** shipped to the 404 — a leaning ruin standing in a lake under a
   cold moon, no gold in it. Two things it turned on, both in `scenes.md` §3.5:
   a lean has to be a rotation rather than a shear, because the eye reads lean
@@ -175,8 +185,9 @@ is no feature branch.
 - **The world flip is instant** — the veil is gone.
 - **Three marks**: a carved sigil for the site, a sun and moon for the world
   control, a rune for the edit link.
-- **Three scenes**: **Approach** on the home page, **Clerestory** behind the
-  four listing pages and **Drowned** on the 404, all generated pen drawings. Clerestory is built in
+- **Four scenes**: **Approach** on the home page, **Clerestory** behind posts
+  and tags, **Court** on the archive and **Drowned** on the 404, all generated
+  pen drawings. Clerestory is built in
   one-point perspective, which is what makes that much architecture affordable.
 - **The four marks are drawn, not stroked.** `src/utils/nib.ts` takes a spine
   and a pressure profile and returns the outline a nib would have left, so the
@@ -199,11 +210,10 @@ is no feature branch.
    is invisible in a headless shot because the overlay scrollbar does not
    render. Still open there: **the kindled world has never been looked at on a
    real screen**, only in captures.
-2. **The last two scenes** — Court and Rest. Briefs in
-   [`scenes.md`](./scenes.md), which also carries two open decisions. Rest is
-   the hard one and may not be a pen drawing at all: §7 records that the same
-   approach produced usable architecture and unusable figuration, and Court is
-   architecture.
+2. **The last scene — Rest**, on the about page. It is the hard one and may not
+   be a pen drawing at all: [`scenes.md`](./scenes.md) §7 records that this
+   approach produced usable architecture and unusable figuration, and a seated
+   knight is figuration. The other four are built.
 3. **Ash variations and the stain texture.** Soot ground, ruled headings,
    mincho and the spec block are all prototyped and none is chosen. The stain
    must ship un-tiled — a repeat is visible on a wide screen — and its dials
