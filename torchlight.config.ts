@@ -4,7 +4,10 @@ export default defineTorchlightConfig({
   site: {
     url: "https://bananaappletw.github.io/",
     title: "Weibo's Home",
-    description: "Weibo's Home",
+    // Search results and social cards print title and description together,
+    // so this must not repeat the title — it read "Weibo's Home" twice.
+    description:
+      "Infrastructure, Kubernetes and security notes from Weibo Chen, a DevOps engineer in Tokyo.",
     author: "bananaappletw",
     profile: "https://github.com/bananaappletw",
     ogImage: "default-og.jpg",

@@ -115,6 +115,8 @@ These cost real time. All are recorded in `design.md` §13 as anti-patterns.
 - The List page lost its nav entry during the header rebuild; restored.
 - `list.astro` referenced three removed custom properties and carried a four-colour category palette.
 - The repo had no prettier config, so `npm run format` reformatted untouched files. Conventions pinned in `.prettierrc.json`; `tokens.css` is in `.prettierignore` because the generator owns it.
+- The site description was the title again, so every search result and social
+  card read "Weibo's Home" twice. It says what the site is about now.
 - The kindled scene was four points of lightness from the paper at
   `--scene-opacity: 0.4` — the same drawing in the dark carries twenty — so
   the whole vignette read as a smudge. It is 0.66 now, near hollowed's 0.62.
@@ -190,9 +192,10 @@ is no feature branch.
 4. **The lake footer** on the 404. It works; keep the ripple static, since §11
    permits one ambient animation and the grain is not it.
 5. **The post header image rule** (`design.md` §15).
-6. **A real site description.** `torchlight.config.ts` duplicates the title, so
-   search results and social cards read "Weibo's Home" twice.
-7. **Review the `about` page prose** against the measure. Never checked.
+6. **Review the `about` page prose** against the measure. The measure itself is
+   fine at the smaller scale; what is left is the writing — and the coloured
+   emoji in "Let's Connect", which are the only full-saturation pixels on the
+   site.
 
 ---
 
