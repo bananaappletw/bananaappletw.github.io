@@ -117,7 +117,9 @@ Kindled runs the same layers to the opposite end: the shaft is a clerestory wind
 
 `--ornament` is what makes the flip a world change rather than a palette swap. Rune bullets and any structural mark read from it — never from `--torch` directly, which is the anti-pattern that would leave ornament lit in a dead world.
 
-Kindled, `--ornament` equals gold and marks are gilded. Hollowed, it equals `--text-4` and the same marks survive in bone. Nothing moves and nothing is removed; the world has simply been abandoned. `tests/tokens.test.ts` asserts both equalities.
+It equals `--text-4` in both worlds: bone on the dark ground, warm grey on paper. A mark carries the world's quietest ink, so nothing moves and nothing is removed when the world hollows — the light has simply gone out of the room.
+
+**It was gold when kindled until the light world was actually looked at, on 19 August 2026.** The about page sets twenty rune bullets, and twenty gilded marks in one viewport is precisely the failure the three-times rule below exists to prevent; the bonfire, whose own comment says only the flame is gold, had a gilded sword and pyre to go with it. Gilding is for the thing that is rare, and a bullet is the least rare mark on the site. `tests/tokens.test.ts` asserts the equality in both worlds, and asserts that ornament is never `--torch`.
 
 ```css
 .rune-list > li::before {

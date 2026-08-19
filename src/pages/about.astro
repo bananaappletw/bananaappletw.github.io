@@ -28,8 +28,13 @@ const { Content } = await render(about);
 
   <Breadcrumb />
 
-  <Main pageTitle={about.data.title} class="app-prose">
-    <Content />
+  <!-- app-prose goes on an inner element, never on <Main>: Main is also
+       app-layout, and that utility's max-width won, so the about page was
+       set to the full width of the hall rather than to the 66ch measure. -->
+  <Main pageTitle={about.data.title}>
+    <div class="app-prose">
+      <Content />
+    </div>
   </Main>
 
   <Footer />

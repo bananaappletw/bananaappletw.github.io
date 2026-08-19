@@ -81,7 +81,7 @@ Each of these was reached the hard way. Reasons are in `design.md`; summarised s
 1. **Gold appears at most three times per viewport.** A count, not a percentage. An earlier 8%-area budget was permissive enough to allow gold on every link, tag and nav item and still pass. Links are neutral until hovered.
 2. **Hollowed is warm sepia, not cold ash.** Built on the Dark Souls Remastered ramp; the ground sits a step below its darkest value, at `#100f0d`. Souls _looks_ cold, so cold blue-grey feels right and is wrong — the series is desaturated _brown_.
 3. **Contrast has a ceiling as well as a floor.** `--text` targets 8–13:1, never above 14:1. Maximum-contrast text detaches and reads as glowing rather than printed. Borders sit near 1.3:1 for the same reason.
-4. **Ornament reads `--ornament`, never `--torch`** — so it goes to bone when the world hollows. Asserted by test.
+4. **Ornament reads `--ornament`, never `--torch`**, and `--ornament` is `--text-4` in _both_ worlds — bone on the dark ground, warm grey on paper. It was gold when kindled until 19 August: twenty gilded bullets on the about page is the exact failure rule 1 exists to prevent. Asserted by test, in both directions.
 5. **Drop caps, section marks and carved frames were cut.** With two ornaments per viewport, space and light do the work better.
 6. **The roguelike/terminal direction was considered and declined** (`design.md` §14). The escape hatch, if ever wanted, is a single `>` for "read more".
 7. **One family, no capitals.** Cardo sets everything — display and body. Cinzel was the obvious pick (Dark Souls uses Optimus Princeps, and Cinzel is the closest OFL relative) and it was wrong: it is a capitals face whose lowercase sprawls, which forced every title into small caps to hide it. Nothing on the site is set in capitals now, because capitals are slower to read. See `design.md` §5 for the full history.
@@ -117,6 +117,14 @@ These cost real time. All are recorded in `design.md` §13 as anti-patterns.
 - The repo had no prettier config, so `npm run format` reformatted untouched files. Conventions pinned in `.prettierrc.json`; `tokens.css` is in `.prettierignore` because the generator owns it.
 - The site description was the title again, so every search result and social
   card read "Weibo's Home" twice. It says what the site is about now.
+- Kindled painted every rune bullet gold, because `--ornament` equalled
+  `--torch` there — twenty of them on the about page. Pseudo-element paint is
+  invisible to a naive audit of computed styles, which is how it survived this
+  long. `--ornament` is `--text-4` in both worlds now.
+- The about page was never inside the measure: `app-prose` sat on `<Main>`,
+  which is also `app-layout`, and that utility's `max-width: var(--hall)` won.
+  The page was set to 1024px — about 80 characters — and centred, while every
+  post ran at 66ch. The class goes on an inner element now.
 - The kindled scene was four points of lightness from the paper at
   `--scene-opacity: 0.4` — the same drawing in the dark carries twenty — so
   the whole vignette read as a smudge. It is 0.66 now, near hollowed's 0.62.
@@ -174,9 +182,10 @@ is no feature branch.
 1. **The kindled world had its pass** on 19 August, page by page at 1440 and
    390 against the same page hollowed. Two things came out of it: the scene
    was invisible on paper (§6) and the archive rules were ragged (§6). What
-   the pass also established, so nobody re-opens it: gold stays inside its
-   budget in both worlds — the only torch paint on a page is the sigil and the
-   world control, both marks; the mottling that appears on a white page in a
+   the pass also established, so nobody re-opens it: gold now stays inside its
+   budget in both worlds — the only torch paint left on a page is the sigil and
+   the world control, both marks, once the kindled ornament channel stopped
+   being gold (§4 rule 4); the mottling that appears on a white page in a
    screenshot is the viewer's compression, not the grain, which measures 253
    to 255 across an empty region; and `pre` scrolls rather than clips, which
    is invisible in a headless shot because the overlay scrollbar does not

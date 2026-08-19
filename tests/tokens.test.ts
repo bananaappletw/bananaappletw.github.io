@@ -54,9 +54,11 @@ describe("contrast floors (design.md section 11)", () => {
 });
 
 describe("ornament channel", () => {
-  it("equals --torch when kindled and --text-4 when hollowed", () => {
-    expect(tokens.kindled["--ornament"]).toBe(tokens.kindled["--torch"]);
-    expect(tokens.hollowed["--ornament"]).toBe(tokens.hollowed["--text-4"]);
+  it("equals --text-4 in both worlds, and is never --torch", () => {
+    for (const world of WORLDS) {
+      expect(tokens[world]["--ornament"]).toBe(tokens[world]["--text-4"]);
+      expect(tokens[world]["--ornament"]).not.toBe(tokens[world]["--torch"]);
+    }
   });
 });
 
