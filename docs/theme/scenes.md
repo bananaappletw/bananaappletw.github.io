@@ -7,8 +7,9 @@ generated or drawn by someone who has never seen the theme, and still come back
 usable. Read [`design.md`](./design.md) for the system the scenes have to live
 inside; §0 (Ash), §4 (gold budget) and §11 (motion) all constrain what follows.
 
-**Status: deferred to v2.** The briefs below are complete and the decisions in
-§4 and §5 are still open. Nothing here blocks the release — see
+**Status: three of five built** — Approach, Clerestory and Drowned, all as SVG
+pen drawings rather than as the raster assets §2 specifies. Court and Rest are
+still briefs, and the decisions in §4 and §5 are still open. Nothing here blocks the release — see
 [`STATUS.md`](./STATUS.md) §7. Painting these programmatically was attempted
 and rejected; §7 records why.
 
@@ -255,24 +256,48 @@ the lighting and the posture from it; do not take the forest.
 - **Avoid:** a heroic pose; a face; a visible expression. He is anonymous —
   the reader is meant to be able to be him.
 
-### 3.5 Drowned → **404**
+### 3.5 Drowned → **404** — **built**
 
 > The ruins of a medieval building, and a lake with the moon reflected in it.
 
 The reader has reached the end of the world. A shore is the right metaphor for
 a page that does not exist.
 
+Shipped as `src/components/scenes/Drowned.astro`, a pen drawing like the other
+two: three masses given as data, coursed masonry with joints staggered and a
+share of both courses and stones simply missing, lancet openings on the same
+two-centre arch formula Clerestory uses, and water as broken horizontals.
+
+Four things it turned out to depend on:
+
+- **The lean is a rotation, not a shear.** The first version sheared the mass
+  and read as perfectly plumb, because the eye judges lean from the angle
+  between the wall and the **waterline** — and shearing both edges of a wall
+  leaves that angle untouched. It is 3.4° about the point where the ruin meets
+  the water, with a small shear left in for batter.
+- **Then the walls have to carry on under the water.** Rotating about the
+  waterline lifts one corner clear of it, and the ruin hangs. The masonry runs
+  14 units below the surface and the near ripples are drawn over the top, which
+  is also what puts the building _in_ the lake rather than against it.
+- **The reflection is sampled, never mirrored.** For each band of water the
+  silhouette is measured at the height that band reflects, then displaced by a
+  slow wave and drawn as a single horizontal dash. A reflection on water keeps
+  the right width in the right place and loses everything else; a flipped copy
+  reads as glass. It is foreshortened by 0.58 and runs out rather than stopping,
+  because a reflection that ends on a line is a second waterline.
+- **The moon is nearly solid, and it is the only mark that is.** At half opacity
+  it read as a hole in the sky. Everything else in the drawing is a line, so the
+  disc reads as the source without having to be large.
+
 - **Composition:** the waterline sits low, around 60% down. The ruin is
   mid-centre and **leaning** — the lean is what makes it corrupt rather than
   merely old. Moon high right; its reflection is directly below it, which means
   the moon cannot be near the frame edge or the reflection falls out of frame.
-- **The reflection must not be a mirror copy.** It is broken into horizontal
-  bands and displaced sideways, because that is how a reflection survives on
-  moving water. Cold, and softer than the thing it reflects.
 - **Light:** the moon. Cold. The only scene of the five that is not warm, which
   is what makes it the ending.
-- **Gold:** one, and it is optional — a single lit window high in the ruin,
-  the last thing still burning. If it weakens the cold, cut it.
+- **Gold:** none. §3.5's optional lit window was cut on the rule the brief gave
+  for it: a warm window turns an ending into somewhere still occupied, and the
+  header already spends two golds on the sigil and the world control.
 - **Avoid:** a perfect mirror; a huge moon; birds.
 
 ---

@@ -1,0 +1,603 @@
+---
+/**
+ * Drowned — the scene behind the 404. See docs/theme/scenes.md §3.5.
+ *
+ * The reader has reached the end of the world, so this is a shore: a ruin
+ * standing in still water with the moon behind it. Approach is the way in and
+ * Clerestory is the room you arrive at; this is the one page that is not on
+ * the way to anywhere, and it is the only scene of the five that is cold.
+ *
+ * ── what the drawing depends on ──────────────────────────────────────────
+ *
+ * THE LEAN. A ruin drawn plumb reads as a building that is merely old. It is
+ * two things together: a small shear, so the walls batter as they rise, and a
+ * rotation of the whole mass about the point where it meets the water. The
+ * shear alone was tried and does nothing — the eye judges lean from the angle
+ * between a wall and the WATERLINE, and shearing both edges leaves that angle
+ * exactly as it was.
+ *
+ * THE REFLECTION IS NOT A MIRROR. It is sampled: for each band of water the
+ * silhouette is measured at the height that band reflects, then displaced
+ * sideways and drawn as a horizontal dash. That is what a reflection does on
+ * water that is moving — it survives as bands of the right WIDTH in the right
+ * PLACE, and loses everything else. A flipped copy of the ruin reads as glass,
+ * and glass is not water.
+ *
+ * IT IS FORESHORTENED BY 0.58, not by 1. You see less of a reflection than of
+ * the thing reflected, because the far side of the ruin reflects off water
+ * further away than the near side does. Mirroring it one-for-one is the error
+ * that makes a lake look like a puddle standing on its edge.
+ *
+ * NO GOLD. §3.5 allows one optional lit window and says to cut it if it
+ * weakens the cold. It does: a warm window on this page turns an ending into
+ * somewhere still occupied, and the header already spends two golds on the
+ * sigil and the world control. Cold, and nobody home.
+ *
+ * Everything takes `currentColor`, so the scene recolours with the world.
+ */
+
+/** deterministic jitter — a drawn line is never mechanically straight */
+let seed = 20260819;
+const rnd = () => {
+  seed = (seed * 1664525 + 1013904223) >>> 0;
+  return seed / 4294967296;
+};
+const j = (n: number) => (rnd() - 0.5) * n;
+const n2 = (v: number) => Math.round(v * 100) / 100;
+
+const W = 520;
+const H = 400;
+
+/** the waterline, at 60% of the frame — §3.5 */
+const WATER = 240;
+
+/**
+ * The lean. Every x in the ruin passes through this, so the mass shears as a
+ * whole: a point one hundred units above the water stands seven to its right.
+ * Shearing the outline alone and leaving the courses level is the tell that
+ * reads as a drawing mistake rather than as subsidence.
+ */
+const LEAN = 0.035;
+const lean = (x: number, y: number) => x + LEAN * (WATER - y);
+
+/**
+ * The tilt, in degrees clockwise about the point where the ruin meets the
+ * water. Shear alone was not enough: shearing both edges by the same amount
+ * leaves every vertical still reading as vertical, because the eye judges
+ * lean from the angle between the wall and the WATERLINE, and a shear leaves
+ * that angle untouched. A rotation tilts the base too, so the building sits
+ * wrong on its own reflection — which is the whole idea.
+ *
+ * The reflection turns the other way, because a mirror in a horizontal line
+ * reverses the sense of a rotation.
+ */
+const TILT = 3.4;
+const PIVOT = { x: 300, y: WATER };
+
+/**
+ * How far the walls carry on below the waterline. The tilt rotates the base
+ * as well as the top, so a ruin whose walls stop exactly at the water lifts
+ * one corner clear of it and hangs there. It is a building standing IN a
+ * lake: the masonry goes under, and the ripples drawn over the top are what
+ * say where the surface is.
+ */
+const SUNK = 14;
+
+/* ── the ruin, as three blocks ──────────────────────────────────────────────
+   Given plumb, in water coordinates; the shear is applied on the way out. The
+   blocks exist twice over: once as linework, and once as the silhouette the
+   reflection samples, which is why they are data rather than path strings. */
+type Block = { top: number; xl: number; xr: number; taper: number };
+
+const BLOCKS: Block[] = [
+  /* the keep — the mass of the thing, and the widest */
+  { top: 116, xl: 152, xr: 298, taper: 3 },
+  /* the tower, standing higher and broken off at the top */
+  { top: 84, xl: 298, xr: 354, taper: 2 },
+  /* a stub of curtain wall, dropping to the right so the mass is not a box */
+  { top: 188, xl: 354, xr: 426, taper: 0 },
+];
+
+/** left and right edge of a block at height y, leaned, walls battered in */
+const edges = (b: Block, y: number): [number, number] => {
+  const t = (WATER - y) / (WATER - b.top);
+  return [lean(b.xl + b.taper * t, y), lean(b.xr - b.taper * t, y)];
+};
+
+/**
+ * The silhouette at height y: the x-intervals the ruin occupies. The
+ * reflection reads this and nothing else, which is the point — a reflection
+ * carries an outline, never a detail.
+ */
+const silhouette = (y: number): [number, number][] =>
+  BLOCKS.filter(b => y >= b.top && y <= WATER).map(b => edges(b, y));
+
+/* ── masonry ───────────────────────────────────────────────────────────────
+   Courses, with vertical joints staggered by course and a share of both
+   simply missing. An unbroken wall of complete courses reads as new. */
+const COURSE = 9.5;
+
+/**
+ * Courses, per block rather than in one path, so the three masses can carry
+ * different amounts of ink. Approach's lesson: one flat mass has no depth of
+ * its own, and a step in value between two of them is what gives it any. The
+ * moon is behind and to the right, so the tower — the piece nearest it and
+ * standing clear of the rest — is the one that catches it.
+ */
+const masonry = ((): string[] => {
+  const out: string[] = [];
+  const d: string[] = [];
+  for (const b of BLOCKS) {
+    let row = 0;
+    for (let y = WATER + SUNK - COURSE; y > b.top + 2; y -= COURSE, row++) {
+      const [xl, xr] = edges(b, y);
+      /* a course is a course, then a gap where the stone has gone */
+      const gapAt = rnd() < 0.22 ? xl + (xr - xl) * (0.2 + rnd() * 0.5) : null;
+      if (gapAt === null) {
+        d.push(`M${n2(xl)} ${n2(y + j(0.7))}L${n2(xr)} ${n2(y + j(0.7))}`);
+      } else {
+        const g = 10 + rnd() * 14;
+        d.push(`M${n2(xl)} ${n2(y + j(0.7))}L${n2(gapAt)} ${n2(y + j(0.7))}`);
+        d.push(
+          `M${n2(gapAt + g)} ${n2(y + j(0.7))}L${n2(xr)} ${n2(y + j(0.7))}`,
+        );
+      }
+
+      /* joints: half a stone's offset every other course, and never a
+         perfect grid — the eye finds a grid before it finds a wall */
+      const step = 17 + j(2);
+      const off = row % 2 ? step * 0.5 : 0;
+      for (let x = xl + off + 4; x < xr - 4; x += step) {
+        if (rnd() < 0.34) continue;
+        const jx = x + j(1.4);
+        d.push(
+          `M${n2(jx)} ${n2(y)}L${n2(jx + LEAN * COURSE)} ${n2(y + COURSE)}`,
+        );
+      }
+    }
+    out.push(d.join(""));
+    d.length = 0;
+  }
+  return out;
+})();
+
+/* ── the outline, broken at the top ────────────────────────────────────────
+   The top edge of each block is a ragged line rather than a straight one:
+   the difference between a building missing its roof and a building drawn
+   without one. */
+const outline = (() => {
+  const d: string[] = [];
+  for (const b of BLOCKS) {
+    const [xl, xr] = edges(b, b.top);
+    const [bl, br] = edges(b, WATER);
+    d.push(`M${n2(bl)} ${n2(WATER + SUNK)}L${n2(xl)} ${n2(b.top)}`);
+
+    /* the break: five or six steps across the top, alternating down and
+       along, each one a stone's worth */
+    const steps = 5 + Math.floor(rnd() * 2);
+    let x = xl;
+    let y = b.top;
+    const run = (xr - xl) / steps;
+    const parts: string[] = [`M${n2(x)} ${n2(y)}`];
+    for (let i = 0; i < steps; i++) {
+      const drop = (rnd() - 0.35) * 9;
+      y = Math.max(b.top - 3, Math.min(b.top + 26, y + drop));
+      x += run;
+      parts.push(`L${n2(x)} ${n2(y)}`);
+      parts.push(`L${n2(x + j(2))} ${n2(y + j(4))}`);
+    }
+    d.push(parts.join(""));
+    d.push(`M${n2(xr)} ${n2(y)}L${n2(br)} ${n2(WATER + SUNK)}`);
+  }
+  return d.join("");
+})();
+
+/* ── openings ──────────────────────────────────────────────────────────────
+   Lancets, because the period is the same one Clerestory is in: a two-centre
+   arch of span w and rise R has radius (w²/4 + R²)/w. Guessing it pulls the
+   halves into a semicircle and the ruin turns romanesque. */
+const archRadius = (w: number, R: number) => (w * w * 0.25 + R * R) / w;
+
+type Opening = { cx: number; sill: number; span: number; rise: number };
+const OPENINGS: Opening[] = [
+  { cx: 196, sill: 214, span: 26, rise: 30 },
+  { cx: 250, sill: 214, span: 26, rise: 30 },
+  { cx: 326, sill: 176, span: 19, rise: 22 },
+];
+
+const lancet = (o: Opening) => {
+  const half = o.span / 2;
+  const springY = o.sill - 34;
+  const xl = lean(o.cx - half, springY);
+  const xr = lean(o.cx + half, springY);
+  const r = archRadius(o.span, o.rise);
+  const apex = lean(o.cx, springY - o.rise);
+  return (
+    `M${n2(lean(o.cx - half, o.sill))} ${n2(o.sill)}` +
+    `L${n2(xl)} ${n2(springY)}` +
+    `A${n2(r)} ${n2(r)} 0 0 1 ${n2(apex)} ${n2(springY - o.rise)}` +
+    `A${n2(r)} ${n2(r)} 0 0 1 ${n2(xr)} ${n2(springY)}` +
+    `L${n2(lean(o.cx + half, o.sill))} ${n2(o.sill)}`
+  );
+};
+
+const OPENING_PATHS = OPENINGS.map(lancet).join("");
+
+/* An opening is a hole, and a hole is darker than the wall around it. A pen
+   has no grey, so the dark is hatched — the same rule Approach settled. */
+const OPENING_HATCH = (() => {
+  const d: string[] = [];
+  for (const o of OPENINGS) {
+    const half = o.span / 2;
+    for (let y = o.sill - 4; y > o.sill - 34 - o.rise * 0.55; y -= 3.4) {
+      const inset = y < o.sill - 34 ? (o.sill - 34 - y) * 0.42 : 0;
+      const xl = lean(o.cx - half + inset + 1.5, y);
+      const xr = lean(o.cx + half - inset - 1.5, y);
+      if (xr - xl < 2) continue;
+      d.push(`M${n2(xl)} ${n2(y + j(0.5))}L${n2(xr)} ${n2(y + j(0.5))}`);
+    }
+  }
+  return d.join("");
+})();
+
+/* ── rubble ────────────────────────────────────────────────────────────────
+   A handful of stones at the foot, half in the water. They are what stops the
+   ruin from meeting its reflection along one clean edge, which is the line
+   that would give the whole thing away as a flip. */
+const RUBBLE = (() => {
+  const d: string[] = [];
+  for (let i = 0; i < 9; i++) {
+    const x = 130 + rnd() * 320;
+    const y = WATER - 3 + rnd() * 5;
+    const w = 5 + rnd() * 11;
+    const h = 2.5 + rnd() * 4;
+    d.push(
+      `M${n2(x)} ${n2(y)}L${n2(x + w * 0.3)} ${n2(y - h)}` +
+        `L${n2(x + w)} ${n2(y - h * 0.6)}L${n2(x + w * 1.1)} ${n2(y)}Z`,
+    );
+  }
+  return d.join("");
+})();
+
+/* ── the moon ──────────────────────────────────────────────────────────────
+   High and right, clear of the ruin so its reflection has open water to fall
+   into. Drawn as an outline with two faint haloes rather than as a disc: a
+   filled circle at this size is the brightest thing in the frame, and §2 puts
+   the top of the value range in the light source only — but this scene's
+   light is cold, and cold light does not glare. */
+const MOON = { cx: 444, cy: 122, r: 17 };
+
+const HALO = [1.9, 2.9].map(k => ({
+  r: MOON.r * k,
+  o: k === 1.9 ? 0.16 : 0.07,
+}));
+
+/* ── water ─────────────────────────────────────────────────────────────────
+   Ripples, spaced by an easing rather than evenly: the near water shows a
+   swell every dozen units and the far water crowds to nothing at the
+   waterline. Each is broken into dashes, because an unbroken horizontal line
+   across a lake reads as a ruled line and nothing else. */
+const RIPPLES = (() => {
+  const d: string[] = [];
+  let y = WATER + 2.5;
+  let gap = 2.6;
+  while (y < H + 4) {
+    const runs = 1 + Math.floor(rnd() * 3);
+    for (let k = 0; k < runs; k++) {
+      const x0 = rnd() * W * 0.92;
+      const len = (30 + rnd() * 150) * (0.4 + (y - WATER) / 200);
+      d.push(
+        `M${n2(x0)} ${n2(y + j(0.8))}L${n2(Math.min(W, x0 + len))} ${n2(y + j(0.8))}`,
+      );
+    }
+    y += gap;
+    gap *= 1.17;
+  }
+  return d.join("");
+})();
+
+/* ── the reflection ────────────────────────────────────────────────────────
+   Sampled, not mirrored. For each band of water: find the height it reflects,
+   measure the ruin there, displace it sideways and draw it as a dash. The
+   displacement is a slow wave plus jitter — a swell moving through, not
+   noise. Bands thin out and shorten with depth, so the reflection falls apart
+   as it comes toward the viewer, which is the direction the eye reads it.
+ */
+const FORESHORTEN = 0.58;
+
+const REFLECTION = (() => {
+  const bands: { d: string; o: number }[] = [];
+  for (let y = WATER + 2; y < WATER + 124; y += 2.9) {
+    const depth = (y - WATER) / 124;
+    /* the height this band reflects */
+    const src = WATER - (y - WATER) / FORESHORTEN;
+    if (src < 60) break;
+    const wave = Math.sin(y * 0.21) * 5.5 + Math.sin(y * 0.62) * 2.2;
+    for (const [xl, xr] of silhouette(src)) {
+      /* the band breaks up as it nears the viewer */
+      if (rnd() < depth * 0.55) continue;
+      const cut = depth * 0.34 * (xr - xl) * rnd();
+      const a = xl + wave + cut + j(2);
+      const b = xr + wave - cut + j(2);
+      if (b - a < 3) continue;
+      /* it does not stop, it runs out: a reflection that ends on a line is
+         a second waterline, and one is all a lake gets */
+      bands.push({
+        d: `M${n2(a)} ${n2(y)}L${n2(b)} ${n2(y)}`,
+        o: Math.pow(1 - depth, 1.35),
+      });
+    }
+  }
+  return bands;
+})();
+
+/* The moon's reflection is the brighter one and it runs the full depth of the
+   water: the ruin blocks the sky, the moon does not. It is a column of dashes
+   that widens as it comes forward, because each further band of water is
+   tilted a little more toward the eye. */
+const MOON_REFLECTION = (() => {
+  const d: { d: string; o: number }[] = [];
+  for (let y = WATER + 3; y < H - 4; y += 3.4) {
+    const depth = (y - WATER) / (H - WATER);
+    const spread = MOON.r * (0.5 + depth * 2.6);
+    const wave = Math.sin(y * 0.27) * 3.5;
+    const runs = 1 + Math.floor(rnd() * 2);
+    for (let k = 0; k < runs; k++) {
+      const half = spread * (0.25 + rnd() * 0.75);
+      const cx = MOON.cx + wave + j(6);
+      d.push({
+        d: `M${n2(cx - half)} ${n2(y)}L${n2(cx + half)} ${n2(y)}`,
+        o: (1 - depth * 0.55) * (0.5 + rnd() * 0.5),
+      });
+    }
+  }
+  return d;
+})();
+
+/* The waterline itself: one line, and the only unbroken one in the drawing.
+   Everything meets it, so it is what tells the eye where the world stops. */
+const SHORE = `M0 ${WATER}L${W} ${WATER}`;
+
+/* The few ripples that pass in front of the ruin's submerged courses. Short,
+   and only where the masonry is, so they read as the surface cutting across
+   it rather than as more lake. */
+const NEAR_RIPPLES = (() => {
+  const d: string[] = [];
+  for (let y = WATER + 1.5; y < WATER + SUNK; y += 2.4) {
+    for (const [xl, xr] of silhouette(WATER - 2)) {
+      const a = xl - 12 + j(6);
+      const b = xr + 14 + j(6);
+      d.push(`M${n2(a)} ${n2(y + j(0.6))}L${n2(b)} ${n2(y + j(0.6))}`);
+    }
+  }
+  return d.join("");
+})();
+---
+
+<div class="scene scene-drowned absolute" aria-hidden="true">
+  <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} focusable="false">
+    <defs>
+      {
+        /* The same pen as Approach and Clerestory: a small displacement so no
+          ruled line is mechanically straight. The filter region is widened
+          because displacement pushes pixels outward and would clip itself. */
+      }
+      <filter
+        id="drowned-pen"
+        x="-6%"
+        y="-6%"
+        width="112%"
+        height="112%"
+        color-interpolation-filters="sRGB"
+      >
+        <feTurbulence
+          type="fractalNoise"
+          baseFrequency="0.028"
+          numOctaves="3"
+          seed="41"
+          result="pen"></feTurbulence>
+        <feDisplacementMap
+          in="SourceGraphic"
+          in2="pen"
+          scale="1.4"
+          xChannelSelector="R"
+          yChannelSelector="G"></feDisplacementMap>
+      </filter>
+
+      {
+        /* SVG masks are LUMINANCE by default — white reveals, black hides.
+          Written with the black stops that are correct for a CSS mask-image,
+          this hides the entire drawing. */
+      }
+      <linearGradient id="drowned-fade-x" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="white" stop-opacity="0"></stop>
+        <stop offset="32%" stop-color="white" stop-opacity="1"></stop>
+      </linearGradient>
+      <linearGradient id="drowned-fade-y" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="white" stop-opacity="0"></stop>
+        <stop offset="24%" stop-color="white" stop-opacity="1"></stop>
+      </linearGradient>
+      <mask id="drowned-fade-left">
+        <rect width={W} height={H} fill="url(#drowned-fade-x)"></rect>
+      </mask>
+      <mask id="drowned-fade-top">
+        <rect width={W} height={H} fill="url(#drowned-fade-y)"></rect>
+      </mask>
+    </defs>
+
+    <g mask="url(#drowned-fade-top)">
+      <g mask="url(#drowned-fade-left)" filter="url(#drowned-pen)">
+        {/* the sky, such as it is: the moon and what it throws */}
+        {
+          HALO.map(h => (
+            <circle
+              class="halo"
+              cx={MOON.cx}
+              cy={MOON.cy}
+              r={n2(h.r)}
+              style={`stroke-opacity:${h.o}`}
+            />
+          ))
+        }
+        <circle class="moon" cx={MOON.cx} cy={MOON.cy} r={MOON.r}></circle>
+
+        {/* the water, before the ruin, so the ruin stands in front of it */}
+        <path class="ripple" d={RIPPLES}></path>
+        {
+          MOON_REFLECTION.map(b => (
+            <path
+              class="moon-band"
+              d={b.d}
+              style={`stroke-opacity:${n2(b.o)}`}
+            />
+          ))
+        }
+        <g transform={`rotate(${-TILT} ${PIVOT.x} ${PIVOT.y})`}>
+          {
+            REFLECTION.map(b => (
+              <path class="band" d={b.d} style={`stroke-opacity:${n2(b.o)}`} />
+            ))
+          }
+        </g>
+        <path class="shore" d={SHORE}></path>
+
+        {/* the ruin, tilted as one mass — see TILT */}
+        <g transform={`rotate(${TILT} ${PIVOT.x} ${PIVOT.y})`}>
+          {masonry.map((d, i) => <path class={`course m${i}`} d={d} />)}
+          <path class="wall" d={outline}></path>
+          <path class="hatch" d={OPENING_HATCH}></path>
+          <path class="opening" d={OPENING_PATHS}></path>
+        </g>
+        <path class="rubble" d={RUBBLE}></path>
+
+        {
+          /* the surface again, over the masonry that goes under it: the near
+            ripples and the shore are the only marks in the drawing that are
+            in FRONT of the ruin, and they are what put it in the water
+            rather than against it */
+        }
+        <path class="ripple near" d={NEAR_RIPPLES}></path>
+        <path class="shore" d={SHORE}></path>
+      </g>
+    </g>
+  </svg>
+</div>
+
+<style>
+  .scene-drowned svg {
+    color: var(--scene-ink);
+  }
+
+  /* The ruin is drawn in line only. The moon and its reflection are the only
+     marks with any area, which is what makes the light the subject — the same
+     rule Clerestory settled with its shafts. */
+  .wall {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.1;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.9;
+  }
+
+  .course {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 0.55;
+    stroke-linecap: round;
+  }
+
+  /* keep, tower, curtain — the step in value is what gives the mass depth */
+  .m0 {
+    opacity: 0.3;
+  }
+
+  .m1 {
+    opacity: 0.52;
+  }
+
+  .m2 {
+    opacity: 0.24;
+  }
+
+  .opening {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 0.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.85;
+  }
+
+  .hatch {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 0.5;
+    opacity: 0.4;
+  }
+
+  .rubble {
+    fill: currentColor;
+    fill-opacity: 0.24;
+    stroke: currentColor;
+    stroke-width: 0.5;
+    stroke-opacity: 0.5;
+  }
+
+  /* The one thing in the drawing that is allowed to be nearly solid. Every
+     other mark is a line, so the disc reads as the source without needing to
+     be large — it was at 0.5 and read as a hole in the sky rather than as the
+     moon. */
+  .moon {
+    fill: currentColor;
+    fill-opacity: 0.88;
+    stroke: none;
+  }
+
+  /* A halo is what the eye reads as cold air, and it is cheaper than any
+     amount of detail in the disc itself. */
+  .halo {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 0.7;
+  }
+
+  /* One unbroken line in the whole drawing. */
+  .shore {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 0.8;
+    opacity: 0.5;
+  }
+
+  .ripple {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 0.5;
+    stroke-linecap: round;
+    opacity: 0.16;
+  }
+
+  /* Heavier than the rest of the water, because these are the ones doing the
+     work of hiding a wall. */
+  .ripple.near {
+    stroke-width: 0.9;
+    opacity: 0.3;
+  }
+
+  .band {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: butt;
+    opacity: 0.3;
+  }
+
+  .moon-band {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    opacity: 0.42;
+  }
+</style>

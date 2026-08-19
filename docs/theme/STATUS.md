@@ -117,6 +117,14 @@ These cost real time. All are recorded in `design.md` §13 as anti-patterns.
 - The repo had no prettier config, so `npm run format` reformatted untouched files. Conventions pinned in `.prettierrc.json`; `tokens.css` is in `.prettierignore` because the generator owns it.
 - The site description was the title again, so every search result and social
   card read "Weibo's Home" twice. It says what the site is about now.
+- **Drowned** shipped to the 404 — a leaning ruin standing in a lake under a
+  cold moon, no gold in it. Two things it turned on, both in `scenes.md` §3.5:
+  a lean has to be a rotation rather than a shear, because the eye reads lean
+  from the angle against the waterline; and the reflection is sampled from the
+  silhouette band by band, never mirrored. **The lake footer prototype is
+  closed by this**, not built: `the-lake.html` reflects the footer text in
+  water on the same page that now has a lake in the corner, and two water
+  treatments on one page is one too many.
 - Kindled painted every rune bullet gold, because `--ornament` equalled
   `--torch` there — twenty of them on the about page. Pseudo-element paint is
   invisible to a naive audit of computed styles, which is how it survived this
@@ -167,8 +175,8 @@ is no feature branch.
 - **The world flip is instant** — the veil is gone.
 - **Three marks**: a carved sigil for the site, a sun and moon for the world
   control, a rune for the edit link.
-- **Two scenes**: **Approach** on the home page and **Clerestory** behind the
-  four listing pages, both generated pen drawings. Clerestory is built in
+- **Three scenes**: **Approach** on the home page, **Clerestory** behind the
+  four listing pages and **Drowned** on the 404, all generated pen drawings. Clerestory is built in
   one-point perspective, which is what makes that much architecture affordable.
 - **The four marks are drawn, not stroked.** `src/utils/nib.ts` takes a spine
   and a pressure profile and returns the outline a nib would have left, so the
@@ -191,17 +199,17 @@ is no feature branch.
    is invisible in a headless shot because the overlay scrollbar does not
    render. Still open there: **the kindled world has never been looked at on a
    real screen**, only in captures.
-2. **The remaining three scenes** — Court, Rest, Drowned. Briefs in
-   [`scenes.md`](./scenes.md), which also carries two open decisions; Drowned
-   is the natural next one and Rest is the hard one.
+2. **The last two scenes** — Court and Rest. Briefs in
+   [`scenes.md`](./scenes.md), which also carries two open decisions. Rest is
+   the hard one and may not be a pen drawing at all: §7 records that the same
+   approach produced usable architecture and unusable figuration, and Court is
+   architecture.
 3. **Ash variations and the stain texture.** Soot ground, ruled headings,
    mincho and the spec block are all prototyped and none is chosen. The stain
    must ship un-tiled — a repeat is visible on a wide screen — and its dials
    are in `stain-calibration.html`.
-4. **The lake footer** on the 404. It works; keep the ripple static, since §11
-   permits one ambient animation and the grain is not it.
-5. **The post header image rule** (`design.md` §15).
-6. **Review the `about` page prose** against the measure. The measure itself is
+4. **The post header image rule** (`design.md` §15).
+5. **Review the `about` page prose** against the measure. The measure itself is
    fine at the smaller scale; what is left is the writing — and the coloured
    emoji in "Let's Connect", which are the only full-saturation pixels on the
    site.
