@@ -7,10 +7,11 @@ generated or drawn by someone who has never seen the theme, and still come back
 usable. Read [`design.md`](./design.md) for the system the scenes have to live
 inside; §0 (Ash), §4 (gold budget) and §11 (motion) all constrain what follows.
 
-**Status: four of five built** — Approach, Clerestory, Drowned and Court, all
-as SVG pen drawings rather than as the raster assets §2 specifies. Rest is the
-one left, and §7 is why it is last. §4 is decided; §5 was settled by the way
-the drawings are made. Nothing here blocks the release — see
+**Status: all five built** — Approach, Clerestory, Court, Rest and Drowned, as
+SVG components rather than as the raster assets §2 specifies. §4 and §5 are
+both decided. §7 stands as written about the painting program, with one
+correction recorded in §3.4: figuration is reachable from a skeleton, which is
+not what that program was doing. Nothing here blocks the release — see
 [`STATUS.md`](./STATUS.md) §7. Painting these programmatically was attempted
 and rejected; §7 records why.
 
@@ -258,11 +259,37 @@ Shipped as `src/components/scenes/Court.astro`. Three things it turned on:
 - **Avoid:** cobwebs, skulls, rubble on the floor, anything that reads as
   haunted. Decline is not horror.
 
-### 3.4 Rest → **about**
+### 3.4 Rest → **about** — **built**
 
 > A weary man in full armour, sitting beside a bonfire, resting.
 
 The only scene with a person in it, on the only page with a person behind it.
+
+Shipped as `src/components/scenes/Rest.astro`, and it is the one §7 predicted
+would fail. What got through it is that **a figure is a skeleton with mass hung
+on it, not a pile of shapes**: eleven joints are written as points, and every
+plate is a `nib.ts` stroke or a closed loop through those points. Move a joint
+and the armour follows, so the posture is what is being edited rather than the
+drawing. Stacking ellipses failed because ellipses have no skeleton to be wrong
+about.
+
+Three things it depends on:
+
+- **The posture is three relations and none of them is armour**: head forward
+  of shoulder, shoulder forward of hip, forearms down on the knees. Drawn
+  upright in the same plate he is a monument.
+- **It is the only scene drawn as mass rather than as line.** A line-drawn man
+  at 460px reads as a diagram. The figure is filled silhouette, and four rim
+  strokes — under the pauldron, along the brow, across the top of the thigh,
+  down the front of the shin — are the entire lighting model.
+- **The fire had to move until it overlapped him.** At arm's length it read as
+  a man and a fire; crossing his shin it reads as a man at a fire.
+
+**Its limit, honestly:** it reads as a seated figure resting, and the armour is
+implied rather than described — closer to a hooded man than to plate. At scene
+scale, dim and behind text, the silhouette is what carries and it carries. If
+it ever needs to read as _plate_, that is the case §7 makes for Claude Design,
+and the skeleton in this file is the pose to hand it.
 
 **Reference:** Barry Allen, _Knight Resting at Bonfire_
 (<https://displate.com/displate/7192913>) — dark armour, helmet set down on the

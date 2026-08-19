@@ -117,6 +117,12 @@ These cost real time. All are recorded in `design.md` §13 as anti-patterns.
 - The repo had no prettier config, so `npm run format` reformatted untouched files. Conventions pinned in `.prettierrc.json`; `tokens.css` is in `.prettierignore` because the generator owns it.
 - The site description was the title again, so every search result and social
   card read "Weibo's Home" twice. It says what the site is about now.
+- **Rest** shipped to the about page, which `scenes.md` §7 predicted could not
+  be done this way. The correction is that a figure is a skeleton with mass
+  hung on it: eleven joints as points, every plate a `nib.ts` stroke through
+  them, so the posture is what gets edited. It is the only scene drawn as mass
+  rather than line, and four rim strokes are the whole lighting model. Its
+  limit is recorded too — the armour is implied, not described.
 - **Court** shipped to the archive — three faded banners on a rail, one
   charged with a cross. Two things it turned on: the hem is the whole
   silhouette (straight-cut, a banner reads as a blind, and the first version
@@ -185,9 +191,10 @@ is no feature branch.
 - **The world flip is instant** — the veil is gone.
 - **Three marks**: a carved sigil for the site, a sun and moon for the world
   control, a rune for the edit link.
-- **Four scenes**: **Approach** on the home page, **Clerestory** behind posts
-  and tags, **Court** on the archive and **Drowned** on the 404, all generated
-  pen drawings. Clerestory is built in
+- **All five scenes**: **Approach** on the home page, **Clerestory** behind
+  posts and tags, **Court** on the archive, **Rest** on the about page and
+  **Drowned** on the 404 — all generated drawings rather than the raster
+  assets `scenes.md` §2 specifies. Clerestory is built in
   one-point perspective, which is what makes that much architecture affordable.
 - **The four marks are drawn, not stroked.** `src/utils/nib.ts` takes a spine
   and a pressure profile and returns the outline a nib would have left, so the
@@ -210,16 +217,12 @@ is no feature branch.
    is invisible in a headless shot because the overlay scrollbar does not
    render. Still open there: **the kindled world has never been looked at on a
    real screen**, only in captures.
-2. **The last scene — Rest**, on the about page. It is the hard one and may not
-   be a pen drawing at all: [`scenes.md`](./scenes.md) §7 records that this
-   approach produced usable architecture and unusable figuration, and a seated
-   knight is figuration. The other four are built.
-3. **Ash variations and the stain texture.** Soot ground, ruled headings,
+2. **Ash variations and the stain texture.** Soot ground, ruled headings,
    mincho and the spec block are all prototyped and none is chosen. The stain
    must ship un-tiled — a repeat is visible on a wide screen — and its dials
    are in `stain-calibration.html`.
-4. **The post header image rule** (`design.md` §15).
-5. **Review the `about` page prose** against the measure. The measure itself is
+3. **The post header image rule** (`design.md` §15).
+4. **Review the `about` page prose** against the measure. The measure itself is
    fine at the smaller scale; what is left is the writing — and the coloured
    emoji in "Let's Connect", which are the only full-saturation pixels on the
    site.

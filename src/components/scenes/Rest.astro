@@ -1,0 +1,518 @@
+---
+/**
+ * Rest — the scene behind the about page. See docs/theme/scenes.md §3.4.
+ *
+ * The only scene with a person in it, on the only page with a person behind
+ * it, and the one §7 says this whole approach fails at: an earlier painting
+ * program produced usable architecture and unusable figuration, because
+ * stacking primitives does not make a seated human.
+ *
+ * The way through is that a figure is not a pile of shapes, it is a SKELETON
+ * with mass hung on it. Every joint below is one point; every plate of armour
+ * is a pen stroke or a closed loop through those points, from `nib.ts` — the
+ * same pen that draws the site's marks. Move a joint and the armour follows,
+ * which is what makes the posture editable rather than the drawing.
+ *
+ * ── what the drawing depends on ──────────────────────────────────────────
+ *
+ * POSTURE IS THE SUBJECT, and it lives in three relations, none of them the
+ * armour: the head is FORWARD of the shoulder, the shoulder is forward of the
+ * hip, and the forearms rest on the knees. A knight drawn upright in the same
+ * armour is a monument. Weariness is the angle of the spine.
+ *
+ * SEEN SLIGHTLY FROM ABOVE, so he reads as sitting DOWN rather than sitting
+ * up: the ground line passes behind his boots rather than at them, and the
+ * seat is a low block he is folded onto.
+ *
+ * THE FIRE OVERLAPS HIM. Two objects evenly spaced across a frame read as two
+ * objects; overlapping ones read as a scene. The glow crosses his forward knee
+ * and the far side of him is lost entirely.
+ *
+ * ONE GOLD, and it is the fire — §3.4. Everything else in the drawing is the
+ * dark the fire is visible against, which is also why the figure is the only
+ * one of the four scenes drawn as MASS rather than as line: a line-drawn man
+ * at this size reads as a diagram, and this scene needs a silhouette.
+ *
+ * NO FACE. §3.4: he is anonymous, and the reader is meant to be able to be
+ * him. The head is a shape with a jawline and nothing else.
+ */
+import { nib, loop, type Pt } from "@/utils/nib";
+
+const n2 = (v: number) => Math.round(v * 100) / 100;
+
+const W = 520;
+const H = 400;
+
+/** the ground, and the low block he is sitting on */
+const GROUND = 330;
+
+/* ── the skeleton ──────────────────────────────────────────────────────────
+   Head forward of shoulder, shoulder forward of hip, forearms down onto the
+   knees. He faces right, into the fire. */
+const HIP: Pt = [212, 268];
+const CHEST: Pt = [226, 222];
+const NECK: Pt = [233, 205];
+const SHOULDER: Pt = [224, 209];
+/** the head is hung off the neck rather than placed: bowed is a relation */
+const HEAD: Pt = [NECK[0] + 10, NECK[1] - 15];
+
+/** a point relative to a joint — the plates are all written this way, so the
+    posture above is the thing being edited and the armour follows it */
+const at = (p: Pt, dx: number, dy: number): Pt => [p[0] + dx, p[1] + dy];
+const ELBOW: Pt = [250, 243];
+const WRIST: Pt = [281, 259];
+const KNEE: Pt = [288, 262];
+const ANKLE: Pt = [276, 324];
+/** the far leg, a step behind and lower in value */
+const KNEE_FAR: Pt = [274, 270];
+const ANKLE_FAR: Pt = [259, 326];
+
+/* ── mass ──────────────────────────────────────────────────────────────────
+   Plates as pen strokes: a limb is a stroke that swells at the joint and
+   narrows between, which is exactly what `nib`'s pressure profile does. */
+const thigh = nib([HIP, [250, 262], KNEE], {
+  width: 12,
+  entry: 0.85,
+  exit: 0.7,
+  taper: 8,
+  seed: 11,
+});
+const shin = nib([KNEE, [285, 292], ANKLE], {
+  width: 8.5,
+  entry: 0.9,
+  exit: 0.75,
+  taper: 7,
+  seed: 12,
+});
+const thighFar = nib([[206, 272], [244, 268], KNEE_FAR], {
+  width: 10,
+  entry: 0.8,
+  exit: 0.7,
+  taper: 8,
+  seed: 13,
+});
+const shinFar = nib([KNEE_FAR, [270, 298], ANKLE_FAR], {
+  width: 7.5,
+  entry: 0.9,
+  exit: 0.8,
+  taper: 6,
+  seed: 14,
+});
+const upperArm = nib([SHOULDER, [236, 224], ELBOW], {
+  width: 8,
+  entry: 0.9,
+  exit: 0.8,
+  taper: 6,
+  seed: 15,
+});
+const forearm = nib([ELBOW, [266, 253], WRIST], {
+  width: 6.8,
+  entry: 0.9,
+  exit: 0.85,
+  taper: 5,
+  seed: 16,
+});
+
+/** the boots, flat on the ground and seen a little from above */
+const boot = (a: Pt, toe: number) =>
+  loop([
+    [a[0] - 7, a[1] - 4],
+    [a[0] + toe, a[1] - 2],
+    [a[0] + toe + 2, a[1] + 5],
+    [a[0] - 8, a[1] + 5],
+  ]);
+
+/**
+ * The cuirass. A closed loop rather than a stroke, because the torso is the
+ * one part of him with a silhouette of its own — the fall of the breastplate
+ * from the shoulder down to the fauld is what says armour at this size.
+ */
+const cuirass = loop([
+  at(HIP, -7, -10),
+  at(CHEST, -15, 4),
+  at(SHOULDER, -2, -1),
+  at(SHOULDER, 16, -1),
+  at(CHEST, 20, 6),
+  at(HIP, 32, -16),
+  at(HIP, 18, 2),
+  at(HIP, 0, 4),
+]);
+
+/** the pauldron: the plate that sits over the shoulder and reads first */
+const pauldron = loop([
+  at(SHOULDER, -12, 3),
+  at(SHOULDER, 0, -7),
+  at(SHOULDER, 16, -5),
+  at(SHOULDER, 19, 7),
+  at(SHOULDER, 6, 13),
+  at(SHOULDER, -9, 12),
+]);
+
+/** the head, bowed. A jaw and a skull, and nothing else in it. */
+const head = loop([
+  at(HEAD, -9, -10),
+  at(HEAD, 3, -12),
+  at(HEAD, 10, -4),
+  at(HEAD, 8, 7),
+  at(HEAD, -2, 12),
+  at(HEAD, -11, 5),
+]);
+
+/** the gauntlets, hanging off the knee where the forearms end */
+const hands = loop([
+  at(WRIST, -6, -5),
+  at(WRIST, 7, -6),
+  at(WRIST, 10, 3),
+  at(WRIST, 1, 7),
+  at(WRIST, -8, 3),
+]);
+
+/* ── the things he has put down ────────────────────────────────────────────
+   §3.4's reference has the helmet set on the ground and the sword leaning
+   nearby. They are why the scene reads as a rest rather than as a watch: a
+   man who has taken his helmet off is not expecting anything. */
+const helm = loop([
+  [196, 316],
+  [208, 312],
+  [217, 318],
+  [214, 328],
+  [201, 329],
+  [193, 324],
+]);
+const helmSlit = nib(
+  [
+    [199, 320],
+    [212, 318],
+  ],
+  { width: 1.2, taper: 2, seed: 21 },
+);
+/* a keel over the skull. Without it the helmet on the ground is a stone */
+const helmCrest = nib(
+  [
+    [195, 320],
+    [204, 311],
+    [216, 316],
+  ],
+  { width: 1.1, taper: 5, seed: 24 },
+);
+
+const sword = nib(
+  [
+    [163, 330],
+    [158, 286],
+    [156, 236],
+  ],
+  { width: 2.6, entry: 0.9, exit: 0.25, taper: 14, seed: 22 },
+);
+const guard = nib(
+  [
+    [147, 253],
+    [167, 247],
+  ],
+  { width: 2.2, taper: 3, seed: 23 },
+);
+const pommel = loop([
+  [153, 236],
+  [159, 233],
+  [162, 238],
+  [156, 241],
+]);
+
+/** the block he is folded onto — barely there, and behind him */
+const seat = `M188 272L188 320L246 320L246 274`;
+
+/* ── the fire ──────────────────────────────────────────────────────────────
+   Low, to his right, close enough that its glow crosses his forward knee.
+   The flame is the one gold in the scene and the only warm thing in it. */
+const FIRE: Pt = [316, 306];
+
+const flames = [
+  {
+    spine: [
+      [312, 316],
+      [316, 292],
+      [313, 274],
+    ] as Pt[],
+    w: 4.4,
+    s: 31,
+  },
+  {
+    spine: [
+      [322, 318],
+      [327, 298],
+      [323, 284],
+    ] as Pt[],
+    w: 3.4,
+    s: 32,
+  },
+  {
+    spine: [
+      [307, 318],
+      [302, 302],
+      [305, 291],
+    ] as Pt[],
+    w: 2.6,
+    s: 33,
+  },
+].map(f =>
+  nib(f.spine, {
+    width: f.w,
+    entry: 0.95,
+    exit: 0.05,
+    taper: 16,
+    wobble: 0.5,
+    seed: f.s,
+  }),
+);
+
+/** the logs, crossed, drawn as two struck strokes rather than as a stack */
+const logs = [
+  nib(
+    [
+      [296, 322],
+      [338, 314],
+    ],
+    { width: 3.4, taper: 5, seed: 41 },
+  ),
+  nib(
+    [
+      [300, 313],
+      [336, 323],
+    ],
+    { width: 3, taper: 5, seed: 42 },
+  ),
+];
+
+/**
+ * Rim light. The fire is low and to his right, so it catches the underside of
+ * the pauldron, the brow, the top of the thigh and the front of the shin —
+ * and nothing else. These four strokes are the only marks in the drawing
+ * brighter than the mass, and they are what turn a silhouette into a lit one.
+ */
+const rims = [
+  nib(
+    [
+      [240, 206],
+      [244, 216],
+      [242, 224],
+    ],
+    { width: 1.5, taper: 4, seed: 51 },
+  ),
+  nib(
+    [
+      [246, 182],
+      [252, 189],
+      [250, 197],
+    ],
+    { width: 1.3, taper: 4, seed: 52 },
+  ),
+  nib(
+    [
+      [232, 254],
+      [262, 251],
+      [286, 254],
+    ],
+    { width: 1.6, taper: 8, seed: 53 },
+  ),
+  nib(
+    [
+      [292, 268],
+      [292, 296],
+      [284, 318],
+    ],
+    { width: 1.4, taper: 8, seed: 54 },
+  ),
+  /* the fauld: the lame that ends the cuirass, and the line that stops the
+     torso and the thigh reading as one shape */
+  nib(
+    [
+      [216, 264],
+      [232, 266],
+      [243, 259],
+    ],
+    { width: 1.2, taper: 6, seed: 55 },
+  ),
+  /* the vambrace, catching the fire along the top of the forearm */
+  nib(
+    [
+      [253, 240],
+      [268, 249],
+      [280, 254],
+    ],
+    { width: 1.3, taper: 6, seed: 56 },
+  ),
+];
+
+/** the ground: one line, and a little broken hatch where the light falls */
+const GROUND_LINE = `M0 ${GROUND}L${W} ${GROUND}`;
+const GLINT = (() => {
+  const d: string[] = [];
+  let seed = 20260821;
+  const rnd = () => (
+    (seed = (seed * 1664525 + 1013904223) >>> 0),
+    seed / 4294967296
+  );
+  for (let i = 0; i < 22; i++) {
+    const x = 250 + rnd() * 200;
+    const y = GROUND + 2 + rnd() * 26;
+    const len = 6 + rnd() * 26;
+    d.push(`M${n2(x)} ${n2(y)}L${n2(x + len)} ${n2(y)}`);
+  }
+  return d.join("");
+})();
+---
+
+<div class="scene scene-rest absolute" aria-hidden="true">
+  <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} focusable="false">
+    <defs>
+      <filter
+        id="rest-pen"
+        x="-6%"
+        y="-6%"
+        width="112%"
+        height="112%"
+        color-interpolation-filters="sRGB"
+      >
+        <feTurbulence
+          type="fractalNoise"
+          baseFrequency="0.026"
+          numOctaves="3"
+          seed="9"
+          result="pen"></feTurbulence>
+        <feDisplacementMap
+          in="SourceGraphic"
+          in2="pen"
+          scale="1.2"
+          xChannelSelector="R"
+          yChannelSelector="G"></feDisplacementMap>
+      </filter>
+
+      {/* SVG masks are LUMINANCE by default — white reveals, black hides. */}
+      <linearGradient id="rest-fade-x" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="white" stop-opacity="0"></stop>
+        <stop offset="26%" stop-color="white" stop-opacity="1"></stop>
+      </linearGradient>
+      <linearGradient id="rest-fade-y" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="white" stop-opacity="0"></stop>
+        <stop offset="22%" stop-color="white" stop-opacity="1"></stop>
+      </linearGradient>
+      <mask id="rest-fade-left">
+        <rect width={W} height={H} fill="url(#rest-fade-x)"></rect>
+      </mask>
+      <mask id="rest-fade-top">
+        <rect width={W} height={H} fill="url(#rest-fade-y)"></rect>
+      </mask>
+
+      {/* the glow: one source, low, and it reaches him */}
+      <radialGradient id="rest-glow" cx="0.5" cy="0.5" r="0.5">
+        <stop offset="0%" stop-color="var(--torch)" stop-opacity="0.22"></stop>
+        <stop offset="100%" stop-color="var(--torch)" stop-opacity="0"></stop>
+      </radialGradient>
+    </defs>
+
+    <g mask="url(#rest-fade-top)">
+      <g mask="url(#rest-fade-left)" filter="url(#rest-pen)">
+        <ellipse
+          class="glow"
+          cx={FIRE[0]}
+          cy={FIRE[1] + 6}
+          rx="118"
+          ry="62"
+          fill="url(#rest-glow)"></ellipse>
+
+        <path class="ground" d={GROUND_LINE}></path>
+        <path class="glint" d={GLINT}></path>
+
+        {/* what he has put down */}
+        <path class="mass dim" d={helm}></path>
+        <path class="rim" d={helmSlit}></path>
+        <path class="rim" d={helmCrest}></path>
+        <path class="mass dim" d={sword}></path>
+        <path class="mass dim" d={guard}></path>
+        <path class="mass dim" d={pommel}></path>
+
+        <path class="seat" d={seat}></path>
+
+        {/* the far side of him, lost in the dark */}
+        <path class="mass far" d={thighFar}></path>
+        <path class="mass far" d={shinFar}></path>
+        <path class="mass far" d={boot(ANKLE_FAR, 9)}></path>
+
+        {/* the figure */}
+        <path class="mass" d={cuirass}></path>
+        <path class="mass" d={thigh}></path>
+        <path class="mass" d={shin}></path>
+        <path class="mass" d={boot(ANKLE, 11)}></path>
+        <path class="mass" d={upperArm}></path>
+        <path class="mass" d={forearm}></path>
+        <path class="mass" d={hands}></path>
+        <path class="mass" d={pauldron}></path>
+        <path class="mass" d={head}></path>
+
+        {rims.map(d => <path class="rim" d={d} />)}
+
+        {/* the fire, in front of him */}
+        {logs.map(d => <path class="mass dim" d={d} />)}
+        {flames.map(d => <path class="flame" d={d} />)}
+      </g>
+    </g>
+  </svg>
+</div>
+
+<style>
+  .scene-rest svg {
+    color: var(--scene-ink);
+  }
+
+  /* The only scene drawn as mass rather than as line. A man built from lines
+     reads as a diagram at this size; a silhouette reads as a man. */
+  .mass {
+    fill: currentColor;
+    fill-opacity: 0.62;
+    stroke: none;
+  }
+
+  .far {
+    fill-opacity: 0.34;
+  }
+
+  .dim {
+    fill-opacity: 0.44;
+  }
+
+  /* Four strokes, and they are the whole lighting model. */
+  .rim {
+    fill: currentColor;
+    fill-opacity: 1;
+    stroke: none;
+  }
+
+  .flame {
+    fill: var(--torch);
+    fill-opacity: 0.85;
+    stroke: none;
+  }
+
+  .seat {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 0.8;
+    opacity: 0.3;
+  }
+
+  .ground {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 0.7;
+    opacity: 0.4;
+  }
+
+  /* firelight on a stone floor, and the only place the ground is drawn at all */
+  .glint {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 0.6;
+    stroke-linecap: round;
+    opacity: 0.22;
+  }
+</style>
