@@ -1,6 +1,6 @@
 # Torchlight — status and handoff
 
-**Last updated:** 17 August 2026
+**Last updated:** 19 August 2026
 **Branch:** `main` — work goes straight to `main` and a push is the deploy.
 **State:** **released and live** at <https://bananaappletw.github.io/>. The
 direction is settled: B — Ash (§1).
@@ -36,7 +36,7 @@ Everything below is on `main`, live, builds clean, and is verified:
 - `npx astro check` — 0 errors, 0 warnings
 - `npm test` — 20/20 pass
 - `npm run format:check` — passes
-- `npm run lint` — **fails, pre-existing**: no `eslint.config.js`; ESLint 10 will not read the old v8 config. Unrelated to the theme.
+- `npm run lint` — passes; flat config added 19 August 2026 (§6).
 
 **Applied to:** base layer and atmosphere, typography, header (HUD), cards, tags, pagination, breadcrumbs, footer, home, post, section pages, 404, list, search, Shiki, Mermaid, OG images, and the bonfire.
 
@@ -115,6 +115,13 @@ These cost real time. All are recorded in `design.md` §13 as anti-patterns.
 - The List page lost its nav entry during the header rebuild; restored.
 - `list.astro` referenced three removed custom properties and carried a four-colour category palette.
 - The repo had no prettier config, so `npm run format` reformatted untouched files. Conventions pinned in `.prettierrc.json`; `tokens.css` is in `.prettierignore` because the generator owns it.
+- `npm run lint` had no config to read. `eslint.config.js` is flat config now:
+  ESLint's recommended set, `eslint-plugin-astro`, and the TypeScript-aware
+  `no-unused-vars` in place of the core rule, which reads a parameter name in
+  a _type_ position as a dead binding and flagged six of them. No type-aware
+  rules — `astro check` already does that pass, and a second one would double
+  the cost. It found one real thing: `slugifyStr` tested for non-Latin text
+  with a literal control-character range, now `\p{ASCII}`.
 
 ---
 
@@ -157,23 +164,18 @@ is no feature branch.
    contrast floors enforced by test) but nobody has _looked_ at it. **Highest
    risk item, because it is invisible to every automated check.**
 2. **The remaining three scenes** — Court, Rest, Drowned. Briefs in
-   `scenes.md`; Drowned is the natural next one and Rest is the hard one.
-3. **Ash variations and the stain texture.** Prototyped, undecided. The stain
-   must ship un-tiled: a repeat is visible on a wide screen.
-4. **The lake footer** on the 404.
-5. **`eslint.config.js`** — `npm run lint` still fails, pre-existing.
-6. **The post header image rule** (`design.md` §15).
-7. **A real site description.** `torchlight.config.ts` duplicates the title, so
+   [`scenes.md`](./scenes.md), which also carries two open decisions; Drowned
+   is the natural next one and Rest is the hard one.
+3. **Ash variations and the stain texture.** Soot ground, ruled headings,
+   mincho and the spec block are all prototyped and none is chosen. The stain
+   must ship un-tiled — a repeat is visible on a wide screen — and its dials
+   are in `stain-calibration.html`.
+4. **The lake footer** on the 404. It works; keep the ripple static, since §11
+   permits one ambient animation and the grain is not it.
+5. **The post header image rule** (`design.md` §15).
+6. **A real site description.** `torchlight.config.ts` duplicates the title, so
    search results and social cards read "Weibo's Home" twice.
-8. **Review the `about` page prose** against the measure. Never checked.
-
--------------------------- | ------------------------------------------------------------------------------------------- |
-| **The five page scenes** | Briefs complete in [`scenes.md`](./scenes.md); no art. Two decisions open there |
-| **Ash variations** | Soot ground, ruled headings, mincho, spec block — all prototyped, none chosen |
-| **The stain texture** | Must ship un-tiled: a repeat is visible on a wide screen. Dials in `stain-calibration.html` |
-| **The lake footer** | Working, for the 404. Keep the ripple static — §11 permits one ambient animation |
-| **Post header image rule** | `design.md` §15, still undecided |
-| **`eslint.config.js`** | Pre-existing failure, unrelated to the theme |
+7. **Review the `about` page prose** against the measure. Never checked.
 
 ---
 

@@ -21,7 +21,7 @@ This is an Astro-based personal blog and knowledge base built with [AstroPaper](
 - **Run tests**: `npm test` - vitest; enforces the design system's contrast floors and the no-hardcoded-colour rule
 - **Regenerate tokens**: `npm run build:tokens` - writes `src/styles/tokens.css` from `docs/theme/tokens.json` (also runs automatically on `dev` and `build`)
 - **Format code**: `npm run format:check` / `npm run format` - Prettier formatting
-- **Lint code**: `npm run lint` - ESLint checks (currently broken: no `eslint.config.js`, see `docs/theme/design.md` §15)
+- **Lint code**: `npm run lint` - ESLint flat config (`eslint.config.js`); keep it at zero errors
 
 ## Theme: Torchlight
 
@@ -62,7 +62,7 @@ Traps discovered while building it, both recorded in the spec's anti-patterns:
 - `src/types/config.ts` - TypeScript types for configuration
 - `tailwind.config.ts` - Tailwind CSS configuration (if present)
 - `tsconfig.json` - TypeScript settings
-- `.eslintrc.*` - ESLint rules
+- `eslint.config.js` - ESLint flat config
 
 ## Content Management
 

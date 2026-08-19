@@ -484,5 +484,4 @@ If it ever returns, the smallest honest version is a single glyph: `>` before "r
 - **Illustration policy.** No rule yet for post header images; a full-bleed photo would flatten the atmosphere and needs its own treatment before one is introduced.
 - **The `list` page.** Its filter buttons still use a generic pill treatment inherited from before the theme; the category colours were neutralised but the layout has not been reconsidered.
 - **`about` page.** Renders through the shared gate but its prose has not been reviewed against the 60ch measure.
-- **ESLint.** `npm run lint` fails: the repo has no `eslint.config.js`, only the v8-style config ESLint 10 no longer reads. Pre-existing, unrelated to the theme, and worth fixing separately.
 - **Reduced-motion grain.** Grain is static so it is safe, but it has not been tested against high-contrast or forced-colours modes.
