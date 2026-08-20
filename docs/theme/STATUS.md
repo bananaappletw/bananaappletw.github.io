@@ -217,12 +217,21 @@ is no feature branch.
    is invisible in a headless shot because the overlay scrollbar does not
    render. Still open there: **the kindled world has never been looked at on a
    real screen**, only in captures.
-2. **Ash variations and the stain texture.** Soot ground, ruled headings,
+2. **Redraw the bonfire mark.** `src/utils/marks.ts` draws the sword, its
+   guard and the ash mound at 2.7 units in a 96-unit box — 0.69px at the 24px
+   the button renders at — so all three fall under a pixel and only the gold
+   tongues survive. It reads as a leaf sprouting from a dish. The fix is
+   weight, not a new drawing language: keep the `nib` pen every other mark is
+   drawn with, raise the sub-pixel parts above a 4-unit floor, and open the
+   gaps between the tongues to 6, then judge it at 24px on both grounds
+   rather than at 96. A flat-polygon set was tried on 21 August and rejected —
+   no pressure in the line, and it read as sails next to the drawn marks.
+3. **Ash variations and the stain texture.** Soot ground, ruled headings,
    mincho and the spec block are all prototyped and none is chosen. The stain
    must ship un-tiled — a repeat is visible on a wide screen — and its dials
    are in `stain-calibration.html`.
-3. **The post header image rule** (`design.md` §15).
-4. **Review the `about` page prose** against the measure. The measure itself is
+4. **The post header image rule** (`design.md` §15).
+5. **Review the `about` page prose** against the measure. The measure itself is
    fine at the smaller scale; what is left is the writing — and the coloured
    emoji in "Let's Connect", which are the only full-saturation pixels on the
    site.
