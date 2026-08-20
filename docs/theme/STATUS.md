@@ -1,6 +1,6 @@
 # Torchlight — status and handoff
 
-**Last updated:** 17 August 2026
+**Last updated:** 20 August 2026
 **Branch:** `main` — work goes straight to `main` and a push is the deploy.
 **State:** **released and live** at <https://bananaappletw.github.io/>. The
 direction is settled: B — Ash (§1).
@@ -104,11 +104,77 @@ These cost real time. All are recorded in `design.md` §13 as anti-patterns.
 - **12 of 25 posts use `# ` for section headings**, not titles. `h1` and `h2` are styled identically in prose; without that, posts render as several stacked giant titles.
 - **All 25 posts have `description === title`**, so `Card.astro` suppresses the description when it matches.
 - **An SVG arc cap's sweep flag is `0`, not `1`.** The sweep flag is a positive-angle direction in a y-down system, so `1` bends the cap the wrong way and takes a bite _out_ of the end of every stroke. On a long stroke it is a subtle notch; on a short one it dominates, and the sun's rays rendered as ragged slabs until it was found.
-- **Google Fonts is blocked on the sandbox this branch was last built in.** `fonts.google.com/metadata/fonts` returns 403 through the egress proxy, so `unifont` resolves zero files, `fontData` comes back as empty arrays, and `npm run build` dies in the OG template with "Cannot find the font path". Nothing in the repo is wrong — it builds on a machine that can reach Google. Do not "fix" `getFontPathByWeight` in response to this error.
+- **Google Fonts is blocked on the sandbox this branch was last built in.** `fonts.google.com/metadata/fonts` returns 403 through the egress proxy, so `unifont` resolves zero files, `fontData` comes back as empty arrays, and `npm run build` dies in the OG template with "Cannot find the font path". Nothing in the repo is wrong — it builds on a machine that can reach Google. Do not "fix" `getFontPathByWeight` in response to this error. Only the _metadata_ host is blocked; `googleapis` and `gstatic` are reachable, so the faces can be fetched by hand — see §6 for the throwaway-config workaround and its two traps.
+- **A token can hold a legal value and still not do its job.** Every contrast assertion in `tests/tokens.test.ts` measures a token against `--ground`. Two of the light world's marks land on something else — the code rule sits on `--panel`, the scene line is `--scene-ink` composited at `--scene-opacity` — and both are invisible where the tests are green. **Measure a mark over the surface it actually lands on.**
+- **A gold count that reads element styles misses most of the gold.** The rune bullets are `::before` backgrounds. An audit that walks `getComputedStyle(el)` and stops there reports a kindled post at 4 when it is 7.
+- **`npx astro build` skips `build:tokens`.** Only `npm run build` chains them. Edit `tokens.json`, rebuild with `astro build` alone, and you screenshot the previous palette while believing you changed it — twenty minutes of "the change did nothing".
 
 ---
 
-## 6. Also fixed along the way
+## 6. The kindled pass — 20 August 2026
+
+Someone finally _looked_ at the light world: every page type, both worlds, 1440
+and 390, plus hover, focus and selection states, with contrast sampled from the
+rendered page rather than read off `tokens.json`. **Nothing was changed.** All
+three findings turned out to be decisions rather than repairs, and they are now
+§8 items 1–3.
+
+What the pass is worth keeping for is the method and the numbers.
+
+**Count gold from the rendered DOM, not by eye.** Walk every element in the
+viewport, resolve `--torch` to `rgb()`, and match `color` / `background` /
+`fill` / `stroke` / `border` **and `::before` / `::after`** against it — the
+rune bullets are pseudo-element backgrounds and are invisible to any check that
+only reads element styles. Then **collapse descendants**: a mark drawn with the
+nib is a dozen `<path>` elements and is _one_ occurrence, not twelve. Without
+that collapse the same audit reports hollowed's home page at 5 gold and tells
+you nothing. With it: hollowed 1–2 everywhere, kindled 2 everywhere except a
+post at 7.
+
+**Measure a world against its own ground, and compare the two worlds by ratio,
+never by hex.** Kindled's `--scene-ink` is _lighter_ than hollowed's and the
+drawing is _weaker_, because one is drawn on white and the other on near-black.
+The pair of hex values looks reasonable and says nothing. The composite line's
+contrast against its own ground is the only number that means anything, and it
+is 1.50:1 against 2.51:1.
+
+**The light world's failures are all failures of the same kind: a mark that
+exists in hollowed does not exist in kindled.** The scene, the code block's
+left rule, and — inverted — a gold that hollowed spends once and kindled spends
+seven times. None of it is visible to `npm test`, which is exactly what the
+old §7 roadmap warned. The test suite checks that tokens have legal _values_; nothing checks
+that a token does its _job_ once composited over the surface it actually lands
+on. Both misses here are composite failures: `--border` over `--panel`, and
+`--scene-ink` at `--scene-opacity` over `--ground`.
+
+**A doc that contradicts itself reads as settled from either end.** §3 and §4
+of `design.md` have disagreed about kindled bullets since the ornament channel
+was written; each section is internally convincing, and the conflict is only
+visible if you render a bulleted post in the light world and count. Two rules
+that never meet on the same page are not caught by reading.
+
+### Sandbox note for the next session
+
+`npm run build` cannot complete on this runner: `fonts.google.com/metadata/fonts`
+returns 403 through the egress proxy (§5), so `unifont` resolves nothing and the
+OG template throws. **`fonts.googleapis.com` and `fonts.gstatic.com` are _not_
+blocked** — only the metadata host is. So the way to get a real build for
+screenshots is to fetch the woff2/ttf by hand from `gstatic` and point a
+throwaway config at `fontProviders.local()`; never edit `astro.config.ts` for
+this and never "fix" `getFontPathByWeight` in response to the error.
+
+Two traps in that workaround, both of which cost a round here:
+
+- **`astro build` does not regenerate `tokens.css`.** `npm run build` runs
+  `build:tokens` first; `npx astro build` does not. Editing `tokens.json` and
+  rebuilding with `astro build` alone silently screenshots the _old_ palette.
+- Astro v6's local provider takes `provider: fontProviders.local()` with the
+  variants under `options: { variants: [...] }` — a bare `provider: "local"`
+  or a top-level `variants` key fails config validation.
+
+---
+
+## 7. Also fixed along the way
 
 - `editPost.url` pointed at `satnaing/astro-paper` — every "edit this post" link sent readers to someone else's repository.
 - `i18n/types.ts` was missing `list`, which `en.ts` defined and `Breadcrumb` used.
@@ -118,7 +184,7 @@ These cost real time. All are recorded in `design.md` §13 as anti-patterns.
 
 ---
 
-## 7. Roadmap
+## 8. Roadmap
 
 v1 is **shipped**. The theme was squash-merged to `main` on 16 August 2026 and
 deploys automatically on every push. Work continues directly on `main`; there
@@ -151,21 +217,41 @@ is no feature branch.
 
 ### Open, in the order worth taking them
 
-1. **Give the kindled world a real pass.** Still never done, and now several
-   rounds deep — a new ground, a new family, a rebuilt scale, three new marks
-   and a scene. It is structurally sound (no colour literals outside tokens,
-   contrast floors enforced by test) but nobody has _looked_ at it. **Highest
-   risk item, because it is invisible to every automated check.**
-2. **The remaining three scenes** — Court, Rest, Drowned. Briefs in
+The kindled pass was done on 20 August 2026 (§6). It found three things, and
+**every one of them is a decision rather than a repair** — each lands on a rule
+the docs either contradict or leave open, so nothing was changed. They are the
+top three items now, in the order they cost the reader:
+
+1. **Kindled spends gold on every rune bullet, and blows the three-per-viewport
+   count.** Measured, not estimated: a kindled post page paints **7** gold marks
+   in the first 1440×900 viewport (sigil, sun, three bullets, the bonfire's ash
+   and its flame) against a hard ceiling of 3. Hollowed never exceeds 2.
+   `design.md` contradicts itself here — §3 makes kindled `--ornament` equal
+   `--torch` (and `tests/tokens.test.ts:58` asserts it), while §2 invariant 2
+   and §4 say bullets are neutral and gold appears at most three times.
+   **One of those two rules has to yield and it is not a fresh session's call.**
+   See `design.md` §15.
+2. **The kindled page scenes render at 1.50:1 where hollowed renders at
+   2.51:1** — the drawing is a smudge on white, not a picture. Blocked on
+   `scenes.md` §5, which is still open and whose own recommendation (option 1,
+   hollowed only) points the opposite way from calibrating them up.
+3. **The code block's left rule does not exist in kindled** — `--border` on
+   `--panel` is 1.22:1, against 1.60:1 hollowed. No value in the current token
+   set fixes it: `--border` is already at the 1.3:1 §12 asks for, and the
+   kindled panel is only 1.07:1 off white, so the two converge. Needs either a
+   new token or a documented value moved.
+4. **The remaining three scenes** — Court, Rest, Drowned. Briefs in
    `scenes.md`; Drowned is the natural next one and Rest is the hard one.
-3. **Ash variations and the stain texture.** Prototyped, undecided. The stain
+   Blocked behind item 2: settle whether kindled gets scenes before drawing
+   three more.
+5. **Ash variations and the stain texture.** Prototyped, undecided. The stain
    must ship un-tiled: a repeat is visible on a wide screen.
-4. **The lake footer** on the 404.
-5. **`eslint.config.js`** — `npm run lint` still fails, pre-existing.
-6. **The post header image rule** (`design.md` §15).
-7. **A real site description.** `torchlight.config.ts` duplicates the title, so
+6. **The lake footer** on the 404.
+7. **`eslint.config.js`** — `npm run lint` still fails, pre-existing.
+8. **The post header image rule** (`design.md` §15).
+9. **A real site description.** `torchlight.config.ts` duplicates the title, so
    search results and social cards read "Weibo's Home" twice.
-8. **Review the `about` page prose** against the measure. Never checked.
+10. **Review the `about` page prose** against the measure. Never checked.
 
 -------------------------- | ------------------------------------------------------------------------------------------- |
 | **The five page scenes** | Briefs complete in [`scenes.md`](./scenes.md); no art. Two decisions open there |
@@ -177,7 +263,7 @@ is no feature branch.
 
 ---
 
-## 8. Useful commands
+## 9. Useful commands
 
 ```bash
 npm run dev            # regenerates tokens, then serves on :4321

@@ -9,8 +9,10 @@ inside; §0 (Ash), §4 (gold budget) and §11 (motion) all constrain what follow
 
 **Status: deferred to v2.** The briefs below are complete and the decisions in
 §4 and §5 are still open. Nothing here blocks the release — see
-[`STATUS.md`](./STATUS.md) §7. Painting these programmatically was attempted
-and rejected; §7 records why.
+[`STATUS.md`](./STATUS.md) §8. **§5 is now the blocking one**: the kindled pass
+of 20 August 2026 measured what the deferral is actually shipping, and it is
+`STATUS.md` §8's second open item. Painting these programmatically was attempted
+and rejected; §7 below records why.
 
 ---
 
@@ -19,14 +21,17 @@ and rejected; §7 records why.
 A scene is **one small painting in the bottom-right corner of a page, behind
 the text**. It is atmosphere, not illustration of the content.
 
-|             |                                       |
-| ----------- | ------------------------------------- |
-| Position    | foot of the DOCUMENT, right-hand side |
-| Size        | `clamp(200px, 30vw, 420px)` wide      |
-| Opacity     | ~0.55 hollowed, ~0.3 kindled          |
-| Stacking    | behind all content (`z-index: 0`)     |
-| Below 900px | removed entirely, not faded           |
-| Per page    | exactly one, or none                  |
+|             |                                                                                              |
+| ----------- | -------------------------------------------------------------------------------------------- |
+| Position    | foot of the DOCUMENT, right-hand side                                                        |
+| Size        | `clamp(220px, 32vw, 460px)` wide                                                             |
+| Opacity     | `--scene-opacity`, 0.62 hollowed, 0.4 kindled — see §5, the kindled figure is under question |
+| Stacking    | behind all content (`z-index: 0`)                                                            |
+| Below 60rem | removed entirely, not faded                                                                  |
+| Per page    | exactly one, or none                                                                         |
+
+The numbers above are `src/styles/global.css` and `tokens.json` as built, not
+intentions — they had drifted from this table and were corrected on 20 August 2026. Read them from the source when they matter.
 
 **It is absolute, not fixed.** The scene sits at the foot of the page and is
 reached by scrolling, like anything else. It was pinned to the viewport at
@@ -311,6 +316,29 @@ refusal better than most would.
 
 The scenes are night scenes lit by one source. The kindled world is Anor Londo
 at noon and has no equivalent, which is a real problem and not a detail.
+
+**What shipped is none of the three, and that is the worst available answer.**
+Measured 20 August 2026: the scene line renders at **1.50:1** against white and
+**2.51:1** against the hollowed ground. So kindled currently gets the drawing at
+about 40% of the presence hollowed gives it — too faint to read as architecture,
+too present to be absent. `global.css` already carries the verdict in a comment
+a few lines from the rule that does it: _"A picture at 12% opacity is not a
+picture, it is a smudge."_
+
+That is not an argument for either option by itself — it is an argument that the
+question cannot keep being deferred, because deferring it is itself shipping
+something. Option 1 (remove) and a calibration to parity (option 3's spirit:
+`--scene-ink` `#756b57` at `--scene-opacity` `0.62`, which lands kindled at
+2.50:1) were both built and screenshotted that day; neither was merged, because
+this section is the decision and it is the author's.
+
+One thing the calibration settled that is worth keeping whichever way §5 goes:
+**the per-world difference belongs in `--scene-ink`, not in `--scene-opacity`.**
+Opacity should mean "how far back the picture sits", and the picture sits
+equally far back in both worlds; what has to change between them is the ink,
+because the paper changed. Kindled's ink is necessarily the _darker_ of the two
+hex values, and comparing the two hexes tells you nothing — only each one's
+composite ratio against its own ground does.
 
 Three options, in the order I would try them:
 
