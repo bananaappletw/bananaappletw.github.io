@@ -1,6 +1,6 @@
 # Torchlight — status and handoff
 
-**Last updated:** 20 August 2026
+**Last updated:** 25 August 2026
 **Branch:** `main` — work goes straight to `main` and a push is the deploy.
 **State:** **released and live** at <https://bananaappletw.github.io/>. The
 direction is settled: B — Ash (§1).
@@ -107,6 +107,18 @@ These cost real time. All are recorded in `design.md` §13 as anti-patterns.
 - **Google Fonts is blocked on the sandbox this branch was last built in.** `fonts.google.com/metadata/fonts` returns 403 through the egress proxy, so `unifont` resolves zero files, `fontData` comes back as empty arrays, and `npm run build` dies in the OG template with "Cannot find the font path". Nothing in the repo is wrong — it builds on a machine that can reach Google. Do not "fix" `getFontPathByWeight` in response to this error. Only the _metadata_ host is blocked; `googleapis` and `gstatic` are reachable, so the faces can be fetched by hand — see §6 for the throwaway-config workaround and its two traps.
 - **A token can hold a legal value and still not do its job.** Every contrast assertion in `tests/tokens.test.ts` measures a token against `--ground`. Two of the light world's marks land on something else — the code rule sits on `--panel`, the scene line is `--scene-ink` composited at `--scene-opacity` — and both are invisible where the tests are green. **Measure a mark over the surface it actually lands on.**
 - **A gold count that reads element styles misses most of the gold.** The rune bullets are `::before` backgrounds. An audit that walks `getComputedStyle(el)` and stops there reports a kindled post at 4 when it is 7.
+- **…and a gold count that trusts the cascade counts marks that are not on the
+  screen.** The bonfire is `opacity: 0; pointer-events: none` until the reader
+  passes 120px, so at the top of a post its ash and its flame are gold in the
+  cascade and absent from the page. The 20 August count of 7 included both.
+  `getComputedStyle` reports the element's own opacity and tells you nothing
+  about its ancestors, so the check has to **walk the parent chain for
+  `opacity`, `visibility` and `display`** before it counts anything.
+- **One viewport is not the page.** The same audit measured only the gate, and
+  the gate is the cheapest viewport a post has — the header is not sticky, so
+  scrolling _spends_ the sigil and the sun and _buys_ the bonfire and every
+  bullet that comes into view. Measure at rest and scrolled; the worst case is
+  wherever the repeating ornament lives, and on a kindled post that is 10, not 7.
 - **`npx astro build` skips `build:tokens`.** Only `npm run build` chains them. Edit `tokens.json`, rebuild with `astro build` alone, and you screenshot the previous palette while believing you changed it — twenty minutes of "the change did nothing".
 
 ---
@@ -153,6 +165,59 @@ was written; each section is internally convincing, and the conflict is only
 visible if you render a bulleted post in the light world and count. Two rules
 that never meet on the same page are not caught by reading.
 
+---
+
+## 6b. The gold recount — 25 August 2026
+
+§7's top item was picked up, and it is still the author's to decide, so
+**nothing in the theme changed**. What this pass did was build all three of
+`design.md` §15's options, render them, and count from the page instead of
+from the cascade. Both halves of that changed the answer.
+
+**The 20 August figure of 7 was wrong in both directions, and the real number
+is worse.** Two of the seven — the bonfire's ash and its flame — are not
+painted at the top of a post (§5). And the gate is the cheapest viewport the
+page has. Measured on `/posts/aws-resource-hierarchy/`, kindled, counting only
+what is actually on the screen:
+
+| Option                                                   | At the gate | Scrolled into the list | Hollowed |
+| -------------------------------------------------------- | ----------- | ---------------------- | -------- |
+| **1** — leave it (what `main` ships today)               | 5           | **10**                 | 1        |
+| **2** — kindled `--ornament` → `--text-4`                | 2           | 1                      | 1        |
+| **3** — bullets read `--text-4`, ornament stays gilded   | 2           | 2                      | 1        |
+| **4** — option 2, plus the sun reading the HUD's own ink | 1           | 1                      | 1        |
+
+At 390 the same order holds (8 / 1 / 2 / 1 scrolled). Add **one** to any cell
+where the cursor is on a prose link — that is the slot §4 reserves for it.
+
+**This retires §15's claim that option 2 is the only one that satisfies the
+count.** That claim came from the gate-only numbers, where option 3's residue
+was the unpainted bonfire. Once the count is honest, options 2 and 3 both clear
+the ceiling of three with room to spare, and the choice between them is no
+longer arithmetic — it is whether the gilded ornament channel is an idea worth
+keeping.
+
+**And it is worth less than it looks.** Under option 3 the channel stays
+gilded, but the only mark left reading it in a kindled viewport is the
+bonfire's ash. `.rune-list` — the other rule `design.md` §3 quotes — **is
+applied to nothing**: it is defined in `ornament.css`, ships in the CSS, and no
+markup in `src/` carries the class. The live bullet rule is the prose one in
+`typography.css` alone, so option 3 is a one-line change and option 2 spends an
+idea that currently buys exactly one mark.
+
+**Two things only the screenshots say.** The gold ash is the bonfire's own
+worst enemy: at delivered size the flame and the mound beneath it merge into
+one gold blob, and knocking the ash to bone is what makes the flame read as a
+flame standing on ash — option 2 improves that mark rather than costing it. Set
+against that, the neutral sun of option 4 **stops reading as a control**: at
+`--text-4` it sits at exactly the weight of the word "About" beside it and
+becomes a fifth nav item, which is the case `design.md` §8 was making when it
+gave the sun the one control-gold in the theme. Option 4 buys parity with
+hollowed and pays for it in the header.
+
+**On the evidence here the recommendation is option 2, and the decision is
+still the author's** — §15 is where it lives and this pass did not move it.
+
 ### Sandbox note for the next session
 
 `npm run build` cannot complete on this runner: `fonts.google.com/metadata/fonts`
@@ -168,6 +233,18 @@ Two traps in that workaround, both of which cost a round here:
 - **`astro build` does not regenerate `tokens.css`.** `npm run build` runs
   `build:tokens` first; `npx astro build` does not. Editing `tokens.json` and
   rebuilding with `astro build` alone silently screenshots the _old_ palette.
+- **Google serves the format your User-Agent admits to supporting, and the
+  obvious "very old browser" UA gets you EOT, not TrueType.** `satori` needs a
+  real `.ttf` (`getFontPathByWeight` asks for `format: "truetype"`), and an
+  MSIE 6 UA on `css2` returns a `/l/font?kit=…` URL whose payload begins
+  `b2 e5 05 00` — an EOT header whose first word is the file's own length. It
+  downloads fine, it is the right size, and the build dies on "Unsupported
+  OpenType signature". A TTF starts `00 01 00 00`; **check the first four bytes
+  before believing the extension you gave the file.** The UA that actually
+  yields `.ttf` URLs is an old mobile WebKit — Android 2.3 / `AppleWebKit/533.1`
+  — and modern Chrome yields the woff2, which `satori` cannot read either. Fetch
+  both, list them as `src: [woff2, ttf]` per variant, and the browser takes the
+  first while the OG generator takes the second.
 - Astro v6's local provider takes `provider: fontProviders.local()` with the
   variants under `options: { variants: [...] }` — a bare `provider: "local"`
   or a top-level `variants` key fails config validation.
@@ -223,14 +300,16 @@ the docs either contradict or leave open, so nothing was changed. They are the
 top three items now, in the order they cost the reader:
 
 1. **Kindled spends gold on every rune bullet, and blows the three-per-viewport
-   count.** Measured, not estimated: a kindled post page paints **7** gold marks
-   in the first 1440×900 viewport (sigil, sun, three bullets, the bonfire's ash
-   and its flame) against a hard ceiling of 3. Hollowed never exceeds 2.
-   `design.md` contradicts itself here — §3 makes kindled `--ornament` equal
-   `--torch` (and `tests/tokens.test.ts:58` asserts it), while §2 invariant 2
-   and §4 say bullets are neutral and gold appears at most three times.
-   **One of those two rules has to yield and it is not a fresh session's call.**
-   See `design.md` §15.
+   count.** Re-measured 25 August (§6b) from what is actually painted, at rest
+   and scrolled: a kindled post shows **5** gold marks at the gate and **10**
+   once the reader is inside a bulleted list, against a hard ceiling of 3.
+   Hollowed shows 1. `design.md` contradicts itself here — §3 makes kindled
+   `--ornament` equal `--torch` (and `tests/tokens.test.ts:58` asserts it),
+   while §2 invariant 2 and §4 say bullets are neutral and gold appears at most
+   three times. **One of those two rules has to yield and it is not a fresh
+   session's call.** All four ways out are built, screenshotted and costed in
+   §6b; **option 2 is the recommendation and option 3 is now equally legal**,
+   which is the part the earlier numbers got wrong. See `design.md` §15.
 2. **The kindled page scenes render at 1.50:1 where hollowed renders at
    2.51:1** — the drawing is a smudge on white, not a picture. Blocked on
    `scenes.md` §5, which is still open and whose own recommendation (option 1,

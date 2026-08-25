@@ -119,16 +119,17 @@ Kindled runs the same layers to the opposite end: the shaft is a clerestory wind
 
 Kindled, `--ornament` equals gold and marks are gilded. Hollowed, it equals `--text-4` and the same marks survive in bone. Nothing moves and nothing is removed; the world has simply been abandoned. `tests/tokens.test.ts` asserts both equalities.
 
-> **This rule and §4 disagree, and the disagreement is live — see §15.** The rune bullet is the one ornament that repeats, so gilding the channel gilds it once per list item: a kindled post page paints seven gold marks in a viewport where §2 invariant 2 allows three. §4 names bullets as a neutral in so many words. One of the two has to yield.
+> **This rule and §4 disagree, and the disagreement is live — see §15.** The rune bullet is the one ornament that repeats, so gilding the channel gilds it once per list item: a kindled post scrolled into a bulleted list paints ten gold marks in a viewport where §2 invariant 2 allows three. §4 names bullets as a neutral in so many words. One of the two has to yield.
 
 ```css
-.rune-list > li::before {
-  background: var(--ornament);
-}
 .app-prose ul > li::before {
   background: var(--ornament);
 }
 ```
+
+`ornament.css` carries a second, identical rule for `.rune-list`, but **no
+markup in `src/` applies that class** — the prose rule above is the only live
+bullet in the theme. Anything that changes bullets changes one line.
 
 ### The transition
 
@@ -445,30 +446,31 @@ The rule that follows: **`--text` targets 8–13:1, never above 14:1.** Borders 
 
 Listed so they can be caught in review. Several were committed during this theme's own construction.
 
-| Anti-pattern                                        | Why it breaks                                                                                                                        |
-| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| Gold on links, tags, nav or listing titles          | Turns relief into wallpaper; §4                                                                                                      |
-| A fourth hue                                        | Three hues is what keeps this a system rather than a costume                                                                         |
-| Cool grey anywhere                                  | Souls is desaturated _brown_; cool grey reads as a rendering bug                                                                     |
-| Flat black hollowed ground                          | Reads as an empty page rather than a lit room                                                                                        |
-| Pushing `--text` to maximum contrast                | Above ~14:1 text detaches and glows instead of sitting in the page                                                                   |
-| High-contrast borders                               | A hard hairline buzzes exactly as much as glaring type                                                                               |
-| Ornament reading `--torch`                          | Leaves ornament lit in a dead world, killing the central idea                                                                        |
-| A dark page with no grain                           | Reads as clean vector art, not a photographed room                                                                                   |
-| `position: fixed` in a hand-written rule            | Tailwind hoists it into a utility and strips it — the atmosphere ships unpositioned                                                  |
-| A panel, frame, card or drop shadow                 | Ash lifts nothing; that is direction A, and the hedge is what stalled the theme                                                      |
-| `black` stops in an SVG `<mask>`                    | SVG masks are luminance by default, so black hides — CSS `mask-image` is alpha                                                       |
-| A scene whose stone is brighter than its mist       | The light is behind the castle; bright stone reads as clear weather, and flat                                                        |
-| Category colours (movie / anime / manga)            | Four decorative hues, and colour as the only signal                                                                                  |
-| Drop caps and section marks                         | Cut: with two ornaments per viewport, space and light do it better                                                                   |
-| A second ambient animation                          | §11 permits exactly one, and it is the flame                                                                                         |
-| A mark built from primitives                        | An exact circle and eight identical rays read as clip art beside a pen drawing                                                       |
-| Taper measured as a fraction of stroke length       | A short stroke becomes all taper — rays turn into petals; taper over a distance                                                      |
-| A filled flame                                      | Fire reads through the dark gaps between tongues, not through the gold                                                               |
-| Judging a 15px mark from its path data              | Rasterise it at delivered size over the real ground, or you are guessing                                                             |
-| Checking a token's contrast only against `--ground` | Two of kindled's marks land on `--panel` and on a composited scene layer; both are illegible where every test is green               |
-| Comparing the two worlds by hex value               | Kindled's `--scene-ink` is the _lighter_ hex and the _weaker_ drawing. Only the ratio against each world's own ground means anything |
-| Counting gold without pseudo-elements               | The rune bullets are `::before` backgrounds, and they are most of the gold on a kindled post                                         |
+| Anti-pattern                                        | Why it breaks                                                                                                                           |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Gold on links, tags, nav or listing titles          | Turns relief into wallpaper; §4                                                                                                         |
+| A fourth hue                                        | Three hues is what keeps this a system rather than a costume                                                                            |
+| Cool grey anywhere                                  | Souls is desaturated _brown_; cool grey reads as a rendering bug                                                                        |
+| Flat black hollowed ground                          | Reads as an empty page rather than a lit room                                                                                           |
+| Pushing `--text` to maximum contrast                | Above ~14:1 text detaches and glows instead of sitting in the page                                                                      |
+| High-contrast borders                               | A hard hairline buzzes exactly as much as glaring type                                                                                  |
+| Ornament reading `--torch`                          | Leaves ornament lit in a dead world, killing the central idea                                                                           |
+| A dark page with no grain                           | Reads as clean vector art, not a photographed room                                                                                      |
+| `position: fixed` in a hand-written rule            | Tailwind hoists it into a utility and strips it — the atmosphere ships unpositioned                                                     |
+| A panel, frame, card or drop shadow                 | Ash lifts nothing; that is direction A, and the hedge is what stalled the theme                                                         |
+| `black` stops in an SVG `<mask>`                    | SVG masks are luminance by default, so black hides — CSS `mask-image` is alpha                                                          |
+| A scene whose stone is brighter than its mist       | The light is behind the castle; bright stone reads as clear weather, and flat                                                           |
+| Category colours (movie / anime / manga)            | Four decorative hues, and colour as the only signal                                                                                     |
+| Drop caps and section marks                         | Cut: with two ornaments per viewport, space and light do it better                                                                      |
+| A second ambient animation                          | §11 permits exactly one, and it is the flame                                                                                            |
+| A mark built from primitives                        | An exact circle and eight identical rays read as clip art beside a pen drawing                                                          |
+| Taper measured as a fraction of stroke length       | A short stroke becomes all taper — rays turn into petals; taper over a distance                                                         |
+| A filled flame                                      | Fire reads through the dark gaps between tongues, not through the gold                                                                  |
+| Judging a 15px mark from its path data              | Rasterise it at delivered size over the real ground, or you are guessing                                                                |
+| Checking a token's contrast only against `--ground` | Two of kindled's marks land on `--panel` and on a composited scene layer; both are illegible where every test is green                  |
+| Comparing the two worlds by hex value               | Kindled's `--scene-ink` is the _lighter_ hex and the _weaker_ drawing. Only the ratio against each world's own ground means anything    |
+| Counting gold without pseudo-elements               | The rune bullets are `::before` backgrounds, and they are most of the gold on a kindled post                                            |
+| Counting gold from the cascade, or in one viewport  | The bonfire is `opacity: 0` until the reader scrolls; the header scrolls away. Walk the opacity chain, and measure at rest AND scrolled |
 
 ---
 
@@ -486,29 +488,47 @@ If it ever returns, the smallest honest version is a single glyph: `>` before "r
 
 ## 15. Not yet decided
 
-- **Gold on kindled ornament — §3 against §2/§4.** Measured 20 August 2026: a
-  kindled post page paints **7** gold marks in the first 1440×900 viewport —
-  the sigil, the sun, three rune bullets, the bonfire's ash and its flame —
-  against invariant 2's ceiling of three. Hollowed never exceeds two, because
-  `--ornament` is bone there and the moon takes the HUD's own ink. Two written
-  rules collide: §3 gilds the ornament channel when kindled (and
-  `tests/tokens.test.ts:58` asserts the equality), while §4 says in so many
-  words that bullets are a neutral. Both readings are defensible from their own
-  section, which is why this survived until someone rendered a bulleted post in
-  the light world and counted.
+- **Gold on kindled ornament — §3 against §2/§4.** Two written rules collide:
+  §3 gilds the ornament channel when kindled (and `tests/tokens.test.ts:58`
+  asserts the equality), while §4 says in so many words that bullets are a
+  neutral. Both readings are defensible from their own section, which is why
+  this survived until someone rendered a bulleted post in the light world and
+  counted. Hollowed never exceeds one mark, because `--ornament` is bone there
+  and the moon takes the HUD's own ink.
 
-  Three ways out, and only one of them actually gets under the ceiling:
+  Re-measured 25 August 2026 (`STATUS.md` §6b), counting only marks that are
+  actually painted, at the gate and scrolled into a list. The 20 August figure
+  of 7 counted the bonfire while it was still `opacity: 0`, and measured only
+  the page's cheapest viewport:
 
-  |       | Change                                                                                                         | Kindled post lands at | Costs                                                                                                  |
-  | ----- | -------------------------------------------------------------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------ |
-  | **1** | Leave it                                                                                                       | 7                     | Invariant 2 is not an invariant                                                                        |
-  | **2** | Kindled `--ornament` → `--text-4`, as hollowed                                                                 | **3**                 | §3's gilded ornament goes; the channel stops distinguishing the worlds and the test at line 58 changes |
-  | **3** | Rune bullets leave the channel and read `--text-4` directly; ornament stays gilded for the once-per-page marks | 4                     | Still over budget, and §7 legality 4 ("marks take `--ornament`") gains an exception                    |
+  |       | Change                                                                                                         | Gate | Scrolled | Costs                                                                                                  |
+  | ----- | -------------------------------------------------------------------------------------------------------------- | ---- | -------- | ------------------------------------------------------------------------------------------------------ |
+  | **1** | Leave it                                                                                                       | 5    | **10**   | Invariant 2 is not an invariant                                                                        |
+  | **2** | Kindled `--ornament` → `--text-4`, as hollowed                                                                 | 2    | 1        | §3's gilded ornament goes; the channel stops distinguishing the worlds and the test at line 58 changes |
+  | **3** | Rune bullets leave the channel and read `--text-4` directly; ornament stays gilded for the once-per-page marks | 2    | 2        | §7 legality 4 ("marks take `--ornament`") gains an exception                                           |
+  | **4** | Option 2, and the sun reads the HUD's own ink like the moon                                                    | 1    | 1        | The world control stops reading as a control — see below                                               |
 
-  Option 2 is the only one that satisfies the count, and it is the one that
-  costs an idea rather than a rule. **The author picks.** Option 2 was built and
-  screenshotted on 20 August and reverted unmerged; it is a one-line token
-  change plus the assertion.
+  Add one to any cell where the cursor is on a prose link; that is the slot §4
+  reserves for it.
+
+  **Options 2, 3 and 4 all satisfy the count**, so this is no longer an
+  arithmetic question — an earlier draft of this section said option 2 was the
+  only one that did, which was an artefact of the gate-only numbers. What is
+  left is whether the gilded ornament channel is an idea worth keeping, and it
+  buys less than §3 implies: with `.rune-list` applied to nothing in `src/`, the
+  only mark still reading the channel in a kindled viewport under option 3 is
+  the bonfire's ash.
+
+  Two arguments live only in the renders. Gilding the ash **costs the bonfire**:
+  at delivered size the flame and its mound merge into one gold blob, and bone
+  ash is what lets the flame read as a flame. And option 4's neutral sun sits at
+  the weight of the nav word beside it and **stops reading as a control**, which
+  is the case §8 makes for giving it the one control-gold in the theme.
+
+  Option 2 is the recommendation on that evidence. **The author picks.** All
+  four were built and screenshotted on 25 August and reverted unmerged; option 2
+  is a one-line token change plus the assertion, option 3 one line in
+  `typography.css`.
 
 - **Kindled page scenes.** They render at 1.50:1 against hollowed's 2.51:1 — a
   smudge rather than a drawing, and `global.css` already says in a comment that
