@@ -47,6 +47,40 @@ export function luminance(hex: string): number {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
 
+/**
+ * Flatten a colour onto the surface behind it, and return it as hex.
+ *
+ * This exists because a token can hold a legal value and still not do its
+ * job. Every contrast assertion here used to measure against `--ground`, and
+ * two of the light world's marks do not land there — the code block's left
+ * rule sits on `--panel`, which is itself translucent when hollowed. A mark
+ * measured against the page behind its own surface is not measured at all.
+ *
+ * Accepts hex or `rgb()` / `rgba()`; the backdrop must be opaque hex.
+ */
+export function composite(colour: string, over: string): string {
+  const c = colour.trim();
+  const hex = /^#([0-9a-f]{6})$/i.exec(c);
+  if (hex) return c;
+
+  const fn =
+    /^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:[,/\s]+([\d.]+))?\s*\)$/i.exec(
+      c,
+    );
+  if (!fn) return c;
+
+  const alpha = fn[4] === undefined ? 1 : Number(fn[4]);
+  const back = /^#([0-9a-f]{6})$/i.exec(over.trim());
+  if (!back) return c;
+  const int = parseInt(back[1], 16);
+  const bg = [(int >> 16) & 255, (int >> 8) & 255, int & 255];
+
+  const out = [1, 2, 3].map((i, k) =>
+    Math.round(Number(fn[i]) * alpha + bg[k] * (1 - alpha)),
+  );
+  return `#${out.map(v => v.toString(16).padStart(2, "0")).join("")}`;
+}
+
 export function contrastRatio(a: string, b: string): number {
   const la = luminance(a);
   const lb = luminance(b);

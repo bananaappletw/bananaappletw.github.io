@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { execSync } from "node:child_process";
-import { tokens, contrastRatio, WORLDS } from "../src/utils/tokens";
+import { tokens, contrastRatio, composite, WORLDS } from "../src/utils/tokens";
 
 describe("token completeness", () => {
   it("defines the same token names in both worlds", () => {
@@ -60,6 +60,31 @@ describe("ornament channel", () => {
       expect(tokens[world]["--ornament"]).not.toBe(tokens[world]["--torch"]);
     }
   });
+});
+
+describe("marks measured over the surface they land on", () => {
+  for (const world of WORLDS) {
+    const ground = tokens[world]["--ground"];
+    // hollowed's panel is translucent black over the lit ground, so the
+    // surface the rule lands on has to be flattened before it is measured
+    const panel = composite(tokens[world]["--panel"], ground);
+
+    it(`${world}: --panel stays a recess, not a slab`, () => {
+      expect(contrastRatio(panel, ground)).toBeLessThan(1.3);
+    });
+
+    it(`${world}: the code block's left rule reads on --panel`, () => {
+      expect(
+        contrastRatio(tokens[world]["--border-recess"], panel),
+      ).toBeGreaterThanOrEqual(1.45);
+    });
+
+    it(`${world}: the blockquote rule reads on --ground`, () => {
+      expect(contrastRatio(tokens[world]["--border"], ground)).toBeGreaterThan(
+        1.25,
+      );
+    });
+  }
 });
 
 describe("generated stylesheet", () => {

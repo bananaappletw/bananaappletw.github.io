@@ -353,7 +353,7 @@ The reasoning generalises. An icon costs the reader a thing to learn, and that c
 
 **Pagination** — words at the edges, the count in the middle, spent directions dimmed to 45% rather than removed.
 
-**Code block** — `--panel` fill and a single 1px `--border` rule on the left, the same mark blockquote carries. No frame, no blur, no shadow, no radius: a darker patch of the same room rather than a surface laid on top of it (§0).
+**Code block** — `--panel` fill and a single 1px `--border-recess` rule on the left, the same mark blockquote carries. No frame, no blur, no shadow, no radius: a darker patch of the same room rather than a surface laid on top of it (§0). The rule reads `--border-recess` rather than `--border` because it lands on the panel instead of on the ground; blockquote, whose rule sits on the ground, keeps `--border`. Both tokens are the same hairline — see §12.
 
 **Prose** — 60ch measure, 16.5px at 1.85. Headings are small, wide-tracked and dim: a marker you pass, not a banner. The first paragraph steps up to `--text` at 19px.
 
@@ -407,8 +407,9 @@ outline-offset: 4px;
 1. **No `box-shadow` anywhere.** A drop shadow implies a surface above the page, and in a room lit by one distant shaft nothing is close enough to the reader to cast one.
 2. **No `backdrop-filter`.** Blur exists to make a panel read as floating in air; with no panels there is nothing to float.
 3. **A rule separates, it never surrounds.** Left rules and bottom rules are legal. Four sides is a frame, and a frame is direction A.
-4. **`--panel` is a recess, not an elevation.** It reads as a darker patch of the same ground — code and diagrams only.
-5. **Depth is spacing.** Where an interface would reach for elevation to say "this is a different thing", Ash reaches for the clearance in §6 instead.
+4. **`--panel` is a recess, not an elevation.** It reads as a darker patch of the same ground — code and diagrams only. Asserted: the panel stays under 1.3:1 against its own ground in both worlds, so it can never quietly become a slab.
+5. **A mark on the panel is measured against the panel.** A hairline tuned against `--ground` vanishes on a surface that is itself only a point off the ground, which is exactly how the light world shipped a code block with no left rule at all. `--border-recess` exists for that one case.
+6. **Depth is spacing.** Where an interface would reach for elevation to say "this is a different thing", Ash reaches for the clearance in §6 instead.
 
 The shaft and vignette remain the one exception to "no gradients": they are the room's lighting, not a component's decoration.
 
@@ -562,14 +563,23 @@ If it ever returns, the smallest honest version is a single glyph: `>` before "r
   the difference sits in `--scene-opacity` today (0.66 against 0.62), and the
   argument for moving it into `--scene-ink` instead is in `scenes.md` §5.
 
-- **The code block's left rule in kindled.** `--border` on `--panel` measures
-  1.22:1, against 1.60:1 hollowed — the mark §8 and §10 both describe simply is
-  not there in the light world. No value in the present token set fixes it:
-  `--border` already sits at the ~1.3:1 §12 asks for, and the kindled panel is
-  only 1.07:1 off white, so border and panel converge. Hollowed escapes because
-  its panel darkens _away_ from a border that lightens. Wants either a token for
-  the rule that sits on a recess, or a decision to move `--border` or `--panel`
-  off its documented value.
+- **The code block's left rule in kindled. DECIDED: a second hairline token,
+  `--border-recess`.** Kindled's rule now reads `#cbc6b8` where hollowed keeps
+  `#33302a`, and both land at **~1.53:1 against their own panel** — the surface
+  the mark is actually on. `tests/tokens.test.ts` asserts it in both worlds and
+  fails if either drifts back.
+
+  The other two ways out are arithmetically closed, which is why this one was
+  taken without a prototype page. Darkening `--panel` until the existing border
+  reads against it needs `#b6b3ae`, which is 2.09:1 off white — a grey slab, and
+  §10 rule 4 says the panel is a recess. Mirroring hollowed's mechanism and
+  making the kindled panel translucent black over white makes it **worse**:
+  panel and border darken together, so at `rgba(0, 0, 0, 0.06)` the rule falls
+  from 1.22:1 to 1.14:1. Only the rule itself can move.
+
+  One correction to the numbers this section carried: hollowed's rule reads
+  **1.53:1** on its panel, not the 1.60 quoted before. The target was set from
+  the measurement rather than the other way round.
 
 - **Illustration policy.** No rule yet for post header images; a full-bleed photo would flatten the atmosphere and needs its own treatment before one is introduced.
 - **The `list` page.** Its filter buttons still use a generic pill treatment inherited from before the theme; the category colours were neutralised but the layout has not been reconsidered.

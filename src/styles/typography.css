@@ -132,11 +132,18 @@
     }
 
     /* Ash: no frame, blur or shadow — a darker patch of the same room,
-       marked by the same left rule blockquote uses. */
+       marked by the same left rule blockquote uses.
+
+       The rule reads --border-recess, not --border, because it lands on
+       --panel rather than on --ground. Kindled's panel is 1.07:1 off white
+       and --border is 1.31:1 off it, so on paper the two converge and the
+       mark is simply not there; --border-recess is the same hairline tuned
+       against the panel instead. Blockquote keeps --border — its rule sits
+       on the ground. */
     pre {
       background: var(--panel);
       border: 0;
-      border-left: 1px solid var(--border);
+      border-left: 1px solid var(--border-recess);
       border-radius: 0;
       overflow-x: auto;
       font-size: clamp(18px, 0.51vw + 16.08px, 21px);

@@ -34,7 +34,7 @@ Everything below is on `main`, live, builds clean, and is verified:
 
 - `npm run build` — succeeds
 - `npx astro check` — 0 errors, 0 warnings
-- `npm test` — 20/20 pass
+- `npm test` — 26/26 pass
 - `npm run format:check` — passes
 - `npm run lint` — passes; flat config added 19 August 2026 (§7).
 
@@ -105,7 +105,9 @@ These cost real time. All are recorded in `design.md` §13 as anti-patterns.
 - **All 25 posts have `description === title`**, so `Card.astro` suppresses the description when it matches.
 - **An SVG arc cap's sweep flag is `0`, not `1`.** The sweep flag is a positive-angle direction in a y-down system, so `1` bends the cap the wrong way and takes a bite _out_ of the end of every stroke. On a long stroke it is a subtle notch; on a short one it dominates, and the sun's rays rendered as ragged slabs until it was found.
 - **Google Fonts is blocked on the sandbox this branch was last built in.** `fonts.google.com/metadata/fonts` returns 403 through the egress proxy, so `unifont` resolves zero files, `fontData` comes back as empty arrays, and `npm run build` dies in the OG template with "Cannot find the font path". Nothing in the repo is wrong — it builds on a machine that can reach Google. Do not "fix" `getFontPathByWeight` in response to this error. Only the _metadata_ host is blocked; `googleapis` and `gstatic` are reachable, so the faces can be fetched by hand — see §6b for the throwaway-config workaround and its two traps.
-- **A token can hold a legal value and still not do its job.** Every contrast assertion in `tests/tokens.test.ts` measures a token against `--ground`. Two of the light world's marks land on something else — the code rule sits on `--panel`, the scene line is `--scene-ink` composited at `--scene-opacity` — and both are invisible where the tests are green. **Measure a mark over the surface it actually lands on.**
+- **A token can hold a legal value and still not do its job.** Every contrast assertion in `tests/tokens.test.ts` measures a token against `--ground`. Two of the light world's marks land on something else — the code rule sits on `--panel`, the scene line is `--scene-ink` composited at `--scene-opacity` — and both are invisible where the tests are green. **Measure a mark over the surface it actually lands on.** `composite()` in
+  `src/utils/tokens.ts` does the flattening, and `tests/tokens.test.ts` now
+  measures the code block's rule this way in both worlds.
 - **A gold count that reads element styles misses most of the gold.** The rune bullets are `::before` backgrounds. An audit that walks `getComputedStyle(el)` and stops there reports a kindled post at 4 when it is 7.
 - **…and a gold count that trusts the cascade counts marks that are not on the
   screen.** The bonfire is `opacity: 0; pointer-events: none` until the reader
@@ -360,6 +362,15 @@ is no feature branch.
   width rather than uniform strokes. Geometric exactness was what read as cheap
   next to the scene drawings — not the shapes, the evenness of the line.
 - **Breadcrumbs** replaced the back link on posts; the gate leads with the title.
+- **The code block's left rule exists in the light world again.** It was
+  invisible there — `--border` measures 1.22:1 on `--panel`, because kindled's
+  panel is only 1.07:1 off white and the border only 1.31:1 off it, so the two
+  converge. `--border-recess` is a second hairline for the one case where a
+  rule lands on the panel rather than on the ground; both worlds are tuned to
+  ~1.53:1 against their own panel. The other two exits were arithmetically
+  closed and `design.md` §15 records why. `src/utils/tokens.ts` grew a
+  `composite()` so the test can flatten hollowed's translucent panel before
+  measuring — the §5 trap, mechanised.
 
 ### Open, in the order worth taking them
 
@@ -399,27 +410,19 @@ is no feature branch.
    A flat-polygon set was tried on 21 August and rejected — no pressure in the
    line, and it read as sails next to the drawn marks.
 
-3. **The code block's left rule does not exist in kindled.** `--border` on
-   `--panel` is **1.22:1**, against 1.60:1 hollowed, and no value in the
-   current token set fixes it: `--border` already sits at the 1.3:1 that
-   `design.md` §12 asks for, and the kindled panel is only 1.07:1 off white,
-   so the two converge. Needs either a new token or a documented value moved.
-   Carried over from the 20 August pass (§6) and still true — the tests do not
-   see it, because every contrast assertion in `tests/tokens.test.ts` measures
-   against `--ground` and this mark lands on `--panel` (§5).
-4. **Kindled's scene is legible now but not at parity.** Raising
+3. **Kindled's scene is legible now but not at parity.** Raising
    `--scene-opacity` to 0.66 took the line from 1.50:1 to **2.03:1** against
    white; hollowed reads **2.51:1**. The 20 August pass argued the per-world
    difference belongs in `--scene-ink` rather than in the opacity — opacity
    should mean "how far back the picture sits", and it sits equally far back
    in both worlds — which would make kindled's ink the _darker_ of the two hex
    values, where today it is the lighter. `scenes.md` §5 carries the reasoning.
-5. **Ash variations and the stain texture.** Soot ground, ruled headings,
+4. **Ash variations and the stain texture.** Soot ground, ruled headings,
    mincho and the spec block are all prototyped and none is chosen. The stain
    must ship un-tiled — a repeat is visible on a wide screen — and its dials
    are in `stain-calibration.html`.
-6. **The post header image rule** (`design.md` §15).
-7. **Review the `about` page prose** against the measure. What is left is the
+5. **The post header image rule** (`design.md` §15).
+6. **Review the `about` page prose** against the measure. What is left is the
    writing — and the coloured emoji in "Let's Connect", which are the only
    full-saturation pixels on the site.
 

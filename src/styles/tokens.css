@@ -5,6 +5,7 @@
 :root {
   --ground: #100f0d;
   --border: #33302a;
+  --border-recess: #33302a;
   --text: #c6bca8;
   --text-2: #a99e8a;
   --text-3: #968873;
@@ -37,6 +38,7 @@
   :root:not([data-theme="dark"]):not([data-theme="hollowed"]) {
     --ground: #ffffff;
     --border: #e7e1d1;
+    --border-recess: #cbc6b8;
     --text: #39352a;
     --text-2: #524c3d;
     --text-3: #6c6553;
@@ -70,6 +72,7 @@
 :root[data-theme="kindled"] {
   --ground: #ffffff;
   --border: #e7e1d1;
+  --border-recess: #cbc6b8;
   --text: #39352a;
   --text-2: #524c3d;
   --text-3: #6c6553;
