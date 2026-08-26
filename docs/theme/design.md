@@ -228,18 +228,18 @@ two widths.
 
 | Role           | 375px | Full | Tracking |
 | -------------- | ----- | ---- | -------- |
-| Home title     | 33    | 48   | +0.03em  |
-| Post title     | 34    | 50   | +0.03em  |
-| Lead paragraph | 22    | 27.5 | 0        |
-| Prose          | 19.5  | 25   | 0        |
-| Body (chrome)  | 19    | 23   | 0        |
-| H1 / H2        | 25    | 33   | +0.06em  |
-| H3             | 21.5  | 26   | +0.01em  |
-| H4             | 18    | 21   | +0.05em  |
-| Listing title  | 23    | 27.5 | +0.03em  |
-| Label / HUD    | 13    | 14.5 | +0.06em  |
-| Date           | 12.5  | 12.5 | +0.1em   |
-| Code           | 15    | 17.5 | 0        |
+| Home title     | 40    | 58   | +0.03em  |
+| Post title     | 41    | 60   | +0.03em  |
+| Lead paragraph | 26.5  | 33   | 0        |
+| Prose          | 23.5  | 30   | 0        |
+| Body (chrome)  | 23    | 27.5 | 0        |
+| H1 / H2        | 30    | 39.5 | +0.06em  |
+| H3             | 26    | 31   | +0.01em  |
+| H4             | 21.5  | 25   | +0.05em  |
+| Listing title  | 27.5  | 33   | +0.03em  |
+| Label / HUD    | 15.5  | 17.5 | +0.06em  |
+| Date           | 15    | 15   | +0.1em   |
+| Code           | 18    | 21   | 0        |
 
 The Face column is gone because there is only one now (§5).
 
@@ -248,16 +248,19 @@ when the family changed from Spectral to Cardo, without a single design intent
 changing: Cardo's x-height is shorter, so identical numbers render visibly
 smaller. Any future change of family must re-measure rather than inherit these.
 
-It then went up a further 20%, and came back down again on reading a real page
-at that size: 30px prose filled the hall edge to edge and left a post with no
-air in it. The table above is the scale as it stood before that increase — the
-15% Cardo correction kept, the 20% on top of it undone.
+It then went up a further 20%. That increase was taken back off on 19 August —
+30px prose fills the hall edge to edge and leaves a post with no air in it —
+and put back on 27 August 2026 at the author's request. **The table above is
+the larger scale**, the 15% Cardo correction and the 20% on top of it both
+standing.
 
-The hall did **not** come back down with it. It stays at 64rem, so the smaller
-type reads as more room around the column rather than as a page that shrank in
-step. At 25px a 66ch line wants about 780px and the hall offers ~944 usable, so
-the ch cap is still the thing that limits the line — the inversion §9 exists to
-prevent stays prevented, with margin.
+Know what that costs, because it is the reason it came off once. At 30px a 66ch
+line wants about 930px and the hall offers ~944 usable, so the measure now
+fills the hall almost exactly: the ch cap is still what limits the line, but
+with roughly 14px of margin rather than 164, and a post reads as a column that
+touches both edges. The left-alignment below is nearly moot at full width for
+the same reason. Below about 1000px the fluid ramp takes the prose down and the
+margin returns.
 
 **The measure never grows with the page.** Prose stays capped at 66ch, so a
 wider window buys room around the text rather than longer lines — 39 characters
