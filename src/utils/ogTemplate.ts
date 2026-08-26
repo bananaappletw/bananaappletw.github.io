@@ -29,22 +29,21 @@ export async function renderOgImage(
   hostname: string,
   url: URL,
 ): Promise<Response> {
-  // 400, because that is the weight the display face actually ships. This
-  // lookup silently fails the whole build if the requested weight is absent.
-  const displayPath = getFontPathByWeight(fontData["--font-display"], 400);
-  const bodyPath = getFontPathByWeight(fontData["--font-body"], 400);
+  // `--font-og` rather than `--font-display`: it is the same face at the same
+  // weight, registered separately so that TrueType is emitted for satori
+  // without also being declared to the browser. See astro.config.ts.
+  //
+  // 400, because that is the weight the face actually ships. This lookup
+  // silently fails the whole build if the requested weight is absent.
+  const fontPath = getFontPathByWeight(fontData["--font-og"], 400);
 
-  if (displayPath === undefined || bodyPath === undefined) {
+  if (fontPath === undefined) {
     throw new Error("Cannot find the font path for the OG template.");
   }
 
-  const [displayData, bodyData] = await Promise.all(
-    [displayPath, bodyPath].map(path =>
-      fetch(experimental_getFontFileURL(path, url)).then(res =>
-        res.arrayBuffer(),
-      ),
-    ),
-  );
+  const fontBytes = await fetch(
+    experimental_getFontFileURL(fontPath, url),
+  ).then(res => res.arrayBuffer());
 
   const svg = await satori(
     {
@@ -58,7 +57,7 @@ export async function renderOgImage(
           justifyContent: "space-between",
           background: c["--ground"],
           padding: "72px 80px",
-          fontFamily: "Spectral",
+          fontFamily: "Body",
         },
         children: [
           // The carved rule, in the ornament channel — bone, not gold.
@@ -128,8 +127,8 @@ export async function renderOgImage(
       height: 630,
       embedFont: true,
       fonts: [
-        { name: "Display", data: displayData, weight: 400, style: "normal" },
-        { name: "Spectral", data: bodyData, weight: 400, style: "normal" },
+        { name: "Display", data: fontBytes, weight: 400, style: "normal" },
+        { name: "Body", data: fontBytes, weight: 400, style: "normal" },
       ],
     },
   );

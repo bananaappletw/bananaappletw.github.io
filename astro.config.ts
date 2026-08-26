@@ -126,7 +126,7 @@ export default defineConfig({
       fallbacks: ["Palatino", "Georgia", "serif"],
       weights: [400, 700],
       styles: ["normal"],
-      formats: ["woff2", "ttf"],
+      formats: ["woff2"],
     },
     {
       // Body is Cardo too — one family for the whole site. Cardo was drawn
@@ -142,7 +142,7 @@ export default defineConfig({
       fallbacks: ["Palatino", "Georgia", "serif"],
       weights: [400, 700],
       styles: ["normal", "italic"],
-      formats: ["woff2", "ttf"],
+      formats: ["woff2"],
     },
     {
       name: "Google Sans Code",
@@ -151,7 +151,26 @@ export default defineConfig({
       fallbacks: ["monospace"],
       weights: [400],
       styles: ["normal"],
-      formats: ["woff2", "ttf"],
+      formats: ["woff2"],
+    },
+    {
+      // TrueType, for the OG image generator alone — `satori` cannot read
+      // woff2, and `getFontPathByWeight` asks for `format: "truetype"`.
+      //
+      // It is a SEPARATE entry so that no reader ever downloads it. Astro
+      // emits one @font-face per format, and the TrueType block carries no
+      // `unicode-range` while the woff2 blocks do; declared under the same
+      // family name it therefore matched every Latin codepoint AND came last,
+      // so the cascade handed the browser a 378KB TTF and the 15KB woff2 was
+      // never fetched at all. Measured, not assumed. Under its own variable
+      // the face is declared and never referenced, so it is never loaded.
+      name: "Cardo",
+      cssVariable: "--font-og",
+      provider: fontProviders.google(),
+      fallbacks: ["serif"],
+      weights: [400],
+      styles: ["normal"],
+      formats: ["ttf"],
     },
   ],
   env: {

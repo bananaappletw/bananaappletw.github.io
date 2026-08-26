@@ -148,14 +148,22 @@ metrics dashboard.
 
 ## TODO — in the order a reader feels them
 
-1. **Stop shipping mermaid to pages without diagrams.** 257KB off 22 of 25
-   posts. Gate the import in `Mermaid.astro` behind a `.mermaid` query and make
-   it dynamic. Verify by checking the entry chunk no longer appears in a post
-   without a diagram.
-2. **Ship one font format to browsers.** Fold the TTF into the woff2
-   `@font-face` as a second `src` entry rather than a separate block, or keep
-   the TrueType out of `dist/` entirely and give the OG generator its own copy.
-   ~1MB of TTF is linked from every page today.
+1. ~~**Stop shipping mermaid to pages without diagrams.**~~ **Done, 27 August.**
+   The post script entry is 257KB → **1.3KB**; mermaid is a chunk the 22
+   diagram-free posts never fetch. It also turned out the three posts that
+   _do_ have diagrams were rendering mermaid's syntax-error bomb in production —
+   smartypants was rewriting `-->` into an em dash inside hand-written
+   `<div class="mermaid">` blocks. `src/plugins/remark-mermaid.ts` now makes
+   the markup from a fence, and `Mermaid.astro` — which was dead code — owns
+   the behaviour.
+2. ~~**Ship one font format to browsers.**~~ **Done, 27 August.** Measured,
+   the browser was fetching **378KB of TTF and none of the woff2**: Astro emits
+   one `@font-face` per format, the TrueType block carries no `unicode-range`
+   while the woff2 blocks do, and it came last — so it won every Latin
+   codepoint. TrueType now lives under its own `--font-og` variable, declared
+   and never referenced, so satori still gets it at build time and no reader
+   loads it. **378KB → 15KB per page**, and three of the four TTFs leave
+   `dist/` entirely.
 3. **Give every post a real description.** 25 of 25 duplicate the title. This is
    the highest-value content change on the list: it fixes search results, social
    cards and `/llms.txt` in one pass.
