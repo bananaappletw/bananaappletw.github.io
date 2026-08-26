@@ -7,6 +7,8 @@ direction is settled: B — Ash (§1).
 
 Read this first, then [`design.md`](./design.md) for the spec, [`tokens.json`](./tokens.json) for colour, and [`scenes.md`](./scenes.md) for the five per-page vignettes (briefs written, art not made).
 
+This file is the _theme's_ state. [`../site-quality.md`](../site-quality.md) is the site's: what it costs to load, what it says to a crawler, and what has never been checked. Its top two items — 257KB of mermaid on 22 posts that have no diagram, and a megabyte of TrueType linked from every page — are the largest measured defects the site currently has.
+
 ---
 
 ## 1. The decision — settled
