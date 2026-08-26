@@ -222,106 +222,124 @@ export const sunRays: string[] = (() => {
  * replaces worked because its hook curled around a dark gap, and that gap —
  * not the gold — is what the eye reads as a tongue of fire.
  *
- * So the flame is three tapered tongues rising from a shared base and leaning
- * apart, and the fire is the two slivers of ground between them. Each tongue
- * is one stroke that starts at full pressure and lifts to nothing, which is
- * both how a pen leaves a point and how a flame ends.
+ * So the flame is tapered tongues rising from a shared base and leaning apart,
+ * and the fire is the ground between them. Each tongue is one stroke that
+ * starts at full pressure and lifts, which is both how a pen leaves a point
+ * and how a flame ends.
+ *
+ * REDRAWN 27 August 2026, and what forced it is arithmetic. At 24px one pixel
+ * is FOUR units of this box, so any gap under 4 units closes and any body
+ * under 4 units greys out. The first drawing had three tongues with three
+ * units of ground between them and tapers running over half the stroke: the
+ * slivers filled in, the tips faded, and what was delivered was a gold leaf on
+ * a stem. There are two tongues now — three tongues means two slivers, and two
+ * slivers is one more than the eye holds at this size — the gap between them
+ * is 8 units, every body is at least 8 units through the middle, and no ramp
+ * runs longer than a quarter of its stroke.
  */
 export const flame: string[] = [
-  // the tall one, leaning right as it rises
+  // the tall one, leaning left out of the base and recovering as it rises
   nib(
     [
-      [46, 63],
-      [42, 48],
-      [46, 30],
-      [50, 12],
+      [43.5, 59],
+      [38.5, 41],
+      [42.5, 24],
+      [46.5, 8],
     ],
     {
-      width: 6,
-      entry: 0.9,
-      exit: 0.04,
-      taperIn: 5,
-      taperOut: 36,
-      wobble: 0.28,
+      width: 5.6,
+      entry: 0.95,
+      exit: 0.3,
+      taperIn: 3,
+      taperOut: 11,
+      wobble: 0.2,
       seed: 8,
     },
   ),
-  // the right-hand lick, shorter, kicking out before it turns back
+  // the lick, shorter, kicking out before it turns back — the hook is what
+  // keeps the pair from reading as a two-pronged fork
   nib(
     [
-      [52, 62],
-      [58, 50],
-      [56.5, 38],
-      [60, 28],
+      [54.5, 59],
+      [62.5, 43],
+      [58.5, 31],
+      [59.5, 19],
     ],
     {
-      width: 4.4,
-      entry: 0.85,
-      exit: 0.04,
-      taperIn: 4,
-      taperOut: 26,
-      wobble: 0.22,
-      seed: 21,
-    },
-  ),
-  // the smallest, low on the left — it is what keeps the base from reading
-  // as one mass with a split in it
-  nib(
-    [
-      [43, 62],
-      [36.5, 51],
-      [38, 41],
-    ],
-    {
-      width: 3.6,
-      entry: 0.8,
-      exit: 0.04,
+      width: 4.8,
+      entry: 0.9,
+      exit: 0.32,
       taperIn: 3,
-      taperOut: 20,
-      wobble: 0.2,
-      seed: 33,
+      taperOut: 9,
+      wobble: 0.18,
+      seed: 21,
     },
   ),
 ];
 
-/** the coiled sword, driven point-down into the ash, and the mound it stands in */
+/**
+ * The coiled sword, driven point-down into the ash, and the mound it stands in.
+ *
+ * Three corrections, all of them things the rasteriser said and the source did
+ * not. The blade is twice the body it was and its point stops ramping at 40%
+ * rather than fading to nothing — a point that arrives at 0.7 units is not a
+ * point, it is an absence. The guard is now WIDER than the fire above it: at
+ * 24px an arm that ends inside the flame's own width is not a crossguard, it
+ * is a slightly fatter flame, and the old one reached 10 units where the fire
+ * reached 11. And it sits six units clear of the flame's foot, because two
+ * marks less than a pixel apart are one mark.
+ *
+ * The arms are unequal in both length and drop. A blade and a level bar of
+ * equal arms is a cross, and a cross is a different mark with a different
+ * meaning; the sweep is what buys the sword back.
+ */
 export const bonfireAsh: string[] = [
-  // blade — full at the guard, then a long ramp to the point that went in
+  // blade — full at the guard, ramping to a point that is still 1.6 units wide
   nib(
     [
-      [48, 51.5],
-      [48.5, 64],
-      [47.8, 74],
-      [48.2, 83.5],
+      [48, 54],
+      [48.6, 66.4],
+      [47.9, 77.2],
+      [48.3, 85],
     ],
     {
-      width: 2.75,
-      entry: 0.85,
-      exit: 0.12,
+      width: 4,
+      entry: 0.9,
+      exit: 0.4,
       taperIn: 2,
-      taperOut: 16,
-      wobble: 0.16,
+      taperOut: 9,
+      wobble: 0.12,
       seed: 61,
     },
   ),
-  // crossguard, sitting a degree or two off level
+  // crossguard, swept, the left arm longer and dropping further
   nib(
     [
-      [37.9, 62.6],
-      [48, 61.6],
-      [58.3, 62.7],
+      [31, 65.4],
+      [39.5, 62.6],
+      [48, 62],
+      [55, 63],
+      [62, 64.6],
     ],
-    { width: 2.75, entry: 0.5, exit: 0.45, taper: 4, wobble: 0.1, seed: 44 },
+    {
+      width: 3.8,
+      entry: 0.5,
+      exit: 0.5,
+      taperIn: 4.5,
+      taperOut: 4,
+      wobble: 0.1,
+      seed: 44,
+    },
   ),
   // the mound
   nib(
     [
-      [26, 83.2],
-      [35.2, 79.5],
-      [48, 78.1],
-      [61, 79.7],
-      [70.1, 83.4],
+      [21, 86.5],
+      [33.2, 82.9],
+      [48, 81.5],
+      [62.9, 83.1],
+      [75, 86.7],
     ],
-    { width: 2.7, entry: 0.4, exit: 0.4, taper: 7, wobble: 0.12, seed: 96 },
+    { width: 4.2, entry: 0.5, exit: 0.5, taper: 5, wobble: 0.12, seed: 96 },
   ),
 ];

@@ -359,6 +359,8 @@ The reasoning generalises. An icon costs the reader a thing to learn, and that c
 
 **Adjacent post nav** — "Further In", then titles in Display, bordered rows.
 
+**Bonfire** (`BackToTopButton.astro`) — a coiled sword driven point-down into a mound of ash with the fire above it, because a Souls bonfire is where you rest and return and that is what the control does. The flame is the theme's one gold on the page; sword and mound read `--ornament`. It is the largest mark at 24px and still the tightest, because a pixel is four units of its box: **two tongues sharing one base, one gap of at least eight units, no body under eight units, and a guard wider than the fire it carries.** The first drawing had three tongues, three-unit gaps and tapers over half of every stroke, and delivered as a gold leaf on a stem — [`prototypes/bonfire-five.html`](./prototypes/bonfire-five.html) has the five candidates and why B won.
+
 **404** — an eyebrow reading "Hollowed", a huge dim numeral, one line, one link home.
 
 **Search** — Pagefind's UI repointed at Torchlight custom properties; its primary is `--text-2`, not gold.
@@ -481,6 +483,9 @@ Listed so they can be caught in review. Several were committed during this theme
 | Taper measured as a fraction of stroke length       | A short stroke becomes all taper — rays turn into petals; taper over a distance                                                         |
 | A filled flame                                      | Fire reads through the dark gaps between tongues, not through the gold                                                                  |
 | Judging a 15px mark from its path data              | Rasterise it at delivered size over the real ground, or you are guessing                                                                |
+| A gap or a body under one delivered pixel           | At 24px one pixel is four units of the 96 box. A three-unit sliver closes, and the mark loses the negative space it was built on        |
+| A zoom that redraws the vector                      | Enlarging the path data shows the intention. Only the delivered raster, enlarged with smoothing off, shows the mark                     |
+| An animation origin left behind by a redraw         | `transform-origin` is geometry too: the flicker scales the flame about its foot, and a foot that moved lifts the fire off the sword     |
 | Checking a token's contrast only against `--ground` | Two of kindled's marks land on `--panel` and on a composited scene layer; both are illegible where every test is green                  |
 | Comparing the two worlds by hex value               | Kindled's `--scene-ink` is the _lighter_ hex and the _weaker_ drawing. Only the ratio against each world's own ground means anything    |
 | Counting gold without pseudo-elements               | The rune bullets are `::before` backgrounds, and they are most of the gold on a kindled post                                            |
