@@ -29,7 +29,7 @@ Solution:
 
 ## Organization
 
-<div class="mermaid">
+```mermaid
 graph LR
 		R[Organization root] --> A[Team A folder]
 		R[Organization root] --> B[Team B folder]
@@ -38,25 +38,28 @@ graph LR
 		B[Company folder] --> B1[Team B production folder]
 		B[Company folder] --> B2[Team B staging folder]
 		R[Organization root] --> P[playground folder]
-</div>
+```
 
 ## Nested Google Group
 
-<div class="mermaid">graph LR</div>
+```mermaid
+graph LR
+```
+
 subgraph A [Team A Google Group] A1[Team A production Google Group] A2[Team A
 staging Google Group] end ```
 
-```
+````
 
 ## IAM relationship between Google Group and Google project
 
-<div class="mermaid">
+```mermaid
 graph LR
 		A[Team A Google Group] -- Folder Admin/Owner -->AF[Team A folder]
 		A1[Team A production Google Group] -- Folder Admin/Owner -->A1F[Team A production folder]
 		A2[Team A production Google Group] -- Folder Admin/Owner -->A2F[Team A staging folder]
 		P[playground Google Group] -- Folder Admin/Owner -->PF[Team B playground folder]
-</div>
+````
 
 ## Terraform
 
@@ -66,11 +69,14 @@ Create service account per GCP project as Terraform repo's credential.
 
 - [one-to-one mapping between Terraform repo and GCP project](https://registry.terraform.io/providers/hashicorp/google/latest/docs)
 
-<div class="mermaid">
+```mermaid
 graph LR;
 		A[A GCP project] --> AT[A Terraform repo];
 		AT[A Terraform repo] --> A[A GCP project];
 		B[B GCP project] --> BT[B Terraform repo];
 		BT[B Terraform repo] --> B[B GCP project];
-</div>
+```
+
+```
+
 ```

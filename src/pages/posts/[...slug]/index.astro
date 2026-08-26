@@ -13,6 +13,7 @@ import ShareLinks from "./_components/ShareLinks.astro";
 import Breadcrumb from "@/components/Breadcrumb.astro";
 import BackToTopButton from "./_components/BackToTopButton.astro";
 import AdjacentPostNav from "./_components/AdjacentPostNav.astro";
+import Mermaid from "@/components/Mermaid.astro";
 import config from "@/config";
 
 export async function getStaticPaths() {
@@ -266,8 +267,4 @@ const ogImage = ogImageUrl
   );
 </script>
 
-<script>
-  import mermaid from "mermaid";
-  mermaid.initialize({ startOnLoad: true, theme: "dark" });
-  mermaid.contentLoaded();
-</script>
+<Mermaid />

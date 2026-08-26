@@ -1,25 +1,36 @@
 ---
 import { tokens } from "@/utils/tokens";
 
-interface Props {
-  chart: string;
-}
-
-const { chart } = Astro.props;
-
 // Diagrams sit in the arcane register, so the accent role takes --arcane
 // rather than --torch. Values come from docs/theme/tokens.json.
 const palette = tokens.diagram;
 ---
 
-<div class="mermaid">{chart}</div>
-
+{
+  /*
+  Behaviour only — the markup comes from `src/plugins/remark-mermaid.ts`, which
+  turns a ```mermaid fence into `<div class="mermaid">`. Include this once on
+  any page type that can contain a diagram; it does nothing on a page that
+  does not.
+*/
+}
 <script is:inline define:vars={{ palette }}>
   window.__torchlightDiagram = palette;
 </script>
 
 <script>
-  import mermaid from "mermaid";
+  /**
+   * mermaid is imported dynamically, and only once a diagram is on the page.
+   *
+   * Astro bundles page scripts per ROUTE, not per page, so a static
+   * `import mermaid` here put mermaid and d3 — 257KB — into the shared entry
+   * for `posts/[...slug]`, which is every post. Three posts draw a diagram and
+   * twenty-two were paying for it. Behind a dynamic import the entry keeps
+   * only this wrapper and mermaid becomes a chunk the other twenty-two never
+   * fetch.
+   */
+  type Mermaid = (typeof import("mermaid"))["default"];
+  let mermaid: Mermaid | undefined;
 
   type Roles = {
     bg: string;
@@ -44,12 +55,19 @@ const palette = tokens.diagram;
     return palette[world];
   }
 
-  function draw() {
+  async function draw() {
+    const nodes = document.querySelectorAll<HTMLElement>(".mermaid");
+    if (nodes.length === 0) return;
+
+    mermaid ??= (await import("mermaid")).default;
+
     const r = currentRoles();
     mermaid.initialize({
       startOnLoad: false,
       theme: "base",
-      fontFamily: "Cinzel, Georgia, serif",
+      // Cardo sets everything on this site; Cinzel was dropped in August
+      // 2026 and a diagram asking for it fell back silently to Georgia.
+      fontFamily: "Cardo, Georgia, serif",
       themeVariables: {
         background: r.bg,
         mainBkg: r.surface,
@@ -69,17 +87,22 @@ const palette = tokens.diagram;
     });
     // Re-render from the original source on every draw so a world flip
     // does not accumulate stale SVG.
-    document.querySelectorAll<HTMLElement>(".mermaid").forEach(node => {
+    nodes.forEach(node => {
       if (!node.dataset.source) node.dataset.source = node.textContent ?? "";
       node.removeAttribute("data-processed");
       node.innerHTML = node.dataset.source;
     });
-    mermaid.contentLoaded();
+    // `run()`, not `contentLoaded()`: contentLoaded is a no-op unless
+    // `startOnLoad` is true, and it must stay false or mermaid renders once
+    // itself before the theme is applied.
+    await mermaid.run({ nodes: Array.from(nodes) });
   }
 
-  draw();
-  document.addEventListener("astro:after-swap", draw);
+  // Every entry point goes through draw(), which returns before it imports
+  // anything if the page carries no diagram.
+  void draw();
+  document.addEventListener("astro:after-swap", () => void draw());
   document.querySelector("#world-btn")?.addEventListener("click", () => {
-    window.setTimeout(draw, 320);
+    window.setTimeout(() => void draw(), 320);
   });
 </script>

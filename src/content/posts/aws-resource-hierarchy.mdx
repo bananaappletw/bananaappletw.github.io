@@ -27,7 +27,7 @@ Solution:
 
 ## Organization
 
-<div class="mermaid">
+```mermaid
 graph LR
 		R[Organization root] --> C[Company OU]
 		C[Company OU] --> A1[Team A production AWS account]
@@ -35,7 +35,7 @@ graph LR
 		C[Company OU] --> B1[Team B production AWS account]
 		C[Company OU] --> B2[Team B staging AWS account]
 		R[Organization root] --> P[playground AWS account]
-</div>
+```
 
 Company OU will whitelist AWS resource and region.
 Playground account has no limitation on AWS resource.
@@ -51,13 +51,13 @@ Periodically clean resource of playground account.
 
 Create `terraform` IAM access key and attach AdministratorAccess policy as Terraform repo's credential.
 
-<div class="mermaid">
+```mermaid
 graph LR;
 		A[A AWS account] --> AT[A Terraform repo];
 		AT[A Terraform repo] --> A[A AWS account];
 		B[B AWS account] --> BT[B Terraform repo];
 		BT[B Terraform repo] --> B[B AWS account];
-</div>
+```
 
 ## SSO
 
@@ -91,13 +91,13 @@ Iterate the Google group, for each Google account, map to corresponding IAM role
 
 [https://aws.amazon.com/tw/single-sign-on/](https://aws.amazon.com/tw/single-sign-on/)
 
-<div class="mermaid">
+```mermaid
 graph LR;
 		A[A AWS account admin group] --> AA[Administer role of A account];
 		A[A AWS account readonly group] --> AR[readonly role of account];
 		B[B AWS account admin group] --> BA[Administer role of A account];
 		B[B AWS account readonly group] --> BR[readonly role of account];
-</div>
+```
 
 Assign user to group to have access to account.
 

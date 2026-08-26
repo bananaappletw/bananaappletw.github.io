@@ -10,6 +10,7 @@ import sitemap from "@astrojs/sitemap";
 import { unified } from "@astrojs/markdown-remark";
 import remarkToc from "remark-toc";
 import remarkCollapse from "remark-collapse";
+import { remarkMermaid } from "./src/plugins/remark-mermaid";
 import {
   transformerNotationDiff,
   transformerNotationHighlight,
@@ -87,6 +88,8 @@ export default defineConfig({
       remarkPlugins: [
         remarkToc,
         [remarkCollapse, { test: "Table of contents" }],
+        // before Shiki, so a diagram never becomes a highlighted code block
+        remarkMermaid,
       ],
     }),
     shikiConfig: {
