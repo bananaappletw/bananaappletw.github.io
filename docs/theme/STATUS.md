@@ -1,6 +1,6 @@
 # Torchlight — status and handoff
 
-**Last updated:** 19 August 2026
+**Last updated:** 27 August 2026
 **Branch:** `main` — work goes straight to `main` and a push is the deploy.
 **State:** **released and live** at <https://bananaappletw.github.io/>. The
 direction is settled: B — Ash (§1).
@@ -36,7 +36,7 @@ Everything below is on `main`, live, builds clean, and is verified:
 - `npx astro check` — 0 errors, 0 warnings
 - `npm test` — 20/20 pass
 - `npm run format:check` — passes
-- `npm run lint` — passes; flat config added 19 August 2026 (§6).
+- `npm run lint` — passes; flat config added 19 August 2026 (§7).
 
 **Applied to:** base layer and atmosphere, typography, header (HUD), cards, tags, pagination, breadcrumbs, footer, home, post, section pages, 404, list, search, Shiki, Mermaid, OG images, and the bonfire.
 
@@ -104,11 +104,166 @@ These cost real time. All are recorded in `design.md` §13 as anti-patterns.
 - **12 of 25 posts use `# ` for section headings**, not titles. `h1` and `h2` are styled identically in prose; without that, posts render as several stacked giant titles.
 - **All 25 posts have `description === title`**, so `Card.astro` suppresses the description when it matches.
 - **An SVG arc cap's sweep flag is `0`, not `1`.** The sweep flag is a positive-angle direction in a y-down system, so `1` bends the cap the wrong way and takes a bite _out_ of the end of every stroke. On a long stroke it is a subtle notch; on a short one it dominates, and the sun's rays rendered as ragged slabs until it was found.
-- **Google Fonts is blocked on the sandbox this branch was last built in.** `fonts.google.com/metadata/fonts` returns 403 through the egress proxy, so `unifont` resolves zero files, `fontData` comes back as empty arrays, and `npm run build` dies in the OG template with "Cannot find the font path". Nothing in the repo is wrong — it builds on a machine that can reach Google. Do not "fix" `getFontPathByWeight` in response to this error.
+- **Google Fonts is blocked on the sandbox this branch was last built in.** `fonts.google.com/metadata/fonts` returns 403 through the egress proxy, so `unifont` resolves zero files, `fontData` comes back as empty arrays, and `npm run build` dies in the OG template with "Cannot find the font path". Nothing in the repo is wrong — it builds on a machine that can reach Google. Do not "fix" `getFontPathByWeight` in response to this error. Only the _metadata_ host is blocked; `googleapis` and `gstatic` are reachable, so the faces can be fetched by hand — see §6b for the throwaway-config workaround and its two traps.
+- **A token can hold a legal value and still not do its job.** Every contrast assertion in `tests/tokens.test.ts` measures a token against `--ground`. Two of the light world's marks land on something else — the code rule sits on `--panel`, the scene line is `--scene-ink` composited at `--scene-opacity` — and both are invisible where the tests are green. **Measure a mark over the surface it actually lands on.**
+- **A gold count that reads element styles misses most of the gold.** The rune bullets are `::before` backgrounds. An audit that walks `getComputedStyle(el)` and stops there reports a kindled post at 4 when it is 7.
+- **…and a gold count that trusts the cascade counts marks that are not on the
+  screen.** The bonfire is `opacity: 0; pointer-events: none` until the reader
+  passes 120px, so at the top of a post its ash and its flame are gold in the
+  cascade and absent from the page. The 20 August count of 7 included both.
+  `getComputedStyle` reports the element's own opacity and tells you nothing
+  about its ancestors, so the check has to **walk the parent chain for
+  `opacity`, `visibility` and `display`** before it counts anything.
+- **One viewport is not the page.** The same audit measured only the gate, and
+  the gate is the cheapest viewport a post has — the header is not sticky, so
+  scrolling _spends_ the sigil and the sun and _buys_ the bonfire and every
+  bullet that comes into view. Measure at rest and scrolled; the worst case is
+  wherever the repeating ornament lives, and on a kindled post that is 10, not 7.
+- **`npx astro build` skips `build:tokens`.** Only `npm run build` chains them. Edit `tokens.json`, rebuild with `astro build` alone, and you screenshot the previous palette while believing you changed it — twenty minutes of "the change did nothing".
 
 ---
 
-## 6. Also fixed along the way
+## 6. The kindled pass — 20 August 2026
+
+> **Kept as evidence, not as an open question.** All three of this pass's
+> findings have since been decided: the gold count was settled by taking the
+> recount's option 2 (§4 rule 4), the scene was calibrated up (§7), and the
+> code block's left rule is the one still standing — it is §8's third open
+> item. The method and the numbers below are why those calls were made.
+
+Someone finally _looked_ at the light world: every page type, both worlds, 1440
+and 390, plus hover, focus and selection states, with contrast sampled from the
+rendered page rather than read off `tokens.json`. **Nothing was changed on the
+day.** All three findings turned out to be decisions rather than repairs; two
+have since been taken and the third is §8's third open item.
+
+What the pass is worth keeping for is the method and the numbers.
+
+**Count gold from the rendered DOM, not by eye.** Walk every element in the
+viewport, resolve `--torch` to `rgb()`, and match `color` / `background` /
+`fill` / `stroke` / `border` **and `::before` / `::after`** against it — the
+rune bullets are pseudo-element backgrounds and are invisible to any check that
+only reads element styles. Then **collapse descendants**: a mark drawn with the
+nib is a dozen `<path>` elements and is _one_ occurrence, not twelve. Without
+that collapse the same audit reports hollowed's home page at 5 gold and tells
+you nothing. With it: hollowed 1–2 everywhere, kindled 2 everywhere except a
+post at 7.
+
+**Measure a world against its own ground, and compare the two worlds by ratio,
+never by hex.** Kindled's `--scene-ink` is _lighter_ than hollowed's and the
+drawing is _weaker_, because one is drawn on white and the other on near-black.
+The pair of hex values looks reasonable and says nothing. The composite line's
+contrast against its own ground is the only number that means anything, and it
+is 1.50:1 against 2.51:1.
+
+**The light world's failures are all failures of the same kind: a mark that
+exists in hollowed does not exist in kindled.** The scene, the code block's
+left rule, and — inverted — a gold that hollowed spends once and kindled spends
+seven times. None of it is visible to `npm test`, which is exactly what the
+old roadmap warned (now §8). The test suite checks that tokens have legal _values_; nothing checks
+that a token does its _job_ once composited over the surface it actually lands
+on. Both misses here are composite failures: `--border` over `--panel`, and
+`--scene-ink` at `--scene-opacity` over `--ground`.
+
+**A doc that contradicts itself reads as settled from either end.** §3 and §4
+of `design.md` have disagreed about kindled bullets since the ornament channel
+was written; each section is internally convincing, and the conflict is only
+visible if you render a bulleted post in the light world and count. Two rules
+that never meet on the same page are not caught by reading.
+
+---
+
+## 6b. The gold recount — 25 August 2026
+
+> **Resolved.** Option 2 is what `main` ships: `--ornament` reads `--text-4`
+> in both worlds, asserted by test in both directions (§4 rule 4). Option 4
+> was not taken — the sun keeps the theme's one control-gold, for the reason
+> this section gives.
+
+The roadmap's top item (now §8) was picked up, and at the time it was still
+the author's to decide, so
+**nothing in the theme changed**. What this pass did was build all three of
+`design.md` §15's options, render them, and count from the page instead of
+from the cascade. Both halves of that changed the answer.
+
+**The 20 August figure of 7 was wrong in both directions, and the real number
+is worse.** Two of the seven — the bonfire's ash and its flame — are not
+painted at the top of a post (§5). And the gate is the cheapest viewport the
+page has. Measured on `/posts/aws-resource-hierarchy/`, kindled, counting only
+what is actually on the screen:
+
+| Option                                                   | At the gate | Scrolled into the list | Hollowed |
+| -------------------------------------------------------- | ----------- | ---------------------- | -------- |
+| **1** — leave it (what `main` ships today)               | 5           | **10**                 | 1        |
+| **2** — kindled `--ornament` → `--text-4`                | 2           | 1                      | 1        |
+| **3** — bullets read `--text-4`, ornament stays gilded   | 2           | 2                      | 1        |
+| **4** — option 2, plus the sun reading the HUD's own ink | 1           | 1                      | 1        |
+
+At 390 the same order holds (8 / 1 / 2 / 1 scrolled). Add **one** to any cell
+where the cursor is on a prose link — that is the slot §4 reserves for it.
+
+**This retires §15's claim that option 2 is the only one that satisfies the
+count.** That claim came from the gate-only numbers, where option 3's residue
+was the unpainted bonfire. Once the count is honest, options 2 and 3 both clear
+the ceiling of three with room to spare, and the choice between them is no
+longer arithmetic — it is whether the gilded ornament channel is an idea worth
+keeping.
+
+**And it is worth less than it looks.** Under option 3 the channel stays
+gilded, but the only mark left reading it in a kindled viewport is the
+bonfire's ash. `.rune-list` — the other rule `design.md` §3 quotes — **is
+applied to nothing**: it is defined in `ornament.css`, ships in the CSS, and no
+markup in `src/` carries the class. The live bullet rule is the prose one in
+`typography.css` alone, so option 3 is a one-line change and option 2 spends an
+idea that currently buys exactly one mark.
+
+**Two things only the screenshots say.** The gold ash is the bonfire's own
+worst enemy: at delivered size the flame and the mound beneath it merge into
+one gold blob, and knocking the ash to bone is what makes the flame read as a
+flame standing on ash — option 2 improves that mark rather than costing it. Set
+against that, the neutral sun of option 4 **stops reading as a control**: at
+`--text-4` it sits at exactly the weight of the word "About" beside it and
+becomes a fifth nav item, which is the case `design.md` §8 was making when it
+gave the sun the one control-gold in the theme. Option 4 buys parity with
+hollowed and pays for it in the header.
+
+**On the evidence here the recommendation is option 2, and the decision is
+still the author's** — §15 is where it lives and this pass did not move it.
+
+### Sandbox note for the next session
+
+`npm run build` cannot complete on this runner: `fonts.google.com/metadata/fonts`
+returns 403 through the egress proxy (§5), so `unifont` resolves nothing and the
+OG template throws. **`fonts.googleapis.com` and `fonts.gstatic.com` are _not_
+blocked** — only the metadata host is. So the way to get a real build for
+screenshots is to fetch the woff2/ttf by hand from `gstatic` and point a
+throwaway config at `fontProviders.local()`; never edit `astro.config.ts` for
+this and never "fix" `getFontPathByWeight` in response to the error.
+
+Two traps in that workaround, both of which cost a round here:
+
+- **`astro build` does not regenerate `tokens.css`.** `npm run build` runs
+  `build:tokens` first; `npx astro build` does not. Editing `tokens.json` and
+  rebuilding with `astro build` alone silently screenshots the _old_ palette.
+- **Google serves the format your User-Agent admits to supporting, and the
+  obvious "very old browser" UA gets you EOT, not TrueType.** `satori` needs a
+  real `.ttf` (`getFontPathByWeight` asks for `format: "truetype"`), and an
+  MSIE 6 UA on `css2` returns a `/l/font?kit=…` URL whose payload begins
+  `b2 e5 05 00` — an EOT header whose first word is the file's own length. It
+  downloads fine, it is the right size, and the build dies on "Unsupported
+  OpenType signature". A TTF starts `00 01 00 00`; **check the first four bytes
+  before believing the extension you gave the file.** The UA that actually
+  yields `.ttf` URLs is an old mobile WebKit — Android 2.3 / `AppleWebKit/533.1`
+  — and modern Chrome yields the woff2, which `satori` cannot read either. Fetch
+  both, list them as `src: [woff2, ttf]` per variant, and the browser takes the
+  first while the OG generator takes the second.
+- Astro v6's local provider takes `provider: fontProviders.local()` with the
+  variants under `options: { variants: [...] }` — a bare `provider: "local"`
+  or a top-level `variants` key fails config validation.
+
+---
+
+## 7. Also fixed along the way
 
 - `editPost.url` pointed at `satnaing/astro-paper` — every "edit this post" link sent readers to someone else's repository.
 - `i18n/types.ts` was missing `list`, which `en.ts` defined and `Breadcrumb` used.
@@ -166,7 +321,7 @@ These cost real time. All are recorded in `design.md` §13 as anti-patterns.
 
 ---
 
-## 7. Roadmap
+## 8. Roadmap
 
 v1 is **shipped**. The theme was squash-merged to `main` on 16 August 2026 and
 deploys automatically on every push. Work continues directly on `main`; there
@@ -207,7 +362,7 @@ is no feature branch.
 
 1. **The kindled world had its pass** on 19 August, page by page at 1440 and
    390 against the same page hollowed. Two things came out of it: the scene
-   was invisible on paper (§6) and the archive rules were ragged (§6). What
+   was invisible on paper (§7) and the archive rules were ragged (§7). What
    the pass also established, so nobody re-opens it: gold now stays inside its
    budget in both worlds — the only torch paint left on a page is the sigil and
    the world control, both marks, once the kindled ornament channel stopped
@@ -217,28 +372,57 @@ is no feature branch.
    is invisible in a headless shot because the overlay scrollbar does not
    render. Still open there: **the kindled world has never been looked at on a
    real screen**, only in captures.
-2. **Redraw the bonfire mark.** `src/utils/marks.ts` draws the sword, its
-   guard and the ash mound at 2.7 units in a 96-unit box — 0.69px at the 24px
-   the button renders at — so all three fall under a pixel and only the gold
-   tongues survive. It reads as a leaf sprouting from a dish. The fix is
-   weight, not a new drawing language: keep the `nib` pen every other mark is
-   drawn with, raise the sub-pixel parts above a 4-unit floor, and open the
-   gaps between the tongues to 6, then judge it at 24px on both grounds
-   rather than at 96. A flat-polygon set was tried on 21 August and rejected —
-   no pressure in the line, and it read as sails next to the drawn marks.
-3. **Ash variations and the stain texture.** Soot ground, ruled headings,
+2. **Redraw the bonfire mark — five candidates are drawn and one has to be
+   picked.** [`prototypes/bonfire-five.html`](./prototypes/bonfire-five.html)
+   carries them, each at 24px on both grounds beside the rasteriser's own
+   output blown up, plus the spines ready to move into `src/utils/marks.ts`.
+
+   The diagnosis, corrected while drawing them: `nib`'s `width` is a
+   **half**-width, so the sword, guard and mound are 5.5 units of body in the
+   96-unit box — about 1.4px at 24, not the 0.69 recorded here before. The
+   failure is real but it is in the _tapers_, not the bodies: the blade ramps
+   away over 16 of its 32 units to 0.66 units at the point, the mound fades at
+   both ends, and the three or four units of ground between the tongues close
+   under a rasteriser whose pixel is four units wide. What is left is a gold
+   leaf on a stem.
+
+   The candidates are A **Weight** (the same drawing, floored at 8 units of
+   body and 4 of taper, gaps opened to 7), B **Two tongues** (three tongues
+   means two slivers, and two is one more than the eye holds at this size), C
+   **Sword-led** (hierarchy inverted, the fire a crown on the sword — the
+   fix that keeps it from reading as a cross is a swept guard with unequal
+   arms), D **Silhouette** (one closed `loop()` mass with a bite out of the
+   front) and E **Ash and fire** (the sword dropped, the mound drawn as mass).
+   A flat-polygon set was tried on 21 August and rejected — no pressure in the
+   line, and it read as sails next to the drawn marks.
+
+3. **The code block's left rule does not exist in kindled.** `--border` on
+   `--panel` is **1.22:1**, against 1.60:1 hollowed, and no value in the
+   current token set fixes it: `--border` already sits at the 1.3:1 that
+   `design.md` §12 asks for, and the kindled panel is only 1.07:1 off white,
+   so the two converge. Needs either a new token or a documented value moved.
+   Carried over from the 20 August pass (§6) and still true — the tests do not
+   see it, because every contrast assertion in `tests/tokens.test.ts` measures
+   against `--ground` and this mark lands on `--panel` (§5).
+4. **Kindled's scene is legible now but not at parity.** Raising
+   `--scene-opacity` to 0.66 took the line from 1.50:1 to **2.03:1** against
+   white; hollowed reads **2.51:1**. The 20 August pass argued the per-world
+   difference belongs in `--scene-ink` rather than in the opacity — opacity
+   should mean "how far back the picture sits", and it sits equally far back
+   in both worlds — which would make kindled's ink the _darker_ of the two hex
+   values, where today it is the lighter. `scenes.md` §5 carries the reasoning.
+5. **Ash variations and the stain texture.** Soot ground, ruled headings,
    mincho and the spec block are all prototyped and none is chosen. The stain
    must ship un-tiled — a repeat is visible on a wide screen — and its dials
    are in `stain-calibration.html`.
-4. **The post header image rule** (`design.md` §15).
-5. **Review the `about` page prose** against the measure. The measure itself is
-   fine at the smaller scale; what is left is the writing — and the coloured
-   emoji in "Let's Connect", which are the only full-saturation pixels on the
-   site.
+6. **The post header image rule** (`design.md` §15).
+7. **Review the `about` page prose** against the measure. What is left is the
+   writing — and the coloured emoji in "Let's Connect", which are the only
+   full-saturation pixels on the site.
 
 ---
 
-## 8. Useful commands
+## 9. Useful commands
 
 ```bash
 npm run dev            # regenerates tokens, then serves on :4321

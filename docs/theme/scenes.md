@@ -12,7 +12,7 @@ SVG components rather than as the raster assets §2 specifies. §4 and §5 are
 both decided. §7 stands as written about the painting program, with one
 correction recorded in §3.4: figuration is reachable from a skeleton, which is
 not what that program was doing. Nothing here blocks the release — see
-[`STATUS.md`](./STATUS.md) §7. Painting these programmatically was attempted
+[`STATUS.md`](./STATUS.md) §8. Painting these programmatically was attempted
 and rejected; §7 records why.
 
 ---
@@ -22,14 +22,17 @@ and rejected; §7 records why.
 A scene is **one small painting in the bottom-right corner of a page, behind
 the text**. It is atmosphere, not illustration of the content.
 
-|             |                                       |
-| ----------- | ------------------------------------- |
-| Position    | foot of the DOCUMENT, right-hand side |
-| Size        | `clamp(200px, 30vw, 420px)` wide      |
-| Opacity     | ~0.55 hollowed, ~0.3 kindled          |
-| Stacking    | behind all content (`z-index: 0`)     |
-| Below 900px | removed entirely, not faded           |
-| Per page    | exactly one, or none                  |
+|             |                                                                                              |
+| ----------- | -------------------------------------------------------------------------------------------- |
+| Position    | foot of the DOCUMENT, right-hand side                                                        |
+| Size        | `clamp(220px, 32vw, 460px)` wide                                                             |
+| Opacity     | `--scene-opacity`, 0.62 hollowed, 0.4 kindled — see §5, the kindled figure is under question |
+| Stacking    | behind all content (`z-index: 0`)                                                            |
+| Below 60rem | removed entirely, not faded                                                                  |
+| Per page    | exactly one, or none                                                                         |
+
+The numbers above are `src/styles/global.css` and `tokens.json` as built, not
+intentions — they had drifted from this table and were corrected on 20 August 2026. Read them from the source when they matter.
 
 **It is absolute, not fixed.** The scene sits at the foot of the page and is
 reached by scrolling, like anything else. It was pinned to the viewport at
@@ -402,6 +405,21 @@ cost at all once the scenes were drawings rather than paintings. What it does
 cost is tone: the line means light on the dark ground and shade on paper, which
 Clerestory feels most. Geometry carries it, and the kindled opacity is tuned
 separately (0.66 against hollowed's 0.62, and Court's dye halved again).
+
+**Legible, but not at parity — and the dial may be the wrong one.** Measured
+against each world's own ground, the composited line reads **2.03:1** kindled
+against **2.51:1** hollowed. That is up from the 1.50:1 the 20 August pass
+found and is no longer a smudge, but kindled still gets about four-fifths of
+the presence hollowed gives it. That pass also made a case this section did not
+take, and it is worth keeping: **the per-world difference belongs in
+`--scene-ink`, not in `--scene-opacity`.** Opacity should mean "how far back
+the picture sits", and the picture sits equally far back in both worlds; what
+has to change between them is the ink, because the paper changed. Under that
+reading kindled's ink would be the _darker_ of the two hex values, where today
+it is the lighter (`#9c8f74` against hollowed's `#8a7c64`) with the opacity
+making up the difference. Either way, comparing the two hexes tells you
+nothing — only each one's composite ratio against its own ground does. Open as
+`STATUS.md` §8's fourth item.
 
 The three options as they stood, kept because a raster scene would face them
 again:
