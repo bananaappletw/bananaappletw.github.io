@@ -11,6 +11,7 @@ import { unified } from "@astrojs/markdown-remark";
 import remarkToc from "remark-toc";
 import remarkCollapse from "remark-collapse";
 import { remarkMermaid } from "./src/plugins/remark-mermaid";
+import { redirects } from "./src/redirects";
 import {
   transformerNotationDiff,
   transformerNotationHighlight,
@@ -83,6 +84,9 @@ export default defineConfig({
       prefixDefaultLocale: false,
     },
   },
+  // Every pre-Astro URL, mapped. See src/redirects.ts.
+  redirects,
+
   markdown: {
     processor: unified({
       remarkPlugins: [

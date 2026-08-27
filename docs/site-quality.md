@@ -129,9 +129,9 @@ screen-reader pass over the world control; forced-colours mode.
 **Where it stands.** No third-party hosts on any page — fonts are self-hosted,
 there is no analytics and no CDN. The build is one `npm run build`.
 
-Not measured yet: what a post looks like with JS disabled (the world control,
-search and the bonfire are all scripted), and whether the Docusaurus-era URLs
-still resolve after the migration.
+Both checked on 27 August: a post reads fine with JavaScript off (TODO 6), and
+the Docusaurus-era URLs did **not** resolve — 67 redirects were added, see
+TODO 7.
 
 ---
 
@@ -193,8 +193,17 @@ metrics dashboard.
    _script_ keeps, not the stylesheet. Making it true without JS means
    dropping the `prefers-color-scheme` block from `build-tokens.mjs`, which
    changes the default for every reader — the author's call, not a fix.
-7. **Confirm the old URLs still resolve** after the Docusaurus migration, and
-   add redirects for any that do not.
+7. ~~**Confirm the old URLs still resolve.**~~ **Done, 27 August — none of
+   them did.** Checked against the live origin: `/blog/opsec/`,
+   `/blog/aws-resource-hierarchy/`, `/blog/`, `/treasure/` and `/archive/` all
+   returned 404, and so did every `/archives/<Name>/` post URL. Two migrations
+   moved every post and nothing was left behind, so links, bookmarks and search
+   results going back to 2016 were dead. `src/redirects.ts` now maps **67**
+   paths — 26 posts, 27 tag pages, 8 indexes and 6 feeds — generated from the
+   last Docusaurus build still in git history rather than from memory, and
+   every target verified to exist in `dist/`. Six old tag pages point at
+   `/tags/` because those tags no longer exist; the migration collapsed most of
+   them into `archive`.
 8. **Partly done, 27 August.** With 1 and 2 landed, a post is **30KB of HTML
    plus 73KB of subresources over 7 requests — 103KB total**, against roughly
    460KB this morning, and requirement 3 above is met with room. First
