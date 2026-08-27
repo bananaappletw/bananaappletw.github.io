@@ -463,34 +463,35 @@ The rule that follows: **`--text` targets 8–13:1, never above 14:1.** Borders 
 
 Listed so they can be caught in review. Several were committed during this theme's own construction.
 
-| Anti-pattern                                        | Why it breaks                                                                                                                           |
-| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| Gold on links, tags, nav or listing titles          | Turns relief into wallpaper; §4                                                                                                         |
-| A fourth hue                                        | Three hues is what keeps this a system rather than a costume                                                                            |
-| Cool grey anywhere                                  | Souls is desaturated _brown_; cool grey reads as a rendering bug                                                                        |
-| Flat black hollowed ground                          | Reads as an empty page rather than a lit room                                                                                           |
-| Pushing `--text` to maximum contrast                | Above ~14:1 text detaches and glows instead of sitting in the page                                                                      |
-| High-contrast borders                               | A hard hairline buzzes exactly as much as glaring type                                                                                  |
-| Ornament reading `--torch`                          | Leaves ornament lit in a dead world, killing the central idea                                                                           |
-| A dark page with no grain                           | Reads as clean vector art, not a photographed room                                                                                      |
-| `position: fixed` in a hand-written rule            | Tailwind hoists it into a utility and strips it — the atmosphere ships unpositioned                                                     |
-| A panel, frame, card or drop shadow                 | Ash lifts nothing; that is direction A, and the hedge is what stalled the theme                                                         |
-| `black` stops in an SVG `<mask>`                    | SVG masks are luminance by default, so black hides — CSS `mask-image` is alpha                                                          |
-| A scene whose stone is brighter than its mist       | The light is behind the castle; bright stone reads as clear weather, and flat                                                           |
-| Category colours (movie / anime / manga)            | Four decorative hues, and colour as the only signal                                                                                     |
-| Drop caps and section marks                         | Cut: with two ornaments per viewport, space and light do it better                                                                      |
-| A second ambient animation                          | §11 permits exactly one, and it is the flame                                                                                            |
-| A mark built from primitives                        | An exact circle and eight identical rays read as clip art beside a pen drawing                                                          |
-| Taper measured as a fraction of stroke length       | A short stroke becomes all taper — rays turn into petals; taper over a distance                                                         |
-| A filled flame                                      | Fire reads through the dark gaps between tongues, not through the gold                                                                  |
-| Judging a 15px mark from its path data              | Rasterise it at delivered size over the real ground, or you are guessing                                                                |
-| A gap or a body under one delivered pixel           | At 24px one pixel is four units of the 96 box. A three-unit sliver closes, and the mark loses the negative space it was built on        |
-| A zoom that redraws the vector                      | Enlarging the path data shows the intention. Only the delivered raster, enlarged with smoothing off, shows the mark                     |
-| An animation origin left behind by a redraw         | `transform-origin` is geometry too: the flicker scales the flame about its foot, and a foot that moved lifts the fire off the sword     |
-| Checking a token's contrast only against `--ground` | Two of kindled's marks land on `--panel` and on a composited scene layer; both are illegible where every test is green                  |
-| Comparing the two worlds by hex value               | Kindled's `--scene-ink` is the _lighter_ hex and the _weaker_ drawing. Only the ratio against each world's own ground means anything    |
-| Counting gold without pseudo-elements               | The rune bullets are `::before` backgrounds, and they are most of the gold on a kindled post                                            |
-| Counting gold from the cascade, or in one viewport  | The bonfire is `opacity: 0` until the reader scrolls; the header scrolls away. Walk the opacity chain, and measure at rest AND scrolled |
+| Anti-pattern                                        | Why it breaks                                                                                                                            |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Gold on links, tags, nav or listing titles          | Turns relief into wallpaper; §4                                                                                                          |
+| A fourth hue                                        | Three hues is what keeps this a system rather than a costume                                                                             |
+| Cool grey anywhere                                  | Souls is desaturated _brown_; cool grey reads as a rendering bug                                                                         |
+| Flat black hollowed ground                          | Reads as an empty page rather than a lit room                                                                                            |
+| Pushing `--text` to maximum contrast                | Above ~14:1 text detaches and glows instead of sitting in the page                                                                       |
+| High-contrast borders                               | A hard hairline buzzes exactly as much as glaring type                                                                                   |
+| Ornament reading `--torch`                          | Leaves ornament lit in a dead world, killing the central idea                                                                            |
+| A dark page with no grain                           | Reads as clean vector art, not a photographed room                                                                                       |
+| `position: fixed` in a hand-written rule            | Tailwind hoists it into a utility and strips it — the atmosphere ships unpositioned                                                      |
+| A panel, frame, card or drop shadow                 | Ash lifts nothing; that is direction A, and the hedge is what stalled the theme                                                          |
+| `black` stops in an SVG `<mask>`                    | SVG masks are luminance by default, so black hides — CSS `mask-image` is alpha                                                           |
+| A scene whose stone is brighter than its mist       | The light is behind the castle; bright stone reads as clear weather, and flat                                                            |
+| Category colours (movie / anime / manga)            | Four decorative hues, and colour as the only signal                                                                                      |
+| Drop caps and section marks                         | Cut: with two ornaments per viewport, space and light do it better                                                                       |
+| A second ambient animation                          | §11 permits exactly one, and it is the flame                                                                                             |
+| A mark built from primitives                        | An exact circle and eight identical rays read as clip art beside a pen drawing                                                           |
+| Taper measured as a fraction of stroke length       | A short stroke becomes all taper — rays turn into petals; taper over a distance                                                          |
+| A filled flame                                      | Fire reads through the dark gaps between tongues, not through the gold                                                                   |
+| Judging a 15px mark from its path data              | Rasterise it at delivered size over the real ground, or you are guessing                                                                 |
+| A gap or a body under one delivered pixel           | At 24px one pixel is four units of the 96 box. A three-unit sliver closes, and the mark loses the negative space it was built on         |
+| A zoom that redraws the vector                      | Enlarging the path data shows the intention. Only the delivered raster, enlarged with smoothing off, shows the mark                      |
+| An animation origin left behind by a redraw         | `transform-origin` is geometry too: the flicker scales the flame about its foot, and a foot that moved lifts the fire off the sword      |
+| Checking a token's contrast only against `--ground` | Two of kindled's marks land on `--panel` and on a composited scene layer; both are illegible where every test is green                   |
+| Comparing the two worlds by hex value               | Kindled's `--scene-ink` was for a year the _lighter_ hex and the _weaker_ drawing. Only the ratio against each world's own ground counts |
+| Two dials doing one job                             | A per-world difference put in the layer's opacity leaves opacity meaning "distance" in one world and "presence" in the other             |
+| Counting gold without pseudo-elements               | The rune bullets are `::before` backgrounds, and they are most of the gold on a kindled post                                             |
+| Counting gold from the cascade, or in one viewport  | The bonfire is `opacity: 0` until the reader scrolls; the header scrolls away. Walk the opacity chain, and measure at rest AND scrolled  |
 
 ---
 
@@ -560,13 +561,20 @@ If it ever returns, the smallest honest version is a single glyph: `>` before "r
   every scene is `currentColor` reading `--scene-ink`, and the world recolours
   it from one declaration.
 
-  What that leaves is a calibration, and it is not finished. The composited
-  line measures **2.03:1** against white and **2.51:1** against the hollowed
-  ground — up from the 1.50:1 of 20 August, when `global.css` could fairly say
-  in a comment that a picture that faint is not a picture, but still about
-  four-fifths of the presence hollowed gets. The open question is which dial:
-  the difference sits in `--scene-opacity` today (0.66 against 0.62), and the
-  argument for moving it into `--scene-ink` instead is in `scenes.md` §5.
+  **The calibration that left is finished, 27 August 2026: the dial is the
+  ink.** `--scene-opacity` is 0.62 in both worlds — it means "how far back the
+  picture sits", and the picture sits equally far back in both — and the whole
+  per-world difference is `--scene-ink`, kindled `#756955` against hollowed
+  `#8a7c64`. Both composite to **~2.53:1** against their own ground, where
+  kindled read 2.03:1 with the opacity carrying the difference and 1.50:1
+  before that. Asserted in `tests/tokens.test.ts`, along with the equality of
+  the two opacities, so neither can drift back.
+
+  Two numbers, not one, and it is worth keeping both. The token ratio is a
+  ceiling the drawing never reaches — no stroke in a scene is drawn at full
+  ink — so the strongest line actually delivered measures **2.22:1** kindled
+  against **2.18:1** hollowed. A test can only hold the first; only a
+  screenshot gives you the second.
 
 - **The code block's left rule in kindled. DECIDED: a second hairline token,
   `--border-recess`.** Kindled's rule now reads `#cbc6b8` where hollowed keeps

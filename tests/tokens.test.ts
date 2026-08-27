@@ -1,7 +1,24 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { execSync } from "node:child_process";
-import { tokens, contrastRatio, composite, WORLDS } from "../src/utils/tokens";
+import {
+  tokens,
+  contrastRatio,
+  composite,
+  withAlpha,
+  WORLDS,
+} from "../src/utils/tokens";
+
+/** The scene's line as it is actually delivered: ink at --scene-opacity,
+ *  flattened onto the world's own ground. */
+const sceneLine = (world: (typeof WORLDS)[number]) =>
+  contrastRatio(
+    composite(
+      withAlpha(tokens[world]["--scene-ink"], tokens[world]["--scene-opacity"]),
+      tokens[world]["--ground"],
+    ),
+    tokens[world]["--ground"],
+  );
 
 describe("token completeness", () => {
   it("defines the same token names in both worlds", () => {
@@ -85,6 +102,31 @@ describe("marks measured over the surface they land on", () => {
       );
     });
   }
+});
+
+describe("the scene layer reads at the same weight in both worlds", () => {
+  // The scene is one drawing recoloured by the world, so the only thing that
+  // may differ between them is the ink — the picture sits equally far back in
+  // both. Comparing the two ink hexes says nothing: kindled's used to be the
+  // LIGHTER value and the WEAKER drawing, with --scene-opacity papering over
+  // the gap. Only the composite against each world's own ground means anything.
+  for (const world of WORLDS) {
+    it(`${world}: the scene line reads against its own ground`, () => {
+      expect(sceneLine(world)).toBeGreaterThanOrEqual(2.4);
+    });
+  }
+
+  it("holds the same opacity in both worlds", () => {
+    expect(tokens.kindled["--scene-opacity"]).toBe(
+      tokens.hollowed["--scene-opacity"],
+    );
+  });
+
+  it("puts the two worlds within a tenth of a ratio of each other", () => {
+    expect(Math.abs(sceneLine("hollowed") - sceneLine("kindled"))).toBeLessThan(
+      0.1,
+    );
+  });
 });
 
 describe("generated stylesheet", () => {

@@ -81,6 +81,23 @@ export function composite(colour: string, over: string): string {
   return `#${out.map(v => v.toString(16).padStart(2, "0")).join("")}`;
 }
 
+/**
+ * Restate an opaque hex as `rgba()` at a given alpha, so `composite()` can
+ * flatten it onto what is behind it.
+ *
+ * The scene layer needs this: it is an opaque ink drawn at `--scene-opacity`,
+ * and the only number that means anything about it is what the two together
+ * measure against the world's own ground. Comparing the two worlds' ink hexes
+ * is what made the kindled scene look calibrated while it read as a smudge.
+ */
+export function withAlpha(hex: string, alpha: number | string): string {
+  const m = /^#([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return hex;
+  const int = parseInt(m[1], 16);
+  const [r, g, b] = [(int >> 16) & 255, (int >> 8) & 255, int & 255];
+  return `rgba(${r}, ${g}, ${b}, ${Number(alpha)})`;
+}
+
 export function contrastRatio(a: string, b: string): number {
   const la = luminance(a);
   const lb = luminance(b);

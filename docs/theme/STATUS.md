@@ -36,7 +36,7 @@ Everything below is on `main`, live, builds clean, and is verified:
 
 - `npm run build` — succeeds
 - `npx astro check` — 0 errors, 0 warnings
-- `npm test` — 26/26 pass
+- `npm test` — 30/30 pass
 - `npm run format:check` — passes
 - `npm run lint` — passes; flat config added 19 August 2026 (§7).
 
@@ -135,6 +135,14 @@ These cost real time. All are recorded in `design.md` §13 as anti-patterns.
   comparison only means something if the large view is the **24px raster
   enlarged with smoothing off** — `image-rendering: pixelated` on an `<img>` of
   the same PNG, never a second render of the path data.
+- **Overriding a token from `:root` in the browser does not override the
+  kindled palette.** The generated stylesheet lands kindled on
+  `:root:not([data-theme="dark"]):not([data-theme="hollowed"])` — three classes
+  of specificity — so a `:root { --scene-ink: … }` injected with `addStyleTag`
+  to compare candidates silently loses and every candidate renders identically.
+  It reads as "the change does nothing", which is the same false signal
+  `astro build` gives when it skips `build:tokens`. Set the property in
+  `documentElement.style` instead; an inline style beats the cascade.
 - **A roadmap item that points at an uncommitted artefact has to be done
   twice.** §8's bonfire item said five candidates were "drawn" and named
   `prototypes/bonfire-five.html`; the file was never committed, and only the
@@ -370,6 +378,31 @@ Two traps in that workaround, both of which cost a round here:
   sword on every beat — nothing in the SVG changes, so nothing in review shows
   it.
 
+- **The kindled scene reached parity — 27 August 2026**, and the dial that
+  moved is the one `scenes.md` §5 argued for: **`--scene-opacity` is 0.62 in
+  both worlds now**, and the entire per-world difference is `--scene-ink`,
+  kindled `#756955` — hollowed's own `#8a7c64` darkened — where it used to be
+  the _lighter_ hex `#9c8f74` with the opacity making up the gap. Composited
+  against each world's own ground both land at **~2.53:1**, from kindled's
+  2.03:1. Opacity now means one thing in both worlds: how far back the picture
+  sits.
+
+  Three things worth keeping:
+  - **The token ratio is a ceiling the drawing never reaches.** No stroke in
+    any scene is drawn at full ink — every path carries its own opacity on top
+    of the layer's — so the strongest line the home page actually delivers
+    measures **2.22:1** kindled against **2.18:1** hollowed, not 2.53. Both
+    numbers are real and they measure different things: the token ratio is what
+    a test can hold, the rendered one is what a reader sees. Quote the second
+    when arguing about presence, the first when writing an assertion.
+  - **The scene layer is now measured by test**, the same way the code block's
+    rule is: `withAlpha()` in `src/utils/tokens.ts` restates the ink as `rgba`
+    so `composite()` can flatten it, and `tests/tokens.test.ts` asserts the
+    ratio in each world, the equality of the two opacities, and that the worlds
+    land within a tenth of a ratio of each other. 30 tests now, from 26.
+  - **A page-level `:root` override loses to the kindled block** (§5), which
+    is how four candidate inks appeared to render identically.
+
 - `npm run lint` had no config to read. `eslint.config.js` is flat config now:
   ESLint's recommended set, `eslint-plugin-astro`, and the TypeScript-aware
   `no-unused-vars` in place of the core rule, which reads a parameter name in
@@ -443,13 +476,14 @@ is no feature branch.
    is invisible in a headless shot because the overlay scrollbar does not
    render. Still open there: **the kindled world has never been looked at on a
    real screen**, only in captures.
-2. **Kindled's scene is legible now but not at parity.** Raising
-   `--scene-opacity` to 0.66 took the line from 1.50:1 to **2.03:1** against
-   white; hollowed reads **2.51:1**. The 20 August pass argued the per-world
-   difference belongs in `--scene-ink` rather than in the opacity — opacity
-   should mean "how far back the picture sits", and it sits equally far back
-   in both worlds — which would make kindled's ink the _darker_ of the two hex
-   values, where today it is the lighter. `scenes.md` §5 carries the reasoning.
+2. **`design.md` §3's "What changes" table still says kindled `--ornament`
+   "equals gold".** Found on 27 August and left alone, because it is one line
+   of a section whose own prose, §4 rule 4, §15 and a test in both directions
+   all say the opposite: the channel is `--text-4` in both worlds. It is a
+   stale row rather than an open question, and it is exactly the failure §6
+   names — a doc that contradicts itself reads as settled from either end.
+   Whoever takes it should read the rest of that table against `tokens.json`
+   at the same time rather than fixing the one cell.
 3. **Ash variations and the stain texture.** Soot ground, ruled headings,
    mincho and the spec block are all prototyped and none is chosen. The stain
    must ship un-tiled — a repeat is visible on a wide screen — and its dials
@@ -458,9 +492,10 @@ is no feature branch.
 5. **Review the `about` page prose** against the measure. What is left is the
    writing — and the coloured emoji in "Let's Connect", which are the only
    full-saturation pixels on the site.
-   _Two items left this list on 27 August: the bonfire (redrawn as B — two
-   tongues — see the shipped list above) and the kindled code block's left rule,
-   which now reads `--border-recess` at ~1.53:1 against its own panel._
+   _Three items left this list on 27 August: the bonfire (redrawn as B — two
+   tongues — see the shipped list above), the kindled code block's left rule,
+   which now reads `--border-recess` at ~1.53:1 against its own panel, and the
+   kindled scene's parity, now carried by `--scene-ink` (§7)._
 
 _The mermaid diagrams noted here as showing a red error box were fixed the same
 day: smartypants was rewriting `-->` into an em dash inside hand-written

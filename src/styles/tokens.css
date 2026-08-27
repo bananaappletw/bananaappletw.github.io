@@ -57,8 +57,8 @@
     --haze: rgba(196, 174, 126, 0.07);
     --grain: 0.012;
     --shaft: rgba(255, 233, 178, 0.42);
-    --scene-ink: #9c8f74;
-    --scene-opacity: 0.66;
+    --scene-ink: #756955;
+    --scene-opacity: 0.62;
     --syn-keyword: #96631a;
     --syn-string: #2f5296;
     --syn-comment: #948d79;
@@ -91,8 +91,8 @@
   --haze: rgba(196, 174, 126, 0.07);
   --grain: 0.012;
   --shaft: rgba(255, 233, 178, 0.42);
-  --scene-ink: #9c8f74;
-  --scene-opacity: 0.66;
+  --scene-ink: #756955;
+  --scene-opacity: 0.62;
   --syn-keyword: #96631a;
   --syn-string: #2f5296;
   --syn-comment: #948d79;

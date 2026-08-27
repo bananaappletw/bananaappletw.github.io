@@ -22,14 +22,14 @@ and rejected; §7 records why.
 A scene is **one small painting in the bottom-right corner of a page, behind
 the text**. It is atmosphere, not illustration of the content.
 
-|             |                                                                                              |
-| ----------- | -------------------------------------------------------------------------------------------- |
-| Position    | foot of the DOCUMENT, right-hand side                                                        |
-| Size        | `clamp(220px, 32vw, 460px)` wide                                                             |
-| Opacity     | `--scene-opacity`, 0.62 hollowed, 0.4 kindled — see §5, the kindled figure is under question |
-| Stacking    | behind all content (`z-index: 0`)                                                            |
-| Below 60rem | removed entirely, not faded                                                                  |
-| Per page    | exactly one, or none                                                                         |
+|             |                                                                                                  |
+| ----------- | ------------------------------------------------------------------------------------------------ |
+| Position    | foot of the DOCUMENT, right-hand side                                                            |
+| Size        | `clamp(220px, 32vw, 460px)` wide                                                                 |
+| Opacity     | `--scene-opacity`, **0.62 in both worlds** — the per-world difference lives in `--scene-ink`, §5 |
+| Stacking    | behind all content (`z-index: 0`)                                                                |
+| Below 60rem | removed entirely, not faded                                                                      |
+| Per page    | exactly one, or none                                                                             |
 
 The numbers above are `src/styles/global.css` and `tokens.json` as built, not
 intentions — they had drifted from this table and were corrected on 20 August 2026. Read them from the source when they matter.
@@ -192,12 +192,13 @@ Three things it turned out to depend on:
   line, and that alone is what makes the light read as the subject rather
   than as the brightest thing present.
 
-**The tone inverts in the kindled world, and §5 is still open.** The beams
+**The tone inverts in the kindled world**, which §5 settled by calibrating the
+ink rather than by giving the bright world its own drawing. The beams
 are ink, so on the near-black hollowed ground they read as light and on white
 paper they read as shade. The geometry rescues it — beams leaving windows in
 one consistent direction read as sun whichever way the tone runs — but this
-is the clearest evidence yet for §5's option 1. It ships to both worlds only
-because Approach does, and the two scenes should not disagree.
+remains the strongest case any scene makes for §5's option 1. It ships to both
+worlds only because Approach does, and the two scenes should not disagree.
 
 You are inside now. This is the page returned to most often, so it is the
 quietest of the five — it has to survive being seen a hundred times.
@@ -403,23 +404,28 @@ declaration and there is no second asset to keep. What the three options below
 were weighing — how to pay for a bright-world version — turned out not to be a
 cost at all once the scenes were drawings rather than paintings. What it does
 cost is tone: the line means light on the dark ground and shade on paper, which
-Clerestory feels most. Geometry carries it, and the kindled opacity is tuned
-separately (0.66 against hollowed's 0.62, and Court's dye halved again).
+Clerestory feels most. Geometry carries it, and the kindled **ink** is tuned
+separately (Court's dye is halved there as well).
 
-**Legible, but not at parity — and the dial may be the wrong one.** Measured
-against each world's own ground, the composited line reads **2.03:1** kindled
-against **2.51:1** hollowed. That is up from the 1.50:1 the 20 August pass
-found and is no longer a smudge, but kindled still gets about four-fifths of
-the presence hollowed gives it. That pass also made a case this section did not
-take, and it is worth keeping: **the per-world difference belongs in
-`--scene-ink`, not in `--scene-opacity`.** Opacity should mean "how far back
-the picture sits", and the picture sits equally far back in both worlds; what
-has to change between them is the ink, because the paper changed. Under that
-reading kindled's ink would be the _darker_ of the two hex values, where today
-it is the lighter (`#9c8f74` against hollowed's `#8a7c64`) with the opacity
-making up the difference. Either way, comparing the two hexes tells you
-nothing — only each one's composite ratio against its own ground does. Open as
-`STATUS.md` §8's fourth item.
+**At parity, on the ink — 27 August 2026.** The dial moved. `--scene-opacity`
+is **0.62 in both worlds**, and the whole per-world difference is now in
+`--scene-ink`: kindled is `#756955`, hollowed's own `#8a7c64` darkened, where
+it used to be the _lighter_ hex (`#9c8f74`) with the opacity making up the
+gap. Opacity means "how far back the picture sits", and the picture sits
+equally far back in both worlds; what changes between them is the ink, because
+the paper changed. Both composites now measure **~2.53:1** against their own
+ground, up from kindled's 2.03:1 and the 1.50:1 of 20 August.
+`tests/tokens.test.ts` asserts the ratio in each world, the equality of the two
+opacities, and that the two worlds land within a tenth of a ratio of each
+other — comparing the two hexes still tells you nothing.
+
+**The token ratio is a ceiling the drawing never reaches, and the rendered
+number is the one to quote.** No path in any scene is drawn at full ink —
+every stroke carries its own opacity on top of the layer's — so the strongest
+line actually delivered on the home page measures **2.22:1** kindled against
+**2.18:1** hollowed, where the tokens say 2.53. Both numbers are worth having:
+the token ratio is what a test can hold, and the rendered one is what a reader
+sees. They agree on parity, which is the point.
 
 The three options as they stood, kept because a raster scene would face them
 again:
