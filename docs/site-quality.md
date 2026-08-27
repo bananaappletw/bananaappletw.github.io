@@ -82,8 +82,9 @@ One open consequence: at the 30px scale restored on 27 August, a 66ch line wants
 
 **Where it stands.** All present. A post carries `description`, `canonical`,
 `og:*`, `application/ld+json`, an RSS `alternate` and a favicon; `/sitemap-index.xml`,
-`/rss.xml`, `/llms.txt` and Pagefind search all build. No `rel="me"`, and
-`twitter:` tags are on the home page but not on posts.
+`/rss.xml`, `/llms.txt` and Pagefind search all build. `rel="me"` and the five
+`twitter:` card tags were added on 27 August — the latter existed already but
+under `property=`, which the card parser does not read.
 
 **The content defect underneath it.** All 25 posts have `description` identical
 to `title`, so every search result, social card and `/llms.txt` line says the
@@ -183,8 +184,12 @@ metrics dashboard.
    add redirects for any that do not.
 8. **Measure LCP and CLS on a throttled connection**, once 1 and 2 are done, so
    the number means something.
-9. **`twitter:` tags on posts and `rel="me"` in the head** — small, and the last
-   two gaps in an otherwise complete metadata set.
+9. ~~**`twitter:` tags on posts and `rel="me"` in the head**~~ **Done, 27
+   August.** The Twitter tags were there all along under `property=`, which is
+   RDFa and is what `og:*` takes; the card spec is plain meta and its own
+   validator reads `name=`, so the five tags existed and were ignored by the
+   parser they were written for. `rel="me"` now comes from the same socials
+   list the footer renders, minus the mailto.
 
 Items 1, 2, 8 and 9 are mechanical. Items 3 and 4 are content work only the
 author can do. Items 5, 6 and 7 are passes that need a real browser.

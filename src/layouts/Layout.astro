@@ -14,7 +14,7 @@ type Props = {
   canonicalURL?: string;
 };
 
-const { site } = config;
+const { site, socials } = config;
 
 const {
   title = site.title,
@@ -70,12 +70,23 @@ const rssHref = getRelativeLocaleUrl(
     <meta property="og:url" content={canonicalURL} />
     <meta property="og:image" content={socialImageURL} />
 
-    <!-- Twitter / X -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content={canonicalURL} />
-    <meta property="twitter:title" content={title} />
-    <meta property="twitter:description" content={description} />
-    <meta property="twitter:image" content={socialImageURL} />
+    <!-- Twitter / X. `name`, not `property`: og:* is RDFa and takes
+         `property`, but the Twitter card spec is plain meta and its own
+         validator reads `name`. These were `property` and were being ignored
+         by the parser they exist for. -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content={canonicalURL} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={socialImageURL} />
+
+    <!-- Identity: rel="me" is what lets a profile verify this page back.
+         Read from the same socials list the footer renders. -->
+    {
+      socials
+        .filter(s => !s.url.startsWith("mailto:"))
+        .map(s => <link rel="me" href={s.url} />)
+    }
 
     <!-- RSS autodiscovery -->
     <link
