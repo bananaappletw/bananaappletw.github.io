@@ -87,10 +87,11 @@ One open consequence: at the 30px scale restored on 27 August, a 66ch line wants
 `twitter:` card tags were added on 27 August — the latter existed already but
 under `property=`, which the card parser does not read.
 
-**The content defect underneath it.** All 25 posts have `description` identical
-to `title`, so every search result, social card and `/llms.txt` line says the
-same thing twice — `Card.astro` already suppresses the duplicate, and
-`llms.txt.ts` omits it, but both are working around the data. Separately, 19 of
+**The content defect underneath it, now fixed.** All 25 posts had `description`
+identical to `title`, so every search result, social card and `/llms.txt` line
+said the same thing twice; `Card.astro` and `llms.txt.ts` both worked around
+the data rather than around a bug. Descriptions drafted from the posts
+themselves on 28 August and awaiting the author's read. Separately, 19 of
 25 posts carried `pubDatetime` of 2026-06-02, the migration date rather than
 the date they were written — recovered on 27 August from the pre-Docusaurus
 front matter, so the archive and the feed now order by when things were
@@ -168,9 +169,14 @@ metrics dashboard.
    and never referenced, so satori still gets it at build time and no reader
    loads it. **378KB → 15KB per page**, and three of the four TTFs leave
    `dist/` entirely.
-3. **Give every post a real description.** 25 of 25 duplicate the title. This is
-   the highest-value content change on the list: it fixes search results, social
-   cards and `/llms.txt` in one pass.
+3. **Drafted, 28 August — needs your eye.** All 25 descriptions are written
+   from each post's own content rather than from its title, so search results,
+   social cards and `/llms.txt` now say something. They are a draft by someone
+   who is not the author: read them before they go out. Two things worth
+   deciding while you do — twelve of these posts are written in Chinese and the
+   descriptions are in English, which may or may not be what you want a search
+   result to promise; and `Card.astro` still carries the suppress-if-identical
+   branch, which is now dead code and can go once you are happy.
 4. ~~**Fix the migrated dates.**~~ **Done, 27 August.** All 19 recovered from
    the pre-Docusaurus front matter in commit `9b792f7` (20 June 2021), matched
    by title, with the original time of day kept. They span 2016-02-23 to
