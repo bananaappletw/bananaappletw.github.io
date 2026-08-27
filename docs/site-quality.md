@@ -89,8 +89,10 @@ One open consequence: at the 30px scale restored on 27 August, a 66ch line wants
 to `title`, so every search result, social card and `/llms.txt` line says the
 same thing twice — `Card.astro` already suppresses the duplicate, and
 `llms.txt.ts` omits it, but both are working around the data. Separately, 19 of
-25 posts carry `pubDatetime` of 2026-06-02, the migration date rather than the
-date they were written, so the archive and the feed order are fiction.
+25 posts carried `pubDatetime` of 2026-06-02, the migration date rather than
+the date they were written — recovered on 27 August from the pre-Docusaurus
+front matter, so the archive and the feed now order by when things were
+actually written.
 
 ---
 
@@ -167,8 +169,12 @@ metrics dashboard.
 3. **Give every post a real description.** 25 of 25 duplicate the title. This is
    the highest-value content change on the list: it fixes search results, social
    cards and `/llms.txt` in one pass.
-4. **Fix the migrated dates.** 19 posts claim 2026-06-02. Recover the real
-   `pubDatetime` from git history or the Docusaurus front matter.
+4. ~~**Fix the migrated dates.**~~ **Done, 27 August.** All 19 recovered from
+   the pre-Docusaurus front matter in commit `9b792f7` (20 June 2021), matched
+   by title, with the original time of day kept. They span 2016-02-23 to
+   2019-07-03; the archive and the feed now order by when things were written
+   rather than by when they were imported. No post carries `modDatetime`, so
+   nothing else was overriding the sort.
 5. **Keyboard and screen-reader pass**, header through pagination, both worlds.
    Nothing here is known broken; nothing here has been checked either.
 6. **Check the site with JavaScript off**, and decide what degrades and what
