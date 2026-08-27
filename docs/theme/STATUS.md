@@ -7,7 +7,7 @@ direction is settled: B — Ash (§1).
 
 Read this first, then [`design.md`](./design.md) for the spec, [`tokens.json`](./tokens.json) for colour, and [`scenes.md`](./scenes.md) for the five per-page vignettes (briefs written, art not made).
 
-This file is the _theme's_ state. [`../site-quality.md`](../site-quality.md) is the site's: what it costs to load, what it says to a crawler, and what has never been checked. Its top two items — 257KB of mermaid on 22 posts that have no diagram, and a megabyte of TrueType linked from every page — are the largest measured defects the site currently has.
+This file is the _theme's_ state. [`../site-quality.md`](../site-quality.md) is the site's: what it costs to load, what it says to a crawler, and what has never been checked. Its top two items — 257KB of mermaid on posts with no diagram, and a browser fetching 378KB of TrueType while the 15KB woff2 went untouched — were both fixed on 27 August; what remains there is content work and three passes nobody has run.
 
 ---
 
@@ -124,6 +124,23 @@ These cost real time. All are recorded in `design.md` §13 as anti-patterns.
   bullet that comes into view. Measure at rest and scrolled; the worst case is
   wherever the repeating ornament lives, and on a kindled post that is 10, not 7.
 - **`npx astro build` skips `build:tokens`.** Only `npm run build` chains them. Edit `tokens.json`, rebuild with `astro build` alone, and you screenshot the previous palette while believing you changed it — twenty minutes of "the change did nothing".
+- **At 24px, one delivered pixel is FOUR units of the marks' 96-unit box** — and
+  at 15px, four units of the 64 box. Every failure the bonfire redraw found is
+  that number: a gap under four units closes, a body under four units greys
+  out, and a taper ending below two units ends in nothing. It is worth doing the
+  division before drawing rather than after rendering.
+- **A zoom that redraws the vector is judging the mark at a size nobody sees
+  it at.** The first build of `bonfire-five.html` showed each candidate as a
+  336px SVG beside a 24px one, which is a picture of the intention. The
+  comparison only means something if the large view is the **24px raster
+  enlarged with smoothing off** — `image-rendering: pixelated` on an `<img>` of
+  the same PNG, never a second render of the path data.
+- **A roadmap item that points at an uncommitted artefact has to be done
+  twice.** §8's bonfire item said five candidates were "drawn" and named
+  `prototypes/bonfire-five.html`; the file was never committed, and only the
+  paragraph describing the five survived. Redrawing them from that prose cost
+  most of the session. The prose was good enough that the redraw reached the
+  same answer, which is the only reason it was recoverable at all.
 
 ---
 
@@ -315,6 +332,44 @@ Two traps in that workaround, both of which cost a round here:
 - Archive entries were shrink-to-fit, so each month's rules ended at that
   month's longest title and the page read as a ragged stack. The list is
   `flex-1` now and every rule ends at the hall's edge.
+- **The bonfire was redrawn — 27 August 2026**, and it is candidate **B, two
+  tongues**. The old mark delivered as a gold leaf on a stem: the sword, the
+  guard and the two slivers of ground inside the fire were all absent from the
+  page. All five candidates were rebuilt with the pen and rendered at 24px over
+  both grounds; [`prototypes/bonfire-five.html`](./prototypes/bonfire-five.html)
+  is the record, and it now shows the delivered raster rather than a redrawn
+  vector (§5).
+
+  **The pick was not a matter of taste, which is the useful part.** Three of
+  the five change what the mark depicts — C inverts the hierarchy, D replaces
+  the drawing with a silhouette, E drops the sword — and those are the author's
+  to want, not a fix to a defect. Of the two that keep the mark, **A carries a
+  stroke the rasteriser deletes**: its third tongue merges into the tall one at
+  every size the mark ships at, so it costs mass and buys nothing. That leaves
+  B. `f89cac8`'s own diagnosis predicted it — "three tongues means two slivers,
+  and two is one more than the eye holds at this size" — and rendering A is
+  what turned the prediction into evidence.
+
+  Three things only the render said, all of them after B had won:
+  - **The two tongues have to meet at the foot.** Drawn from separate bases
+    they deliver as two prongs standing on a bar — a candelabra. Moving the
+    bases 3 units together so the bodies overlap makes it one fire that forks,
+    and the dark between them closes into an almond instead of running the
+    full height as a slot.
+  - **A crossguard narrower than the fire above it is not a crossguard**, it is
+    a slightly fatter flame. The old guard reached 10 units where the fire
+    reached 11. It is wider than the flame now and sits six units clear of it,
+    because two marks less than a pixel apart are one mark.
+  - **The guard's arms are unequal in length and in drop on purpose.** A blade
+    under a level bar of equal arms is a cross, and a cross is a different mark
+    with a meaning this site is not making.
+
+  And one thing the source hid: **`transform-origin` is geometry too.** The
+  flicker scales the flame about its foot, and the foot moved up the box with
+  the redraw. Left at its old value the animation lifts the whole fire off the
+  sword on every beat — nothing in the SVG changes, so nothing in review shows
+  it.
+
 - `npm run lint` had no config to read. `eslint.config.js` is flat config now:
   ESLint's recommended set, `eslint-plugin-astro`, and the TypeScript-aware
   `no-unused-vars` in place of the core rule, which reads a parameter name in
@@ -388,45 +443,32 @@ is no feature branch.
    is invisible in a headless shot because the overlay scrollbar does not
    render. Still open there: **the kindled world has never been looked at on a
    real screen**, only in captures.
-2. **Redraw the bonfire mark — five candidates are drawn and one has to be
-   picked.** [`prototypes/bonfire-five.html`](./prototypes/bonfire-five.html)
-   carries them, each at 24px on both grounds beside the rasteriser's own
-   output blown up, plus the spines ready to move into `src/utils/marks.ts`.
-
-   The diagnosis, corrected while drawing them: `nib`'s `width` is a
-   **half**-width, so the sword, guard and mound are 5.5 units of body in the
-   96-unit box — about 1.4px at 24, not the 0.69 recorded here before. The
-   failure is real but it is in the _tapers_, not the bodies: the blade ramps
-   away over 16 of its 32 units to 0.66 units at the point, the mound fades at
-   both ends, and the three or four units of ground between the tongues close
-   under a rasteriser whose pixel is four units wide. What is left is a gold
-   leaf on a stem.
-
-   The candidates are A **Weight** (the same drawing, floored at 8 units of
-   body and 4 of taper, gaps opened to 7), B **Two tongues** (three tongues
-   means two slivers, and two is one more than the eye holds at this size), C
-   **Sword-led** (hierarchy inverted, the fire a crown on the sword — the
-   fix that keeps it from reading as a cross is a swept guard with unequal
-   arms), D **Silhouette** (one closed `loop()` mass with a bite out of the
-   front) and E **Ash and fire** (the sword dropped, the mound drawn as mass).
-   A flat-polygon set was tried on 21 August and rejected — no pressure in the
-   line, and it read as sails next to the drawn marks.
-
-3. **Kindled's scene is legible now but not at parity.** Raising
+2. **Kindled's scene is legible now but not at parity.** Raising
    `--scene-opacity` to 0.66 took the line from 1.50:1 to **2.03:1** against
    white; hollowed reads **2.51:1**. The 20 August pass argued the per-world
    difference belongs in `--scene-ink` rather than in the opacity — opacity
    should mean "how far back the picture sits", and it sits equally far back
    in both worlds — which would make kindled's ink the _darker_ of the two hex
    values, where today it is the lighter. `scenes.md` §5 carries the reasoning.
-4. **Ash variations and the stain texture.** Soot ground, ruled headings,
+3. **Ash variations and the stain texture.** Soot ground, ruled headings,
    mincho and the spec block are all prototyped and none is chosen. The stain
    must ship un-tiled — a repeat is visible on a wide screen — and its dials
    are in `stain-calibration.html`.
-5. **The post header image rule** (`design.md` §15).
-6. **Review the `about` page prose** against the measure. What is left is the
+4. **The post header image rule** (`design.md` §15).
+5. **Review the `about` page prose** against the measure. What is left is the
    writing — and the coloured emoji in "Let's Connect", which are the only
    full-saturation pixels on the site.
+   _Two items left this list on 27 August: the bonfire (redrawn as B — two
+   tongues — see the shipped list above) and the kindled code block's left rule,
+   which now reads `--border-recess` at ~1.53:1 against its own panel._
+
+_The mermaid diagrams noted here as showing a red error box were fixed the same
+day: smartypants was rewriting `-->` into an em dash inside hand-written
+`<div class="mermaid">` blocks, so the source mermaid received was never a
+valid graph. `src/plugins/remark-mermaid.ts` builds the markup from a fence
+instead, and `Mermaid.astro` — which nothing had ever imported — now owns the
+behaviour, dynamically and only when a diagram is present. Site-level work of
+this kind lives in [`../site-quality.md`](../site-quality.md)._
 
 ---
 

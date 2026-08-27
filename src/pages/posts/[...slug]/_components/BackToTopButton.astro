@@ -34,9 +34,7 @@ const t = useTranslations(Astro.currentLocale);
   >
     {/* the coiled sword driven point-down into the ash, and its mound */}
     <g class="ash">{bonfireAsh.map(d => <path d={d} />)}</g>
-    {
-      /* three tongues — the fire is as much the dark between them as the gold */
-    }
+    {/* two tongues — the fire is as much the dark between them as the gold */}
     <g class="flame">{flame.map(d => <path d={d} />)}</g>
   </svg>
 
@@ -120,8 +118,11 @@ const t = useTranslations(Astro.currentLocale);
   }
 
   @media (prefers-reduced-motion: no-preference) {
+    /* The origin is the flame's FOOT, in the rendered 24px box — y 59 of the
+       96-unit drawing. It moved up with the redraw; scaling a flame about a
+       point above its base lifts the whole fire off the sword on every beat. */
     #bonfire.lit .flame {
-      transform-origin: 12px 16px;
+      transform-origin: 12px 14.75px;
       animation: bonfire-flicker 3.8s ease-in-out infinite;
     }
 

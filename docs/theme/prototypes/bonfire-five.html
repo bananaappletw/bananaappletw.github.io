@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Torchlight — the bonfire, five candidates</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      body {
+        margin: 0;
+        padding: 48px clamp(20px, 5vw, 64px) 96px;
+        background: #100f0d;
+        color: #a99e8a;
+        font:
+          400 17px/1.7 Cardo,
+          Palatino,
+          Georgia,
+          serif;
+      }
+      header {
+        max-width: 62ch;
+        margin-bottom: 64px;
+      }
+      h1 {
+        font-size: 34px;
+        font-weight: 400;
+        margin: 0 0 20px;
+        color: #c6bca8;
+      }
+      h2 {
+        font-size: 24px;
+        font-weight: 400;
+        margin: 0 0 22px;
+        color: #c6bca8;
+      }
+      .key {
+        display: inline-block;
+        min-width: 1.6em;
+        color: #6d5f4c;
+      }
+      p {
+        max-width: 62ch;
+      }
+      section {
+        margin: 0 0 76px;
+      }
+      .grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 34px;
+        align-items: flex-end;
+        margin-bottom: 26px;
+      }
+      figure {
+        margin: 0;
+      }
+      .pair {
+        display: flex;
+        gap: 18px;
+        align-items: flex-end;
+      }
+      figcaption {
+        font-size: 13px;
+        letter-spacing: 0.06em;
+        color: #6d5f4c;
+        margin-top: 12px;
+      }
+      /* Both images are the SAME 24px raster. The zoom is enlarged by the browser
+     with smoothing off, so what is on screen is the delivered pixel and not a
+     vector redrawn at a size nobody sees it at. */
+      img {
+        display: block;
+        image-rendering: pixelated;
+      }
+      .ship {
+        width: 34px;
+        height: 34px;
+      }
+      .zoom {
+        width: 306px;
+        height: 306px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>The bonfire, five candidates</h1>
+      <p>
+        Drawn 27 August 2026, after the shipped mark was rendered at its
+        delivered size and turned out to be a gold leaf on a stem. Every drawing
+        here uses the same pen (<code>src/utils/nib.ts</code>) and the same
+        96-unit box the component ships.
+        <strong>At 24px one pixel is four units of that box</strong>, which is
+        the number every failure below comes back to: a gap under four units
+        closes, a body under four units greys out, and a taper that ends below
+        two units ends in nothing.
+      </p>
+      <p>
+        The large view is the 24px raster enlarged with smoothing off — not the
+        vector redrawn. A mark judged at the size it was drawn is not judged at
+        all.
+      </p>
+    </header>
+
+    <section>
+      <h2><span class="key">—</span> What shipped until today</h2>
+      <div class="grid">
+        <figure>
+          <div class="pair">
+            <img
+              class="ship"
+              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAiCAYAAAA6RwvCAAAACXBIWXMAAAPoAAAD6AG1e1JrAAABsUlEQVR4nO3VS0sCURgGYH9AOjMOEVZYYWoX0y6mFoHGqDQ1lYVgYVFpF7MLRRFREUXRhUhaRrtCbRW0bx1R2W96w1MMtMzyTNAsXs7HLM48fLzDaFhGi78QjdIAVoUw6ka0/7IjJX8D4myqUh7SZKnAaG+L8pDUuoSZsFtZiM9lxtvtAjbj3cpBeE6Hu/MogRwuBskzt72m4OIWDBn22wkin905AXUmA05XRPobOV7ukSFTQ+04Wu5B5iRCH3J/MS5DOpqrcX0QJrPgsdCD+D1WvKQTMsRQxuFsVSTzzqxAD3K5HcJrNilDWm0mpNb6yLw3H6AH2ZkVZEQ++4sSnm7myCx5G+hBjOU8Hq8/XpzPw1WcnPepMXAs5bJuxAIy5DmdRC6TRGLEW9BdP4JwjBZbM37ksgtIH0chem3Qszr6EPYz/UI7BgMK/msYXQkMZTyELgd8bhtKeZYupNFiRFjsRCIqYmlC+pLpSBBDwQ40mKuKC3E1WzEZFjDgd8HlsMBqqkR9rZHgbNZqdLbVIxT0IBYJwGk3Fw+i/0YZeY6h0xH2l6NCWHUjjNoR7be+mneXGaxyxejHYwAAAABJRU5ErkJggg=="
+              alt=""
+            />
+            <img
+              class="zoom"
+              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAiCAYAAAA6RwvCAAAACXBIWXMAAAPoAAAD6AG1e1JrAAABsUlEQVR4nO3VS0sCURgGYH9AOjMOEVZYYWoX0y6mFoHGqDQ1lYVgYVFpF7MLRRFREUXRhUhaRrtCbRW0bx1R2W96w1MMtMzyTNAsXs7HLM48fLzDaFhGi78QjdIAVoUw6ka0/7IjJX8D4myqUh7SZKnAaG+L8pDUuoSZsFtZiM9lxtvtAjbj3cpBeE6Hu/MogRwuBskzt72m4OIWDBn22wkin905AXUmA05XRPobOV7ukSFTQ+04Wu5B5iRCH3J/MS5DOpqrcX0QJrPgsdCD+D1WvKQTMsRQxuFsVSTzzqxAD3K5HcJrNilDWm0mpNb6yLw3H6AH2ZkVZEQ++4sSnm7myCx5G+hBjOU8Hq8/XpzPw1WcnPepMXAs5bJuxAIy5DmdRC6TRGLEW9BdP4JwjBZbM37ksgtIH0chem3Qszr6EPYz/UI7BgMK/msYXQkMZTyELgd8bhtKeZYupNFiRFjsRCIqYmlC+pLpSBBDwQ40mKuKC3E1WzEZFjDgd8HlsMBqqkR9rZHgbNZqdLbVIxT0IBYJwGk3Fw+i/0YZeY6h0xH2l6NCWHUjjNoR7be+mneXGaxyxejHYwAAAABJRU5ErkJggg=="
+              alt=""
+            />
+          </div>
+          <figcaption>hollowed · 24px, then the same 24px at 9×</figcaption>
+        </figure>
+        <figure>
+          <div class="pair">
+            <img
+              class="ship"
+              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAiCAYAAAA6RwvCAAAACXBIWXMAAAPoAAAD6AG1e1JrAAABu0lEQVR4nO3SSUsCcRjH8XkdFR269hKKTh06de/sFNECXQKbwENREBEU5JIpbZoRaKkttorYgqGWLdqimXiwIigKKptxfjEjDeitCcch/MKfeZjD8OGZPwGZREAmEZBJBGQSAZlEQCYR+FcQlpUH5CEeKj7kOXWNC4+5+BCXmkRwXVNcSDLshUZRhj2LqniQDENjvreOh+wYu/h397Gg6IsrGnJ1aOUR3PHMKfHyeIdNfbvYz4mHbE12CpCTTT22DZ1Y7GuQHmJW1giQVNQP62AjPyfO3NJBEme70JAVAiT9/ooNXWv2N5ko6SCOkSYBwZ2bSAAb2mZ+ds90SwfxmKgcyMJoG7Qtlfwc9a9IB/l4e8JEa5UA0XVU808zVQs2w0gH4bIbKGjI8iyG5LZRgVXzMMQmGsIwDHZnKagVZTAo6xH2rYCmaekhP22vWbC6PIu/9gcIi7fXF3jdThx4XUh/fkgLicciWFqchG5MhfGRnpxjUPfDYZtCPHZZWEgouI9p/RDW7CacHh8imYgiEb/mcbfRMAJHHjht0zBqB3Ae8hUOQv/iMn59pQsHKWQlSH6ljeRX2gjyNvIN/l6D9naPnsUAAAAASUVORK5CYII="
+              alt=""
+            />
+            <img
+              class="zoom"
+              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAiCAYAAAA6RwvCAAAACXBIWXMAAAPoAAAD6AG1e1JrAAABu0lEQVR4nO3SSUsCcRjH8XkdFR269hKKTh06de/sFNECXQKbwENREBEU5JIpbZoRaKkttorYgqGWLdqimXiwIigKKptxfjEjDeitCcch/MKfeZjD8OGZPwGZREAmEZBJBGQSAZlEQCYR+FcQlpUH5CEeKj7kOXWNC4+5+BCXmkRwXVNcSDLshUZRhj2LqniQDENjvreOh+wYu/h397Gg6IsrGnJ1aOUR3PHMKfHyeIdNfbvYz4mHbE12CpCTTT22DZ1Y7GuQHmJW1giQVNQP62AjPyfO3NJBEme70JAVAiT9/ooNXWv2N5ko6SCOkSYBwZ2bSAAb2mZ+ds90SwfxmKgcyMJoG7Qtlfwc9a9IB/l4e8JEa5UA0XVU808zVQs2w0gH4bIbKGjI8iyG5LZRgVXzMMQmGsIwDHZnKagVZTAo6xH2rYCmaekhP22vWbC6PIu/9gcIi7fXF3jdThx4XUh/fkgLicciWFqchG5MhfGRnpxjUPfDYZtCPHZZWEgouI9p/RDW7CacHh8imYgiEb/mcbfRMAJHHjht0zBqB3Ae8hUOQv/iMn59pQsHKWQlSH6ljeRX2gjyNvIN/l6D9naPnsUAAAAASUVORK5CYII="
+              alt=""
+            />
+          </div>
+          <figcaption>kindled · 24px, then the same 24px at 9×</figcaption>
+        </figure>
+      </div>
+      <p>
+        Three tongues with three units of ground between them, and tapers
+        running over half of every stroke. At 24px one pixel is four units: the
+        slivers close, the blade's point arrives at 0.7 units, and the guard is
+        narrower than the fire above it. Delivered, it is a gold leaf on a stem.
+      </p>
+    </section>
+    <section>
+      <h2><span class="key">A</span> Weight</h2>
+      <div class="grid">
+        <figure>
+          <div class="pair">
+            <img
+              class="ship"
+              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAiCAYAAAA6RwvCAAAACXBIWXMAAAPoAAAD6AG1e1JrAAACG0lEQVR4nGMQ4Of9Pxgww0A7QGDUIfyjIcI74tIIz8A7REiQ739ngefAOyQ9xOL/mt7ogXWIqoL4/+OLMv6fWpL5X1JMcOAckhRo9v/s8mwwVpQVhYs7W6jR1yHTqvzBjtg+JQEuZqgp+399fwz9HCIsyPf/8IJUsEOaslzhCXfzpLj/h+al0M8hJrry8GgJdtX7LyUu9D8ZKap01aTp45AAJ124paDoqExx/N9R4PF/VXcUSijR3CFBzgiH2Jgo/z+1OOP/xgmx/+P8TMBi5GRpshxiqCkLd0hZoj2YXtEZ8b+vxAfMnljuSx+HCPDz/N88MRbi++5oML2wOfT/qaWZYLa7tQa9HML7vyTBEWzp4XmQ3LO4LRxMz20IIqv+IcshHnbG/wuTff8vaov9310e9n92U/T/+pyg/9PrI/672eqT5TGyHKKnpfjf3c7wv5O1/v/MaM//ufE+/z3sjf97OZr811CRpZ9DBJBwXJAT2CGyUohifkAckhACcYiMJJ0dIiMp+t9IV+W/s5X+fx8ns//ZMZ7/s2O9wdFia6b9X1dT8b+kmBDtHCIhJvQ/zNsG7HtCOCfO+3+Il/V/cVFB6jskys8ObEl2nNf/cB/b/662hv8tjDTAOcjHxey/rZkOOFSiA+zBDgGpjfC1o75DlOQk/6spy/yXFBcmqFZKQuS/porcf2V5KfolVgEq4VGHCIyGCP8QSSMAByrJ3JIWA0MAAAAASUVORK5CYII="
+              alt=""
+            />
+            <img
+              class="zoom"
+              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAiCAYAAAA6RwvCAAAACXBIWXMAAAPoAAAD6AG1e1JrAAACG0lEQVR4nGMQ4Of9Pxgww0A7QGDUIfyjIcI74tIIz8A7REiQ739ngefAOyQ9xOL/mt7ogXWIqoL4/+OLMv6fWpL5X1JMcOAckhRo9v/s8mwwVpQVhYs7W6jR1yHTqvzBjtg+JQEuZqgp+399fwz9HCIsyPf/8IJUsEOaslzhCXfzpLj/h+al0M8hJrry8GgJdtX7LyUu9D8ZKap01aTp45AAJ124paDoqExx/N9R4PF/VXcUSijR3CFBzgiH2Jgo/z+1OOP/xgmx/+P8TMBi5GRpshxiqCkLd0hZoj2YXtEZ8b+vxAfMnljuSx+HCPDz/N88MRbi++5oML2wOfT/qaWZYLa7tQa9HML7vyTBEWzp4XmQ3LO4LRxMz20IIqv+IcshHnbG/wuTff8vaov9310e9n92U/T/+pyg/9PrI/672eqT5TGyHKKnpfjf3c7wv5O1/v/MaM//ufE+/z3sjf97OZr811CRpZ9DBJBwXJAT2CGyUohifkAckhACcYiMJJ0dIiMp+t9IV+W/s5X+fx8ns//ZMZ7/s2O9wdFia6b9X1dT8b+kmBDtHCIhJvQ/zNsG7HtCOCfO+3+Il/V/cVFB6jskys8ObEl2nNf/cB/b/662hv8tjDTAOcjHxey/rZkOOFSiA+zBDgGpjfC1o75DlOQk/6spy/yXFBcmqFZKQuS/porcf2V5KfolVgEq4VGHCIyGCP8QSSMAByrJ3JIWA0MAAAAASUVORK5CYII="
+              alt=""
+            />
+          </div>
+          <figcaption>hollowed · 24px, then the same 24px at 9×</figcaption>
+        </figure>
+        <figure>
+          <div class="pair">
+            <img
+              class="ship"
+              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAiCAYAAAA6RwvCAAAACXBIWXMAAAPoAAAD6AG1e1JrAAACJElEQVR4nO3V7UtTURwH8Pt3WEEQ+Q/0xuiNBEIvlMCX9SZwkE8vR7oVKkGCWBl2700nicu5Oc1VTi5zm04ZaibhEwnXSep8mObDdU9UuPaV/Yxb+Ua4bneX8AuHczgc7vnc3zmXy0AjYaCRMNBIGGgkDDQSBhoJg/8GkkxmH5JIHMJtqsg+5LPAwvYoP7uQyO46Wu5fBq+7iJ/fo9mDzAy2gi/JoRaTtuT51XmfuhBn011CmPXX5Lmd4AK6DDfUg/xKHMJUdoUgvg69fHEtVXloq8hVD7K9PCsfizj+Fj/iYUy7/hyVFFpUB7I4+V7eNHUcflsNPKZKdNfc/KdKGYeIHx0yZEOcwCvdJViqr2NuqJ3mlHzSiiA7wQUZMtbzmHp7XQFcnI7GQvM9dSBIJtFZlSe/fap31BeBL7lA4+UZj0oQACO240q0ll+l3lp3i/p3DcWK/j+KIEODfWAb9eAeFICrvQPOUAj2SSk4421MjPYreaQySECcxbDbAb9vAHzTQ7DPDPC6euEW7AiuBNSD/J3O140E2d/7hrPkzBBzWwNBpP1ddSFhaQ9f5qfoWFxOK7jnRoJ4hB58GvciIM4hHg1nDhKLRdBna6FNT2svnxrgsJsQj0fTD+l+0/x7IyN6rTxGvB8wPeWnL0hwdmFyzEOX1Wp+QZDUWruFTT9kK7SGtdUlRCMHp66NhCWsfBUR2gymH5LpnENO5rwiJ6OZihwBQ2RZ2BzDACsAAAAASUVORK5CYII="
+              alt=""
+            />
+            <img
+              class="zoom"
+              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAiCAYAAAA6RwvCAAAACXBIWXMAAAPoAAAD6AG1e1JrAAACJElEQVR4nO3V7UtTURwH8Pt3WEEQ+Q/0xuiNBEIvlMCX9SZwkE8vR7oVKkGCWBl2700nicu5Oc1VTi5zm04ZaibhEwnXSep8mObDdU9UuPaV/Yxb+Ua4bneX8AuHczgc7vnc3zmXy0AjYaCRMNBIGGgkDDQSBhoJg/8GkkxmH5JIHMJtqsg+5LPAwvYoP7uQyO46Wu5fBq+7iJ/fo9mDzAy2gi/JoRaTtuT51XmfuhBn011CmPXX5Lmd4AK6DDfUg/xKHMJUdoUgvg69fHEtVXloq8hVD7K9PCsfizj+Fj/iYUy7/hyVFFpUB7I4+V7eNHUcflsNPKZKdNfc/KdKGYeIHx0yZEOcwCvdJViqr2NuqJ3mlHzSiiA7wQUZMtbzmHp7XQFcnI7GQvM9dSBIJtFZlSe/fap31BeBL7lA4+UZj0oQACO240q0ll+l3lp3i/p3DcWK/j+KIEODfWAb9eAeFICrvQPOUAj2SSk4421MjPYreaQySECcxbDbAb9vAHzTQ7DPDPC6euEW7AiuBNSD/J3O140E2d/7hrPkzBBzWwNBpP1ddSFhaQ9f5qfoWFxOK7jnRoJ4hB58GvciIM4hHg1nDhKLRdBna6FNT2svnxrgsJsQj0fTD+l+0/x7IyN6rTxGvB8wPeWnL0hwdmFyzEOX1Wp+QZDUWruFTT9kK7SGtdUlRCMHp66NhCWsfBUR2gymH5LpnENO5rwiJ6OZihwBQ2RZ2BzDACsAAAAASUVORK5CYII="
+              alt=""
+            />
+          </div>
+          <figcaption>kindled · 24px, then the same 24px at 9×</figcaption>
+        </figure>
+      </div>
+      <p>
+        The same drawing, floored at 8 units of body and 4 of taper, gaps opened
+        to 7. Everything survives except the third tongue, which the rasteriser
+        merges into the tall one — it costs mass and buys nothing.
+      </p>
+    </section>
+    <section>
+      <h2><span class="key">B</span> Two tongues</h2>
+      <div class="grid">
+        <figure>
+          <div class="pair">
+            <img
+              class="ship"
+              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAiCAYAAAA6RwvCAAAACXBIWXMAAAPoAAAD6AG1e1JrAAACFUlEQVR4nO3UTU8TURQGYH4A0OFjaKedAkMrFKElUDIplQ7SAqmdtrZSrAE7LSRgsUiM0RA+NkYTNUYSIIBuDIYQNhIXXbokMZHE3/SSHmBi4oIo5RZDF2dx39zc+8yZM1PBGapwFaqi1ACuDDGUO1J1zWakrcVUekizyOPjcqzUkEpsLEaRX9dKCxkdduHXfo6qyVKv41olE1vI1kpMhzhsAmUxvxPZMQ87iJHn8GNnhhDft6eoEx12Cw4/z+DpRD87yIi3Te/G67kRyhambtP600qcHeR5WtEhhddRyGaTfbQ+2s2i84aFDWRz6a4OOfuPSFYehzvTlL2cHWID+fIqoUMK83KWv5kPUrb/NskG8v5ZSId4uqTTvBIHH8YpW1uIsIGkIm4d8iKj/DHA8YCTDaRZ5PFzN0uXHqymMNjnwvZynNb59RTqaqrZQIKKG19XM3Txt7VJPEmHsfdOw9HeY6Tj3r8+758hrpsSVL8bj5IK5jWVIMEBN6IBGQ67lR2E+620e36CWM38hc65MCSTOIGIAmOIKPDocdoR8HYh7JeRe3gHuZSK0GAvfHIHnO0ShIbay4OYGmpxX+2npz+v5jQVidAtGPma4kPGowpdktNCSIZ9GPZ1w9PjoC8oPCTDJ3dSVyZiAwQp7H0QUYoPaWkU0GoTIRjrzt1rNtWj3d4IW5OZ3bByRaoyhCt3xPCfzMgxz5zJ8Cq7h6UAAAAASUVORK5CYII="
+              alt=""
+            />
+            <img
+              class="zoom"
+              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAiCAYAAAA6RwvCAAAACXBIWXMAAAPoAAAD6AG1e1JrAAACFUlEQVR4nO3UTU8TURQGYH4A0OFjaKedAkMrFKElUDIplQ7SAqmdtrZSrAE7LSRgsUiM0RA+NkYTNUYSIIBuDIYQNhIXXbokMZHE3/SSHmBi4oIo5RZDF2dx39zc+8yZM1PBGapwFaqi1ACuDDGUO1J1zWakrcVUekizyOPjcqzUkEpsLEaRX9dKCxkdduHXfo6qyVKv41olE1vI1kpMhzhsAmUxvxPZMQ87iJHn8GNnhhDft6eoEx12Cw4/z+DpRD87yIi3Te/G67kRyhambtP600qcHeR5WtEhhddRyGaTfbQ+2s2i84aFDWRz6a4OOfuPSFYehzvTlL2cHWID+fIqoUMK83KWv5kPUrb/NskG8v5ZSId4uqTTvBIHH8YpW1uIsIGkIm4d8iKj/DHA8YCTDaRZ5PFzN0uXHqymMNjnwvZynNb59RTqaqrZQIKKG19XM3Txt7VJPEmHsfdOw9HeY6Tj3r8+758hrpsSVL8bj5IK5jWVIMEBN6IBGQ67lR2E+620e36CWM38hc65MCSTOIGIAmOIKPDocdoR8HYh7JeRe3gHuZSK0GAvfHIHnO0ShIbay4OYGmpxX+2npz+v5jQVidAtGPma4kPGowpdktNCSIZ9GPZ1w9PjoC8oPCTDJ3dSVyZiAwQp7H0QUYoPaWkU0GoTIRjrzt1rNtWj3d4IW5OZ3bByRaoyhCt3xPCfzMgxz5zJ8Cq7h6UAAAAASUVORK5CYII="
+              alt=""
+            />
+          </div>
+          <figcaption>hollowed · 24px, then the same 24px at 9×</figcaption>
+        </figure>
+        <figure>
+          <div class="pair">
+            <img
+              class="ship"
+              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAiCAYAAAA6RwvCAAAACXBIWXMAAAPoAAAD6AG1e1JrAAACIUlEQVR4nO3UzU8TQRgG8P07jBwI3j1i8EDCwaNnNMaQQKIcTMAoBOJBgzFBKKlAFykhgkDph61Ky1rs8mGQCiIxQDiUVik0cSnabrftHgzax/QFVoMHEijTDeFJ5jBvJju/vDOzHHQSDjoJB52Eg07CQSfhoJNwOCkQZWs9/xA1EcWI4UqeIZkMRp9cx2D9hfxCAv4X4CvP0FCV7xouFYuwhbjbrmoQJbpGtdW5V1gY7WAH2f6povtmISGe1Z6nTsjSF5irz2HW1cwOEl4UtW6M99ZQ7b31Ps1HDOXsIB8cDzVI9jiy+eQ20ryrqgBxKcQG4jFe+3s/dv8jaXkT5uoiqk313WUDcT66rEGy92Uvvp5bVLM/uMQGMtZ1Q4NIoYWdYiYDy71SqgntFWwgyxN9GsRvb/rvAq/OvmQDURNR8JVnd55vXQlm3r2B83E5zQfqivH71zYbyPiYE6bbF2ljU00xOg0NMN0pA19VgAkXf5hPHg4SDCxCFKwQhlvAG+oJInod8HqGsBEOsoP8m4HeFoLEY1s4So4M6e9pJogc/8EWosgxrCzPY3rSA6/bAlNbI0F8gh0f/SKCgSWoKeX4IOl0Es7hp7TpQaOjtQEumxmqmso9xPq8fXejRjgsPKbE1/g8P00vSHAPYW7Gh7eCDZZ+I0Gya22DnbmHbEoRRNZDSCUTB65NKjLCXwOQvm3kHnLcOYXsz2lH9kc3HfkDLjlaTTz/OqEAAAAASUVORK5CYII="
+              alt=""
+            />
+            <img
+              class="zoom"
+              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAiCAYAAAA6RwvCAAAACXBIWXMAAAPoAAAD6AG1e1JrAAACIUlEQVR4nO3UzU8TQRgG8P07jBwI3j1i8EDCwaNnNMaQQKIcTMAoBOJBgzFBKKlAFykhgkDph61Ky1rs8mGQCiIxQDiUVik0cSnabrftHgzax/QFVoMHEijTDeFJ5jBvJju/vDOzHHQSDjoJB52Eg07CQSfhoJNwOCkQZWs9/xA1EcWI4UqeIZkMRp9cx2D9hfxCAv4X4CvP0FCV7xouFYuwhbjbrmoQJbpGtdW5V1gY7WAH2f6povtmISGe1Z6nTsjSF5irz2HW1cwOEl4UtW6M99ZQ7b31Ps1HDOXsIB8cDzVI9jiy+eQ20ryrqgBxKcQG4jFe+3s/dv8jaXkT5uoiqk313WUDcT66rEGy92Uvvp5bVLM/uMQGMtZ1Q4NIoYWdYiYDy71SqgntFWwgyxN9GsRvb/rvAq/OvmQDURNR8JVnd55vXQlm3r2B83E5zQfqivH71zYbyPiYE6bbF2ljU00xOg0NMN0pA19VgAkXf5hPHg4SDCxCFKwQhlvAG+oJInod8HqGsBEOsoP8m4HeFoLEY1s4So4M6e9pJogc/8EWosgxrCzPY3rSA6/bAlNbI0F8gh0f/SKCgSWoKeX4IOl0Es7hp7TpQaOjtQEumxmqmso9xPq8fXejRjgsPKbE1/g8P00vSHAPYW7Gh7eCDZZ+I0Gya22DnbmHbEoRRNZDSCUTB65NKjLCXwOQvm3kHnLcOYXsz2lH9kc3HfkDLjlaTTz/OqEAAAAASUVORK5CYII="
+              alt=""
+            />
+          </div>
+          <figcaption>kindled · 24px, then the same 24px at 9×</figcaption>
+        </figure>
+      </div>
+      <p>
+        Three tongues means two slivers, and two slivers is one more than the
+        eye holds here. One gap, 8 units wide, and the tongues share a base so
+        the fire is one fire. <strong>Chosen</strong> — it is the only candidate
+        that fixes the failure without changing what the mark depicts.
+      </p>
+    </section>
+    <section>
+      <h2><span class="key">C</span> Sword-led</h2>
+      <div class="grid">
+        <figure>
+          <div class="pair">
+            <img
+              class="ship"
+              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAiCAYAAAA6RwvCAAAACXBIWXMAAAPoAAAD6AG1e1JrAAACIUlEQVR4nO3UQU/TYBgHcD6As+26rrbbGF1hrLAwHGRCzQYOhS4YYToz3BxjGMbIwJhoJCZyMBzUGK4mxgQ1wRAPnj14MMGTRj7T3+yZNJBwEHRvNdnhyd5/tuz55enztoPnXPgXqsNpAN+GcO2JuNjsSHfQC5474+yyuoWzeLeZcx7yoJzC/m7911RcMHQVeqeXLSSiK/i+s0KQkZiGLp8HH7eKiIZVtpD6nEmIL6/vQBI5bCynKacvhNlCtp/kqPHm6iTl+/NJyk/vWmwhn16WqfHCzDDlsHaO8te3S2wh75/lqfHj6gTl80aA8udXFbaQe6Xmo9jbrsJKDWF9cZxyY1eYQWRJgDU2iG87NfzYrWOtMo0Pz4vYe1OlK8wEMtCnoVa0sFa+ihcPb2JrPU/nR8uz2KhnUbiWgiTyrYX4FQnVW1PUODs5CjMeoXOjJi4OopK7TGdz2Gg9ZKBPQ9AvU5Y8gg0Jaz6IAoeekA+hoMJuWXnORY0PIBE9cOr/+WOIdHgiIZ9zEL8i2ZCDx+UIRAsoNkSVRecgPZpqQ7wegT3E427eDjNuEKJWsBDv19Gr+yGfEnQiiB5UkZ0awUopY0/iuCrMjGEo2t0aiNapYGmu+TJr1GL+Cq5nRnF7dhyl7CXcyJhYyKWxOj9N3zc+T4L5fUhAQTIRRTLRj65DN0R0c0de6bLkRiLWS7+NGSE2y8r/xWpD+PZEuP9kR34C/qi1moPL4dgAAAAASUVORK5CYII="
+              alt=""
+            />
+            <img
+              class="zoom"
+              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAiCAYAAAA6RwvCAAAACXBIWXMAAAPoAAAD6AG1e1JrAAACIUlEQVR4nO3UQU/TYBgHcD6As+26rrbbGF1hrLAwHGRCzQYOhS4YYToz3BxjGMbIwJhoJCZyMBzUGK4mxgQ1wRAPnj14MMGTRj7T3+yZNJBwEHRvNdnhyd5/tuz55enztoPnXPgXqsNpAN+GcO2JuNjsSHfQC5474+yyuoWzeLeZcx7yoJzC/m7911RcMHQVeqeXLSSiK/i+s0KQkZiGLp8HH7eKiIZVtpD6nEmIL6/vQBI5bCynKacvhNlCtp/kqPHm6iTl+/NJyk/vWmwhn16WqfHCzDDlsHaO8te3S2wh75/lqfHj6gTl80aA8udXFbaQe6Xmo9jbrsJKDWF9cZxyY1eYQWRJgDU2iG87NfzYrWOtMo0Pz4vYe1OlK8wEMtCnoVa0sFa+ihcPb2JrPU/nR8uz2KhnUbiWgiTyrYX4FQnVW1PUODs5CjMeoXOjJi4OopK7TGdz2Gg9ZKBPQ9AvU5Y8gg0Jaz6IAoeekA+hoMJuWXnORY0PIBE9cOr/+WOIdHgiIZ9zEL8i2ZCDx+UIRAsoNkSVRecgPZpqQ7wegT3E427eDjNuEKJWsBDv19Gr+yGfEnQiiB5UkZ0awUopY0/iuCrMjGEo2t0aiNapYGmu+TJr1GL+Cq5nRnF7dhyl7CXcyJhYyKWxOj9N3zc+T4L5fUhAQTIRRTLRj65DN0R0c0de6bLkRiLWS7+NGSE2y8r/xWpD+PZEuP9kR34C/qi1moPL4dgAAAAASUVORK5CYII="
+              alt=""
+            />
+          </div>
+          <figcaption>hollowed · 24px, then the same 24px at 9×</figcaption>
+        </figure>
+        <figure>
+          <div class="pair">
+            <img
+              class="ship"
+              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAiCAYAAAA6RwvCAAAACXBIWXMAAAPoAAAD6AG1e1JrAAACJklEQVR4nO3Uz0/TYBgH8P4d6g0vXjz4B5h482Ti1XjTxOywROPFShQluszEBSej4uZgcwYRZBA4GYZhRgfjRxSyzCxDGFvdSrcxy+zWbYQv2VuounjB0LeN4Zu86fukh+eTJ3leBiYJA5OEgUnCwCRhYJIw+F8g5WIW2NkxFrK93cCI7YLxkJnhB+CuHFOnAkAS11DezNGF/BBT4K6eIJDcyiJkScRA+1lsZpN0IfMTTwjihfUUGnUF4QBL6kwsTBcyar9IGk/13SD1zFsbqSc9VroQ/80zpPFyyEtqKZ8mtdvSRhcy1HmeNA6/uk3qfDpO6r7rp+lCZoN20pi7dhJT70bwcbBDhQVYehBZLmN2emxva46Dc9yCjz2H55Y2lIRVOpBkYgm9zrtwOVi47l1GT8cl9W63osdmwZtANxSlqi9EKhXhdt0njceD/VicC6sIB4sP78fhc9vJfSE6rT8kmVhCIS+QWqlWNMj3zBrq9Rr49DeIAq8vpDXNxvuQ9dS/vaiHAlF+mwifWTUOIpWKGqSQzxkH2RB4DbIllYyDZPmUBqlUZPqQWk0h27G/vr3OO4jH5pFZX0FVLusPEbJpTAR94LratUn87Qy+fIp4bEEfyIbAw7P3mDWP99lDjA178drvxEB/F0aHPPB7HqH7sfq/+T0I5kCQ6KdJzEVCKIi/NqTRqP3xpMs/t7D8OYJoJITE1y+HD9E7R5DWHE2kNaaZyC5dUWqlNFQxdwAAAABJRU5ErkJggg=="
+              alt=""
+            />
+            <img
+              class="zoom"
+              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAiCAYAAAA6RwvCAAAACXBIWXMAAAPoAAAD6AG1e1JrAAACJklEQVR4nO3Uz0/TYBgH8P4d6g0vXjz4B5h482Ti1XjTxOywROPFShQluszEBSej4uZgcwYRZBA4GYZhRgfjRxSyzCxDGFvdSrcxy+zWbYQv2VuounjB0LeN4Zu86fukh+eTJ3leBiYJA5OEgUnCwCRhYJIw+F8g5WIW2NkxFrK93cCI7YLxkJnhB+CuHFOnAkAS11DezNGF/BBT4K6eIJDcyiJkScRA+1lsZpN0IfMTTwjihfUUGnUF4QBL6kwsTBcyar9IGk/13SD1zFsbqSc9VroQ/80zpPFyyEtqKZ8mtdvSRhcy1HmeNA6/uk3qfDpO6r7rp+lCZoN20pi7dhJT70bwcbBDhQVYehBZLmN2emxva46Dc9yCjz2H55Y2lIRVOpBkYgm9zrtwOVi47l1GT8cl9W63osdmwZtANxSlqi9EKhXhdt0njceD/VicC6sIB4sP78fhc9vJfSE6rT8kmVhCIS+QWqlWNMj3zBrq9Rr49DeIAq8vpDXNxvuQ9dS/vaiHAlF+mwifWTUOIpWKGqSQzxkH2RB4DbIllYyDZPmUBqlUZPqQWk0h27G/vr3OO4jH5pFZX0FVLusPEbJpTAR94LratUn87Qy+fIp4bEEfyIbAw7P3mDWP99lDjA178drvxEB/F0aHPPB7HqH7sfq/+T0I5kCQ6KdJzEVCKIi/NqTRqP3xpMs/t7D8OYJoJITE1y+HD9E7R5DWHE2kNaaZyC5dUWqlNFQxdwAAAABJRU5ErkJggg=="
+              alt=""
+            />
+          </div>
+          <figcaption>kindled · 24px, then the same 24px at 9×</figcaption>
+        </figure>
+      </div>
+      <p>
+        Hierarchy inverted: the sword is the mark and the fire a crown on it.
+        Legible, but it changes what the mark is about — and a long vertical
+        with a bar across it spends its whole budget on not being a cross.
+      </p>
+    </section>
+    <section>
+      <h2><span class="key">D</span> Silhouette</h2>
+      <div class="grid">
+        <figure>
+          <div class="pair">
+            <img
+              class="ship"
+              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAiCAYAAAA6RwvCAAAACXBIWXMAAAPoAAAD6AG1e1JrAAABxElEQVR4nO3WyS8DURwHcP9AzVRN26kWXYJSrS6ppZ1pFOluS1tiKUFUlYRo4iIcLAlOjhIRa/wBjg4OIhLib/pKH3EgIqHeED18by9vPu+3JFPCMjL8hpRIDWCLEKZYEdk/mhGFvBRhsV56SMzXgOuDKXAKRlrIzkIIjxdZBL1maSFnW0kC2ZwPSAtJBppwf5bBzeE0tLxCOgjLyJAbE0lVVtMd0kK8DgOBPJzPQnAZpYNYaysIJJ+95Rh9SGtTNfZX+nC5N/oKuTuZgYpj6UJ2F59X922ardV0IcfriQ8gerqQtXTnO8TtUZp+a5wWPa72J14R96czyCQ9X7rry5Cg6MT8WBRLk93YziWwsRjH0lQPsqkw2lxmehBrvR4B0Q6/x4bMcIiggj4nwu0u1Jl0dFvDviTV7ycQnYb71j3fhozHnyFanjJEy3NwNJrQ0WZD1O9GdiSE7GiEtEVwN6DRrAevLPs5iFpZhmTES17/WeZSEcTDHqg4eeEhQ90i+Uh+MwaiAroEO1ocdWSDop1uCG4Lqcpwr49A8mcHY2LhIYZKHjVGLXjV5/8dGnU5zKZKGKs09IaVLVCKELZYEeaPzMgT5AG33gz7Ob4AAAAASUVORK5CYII="
+              alt=""
+            />
+            <img
+              class="zoom"
+              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAiCAYAAAA6RwvCAAAACXBIWXMAAAPoAAAD6AG1e1JrAAABxElEQVR4nO3WyS8DURwHcP9AzVRN26kWXYJSrS6ppZ1pFOluS1tiKUFUlYRo4iIcLAlOjhIRa/wBjg4OIhLib/pKH3EgIqHeED18by9vPu+3JFPCMjL8hpRIDWCLEKZYEdk/mhGFvBRhsV56SMzXgOuDKXAKRlrIzkIIjxdZBL1maSFnW0kC2ZwPSAtJBppwf5bBzeE0tLxCOgjLyJAbE0lVVtMd0kK8DgOBPJzPQnAZpYNYaysIJJ+95Rh9SGtTNfZX+nC5N/oKuTuZgYpj6UJ2F59X922ardV0IcfriQ8gerqQtXTnO8TtUZp+a5wWPa72J14R96czyCQ9X7rry5Cg6MT8WBRLk93YziWwsRjH0lQPsqkw2lxmehBrvR4B0Q6/x4bMcIiggj4nwu0u1Jl0dFvDviTV7ycQnYb71j3fhozHnyFanjJEy3NwNJrQ0WZD1O9GdiSE7GiEtEVwN6DRrAevLPs5iFpZhmTES17/WeZSEcTDHqg4eeEhQ90i+Uh+MwaiAroEO1ocdWSDop1uCG4Lqcpwr49A8mcHY2LhIYZKHjVGLXjV5/8dGnU5zKZKGKs09IaVLVCKELZYEeaPzMgT5AG33gz7Ob4AAAAASUVORK5CYII="
+              alt=""
+            />
+          </div>
+          <figcaption>hollowed · 24px, then the same 24px at 9×</figcaption>
+        </figure>
+        <figure>
+          <div class="pair">
+            <img
+              class="ship"
+              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAiCAYAAAA6RwvCAAAACXBIWXMAAAPoAAAD6AG1e1JrAAABy0lEQVR4nO3W3ytDYRzH8fN3iJJSbtz7F1y4d6OEIinFBeZKuDCGOJuhXTDGsSZMJ5th8mszvyWODfNjtmRmP05h9NEeWkIp5pyTvOt7d3rOq+d5Th0KEomCRKIgkShIJAoSiYJEovAXIE+PURyts+JDXA4jNGUZiD7ciQsxd5dCVZiEky2zuBB9fTaBzGjKxYXsLzJQFSWjpzQdd/yteJBYK/oGsivz2mqICvFwNgJRFibh4mBZPIjfwxFIbNiOfOEhXtcaJhS50FZlxSHq4lRE73lhISZ1SRzwdnzHG8JCDI05n0OOBIZY+6s+ILpL0oQ/GvfhFjTlmXFEV1EKbGNt313ue5AZkwG0oga0vBLKujzQ9QVQyitAK2RYs1uFgzi5bcyaR7EwNwlVWy1BWab0MLMMztxO4SBv02qaCeTGf4Wf9GNIX28TgQRuroWFBAN+7O06yLFMGXVQtsoIZJodweqyBU5uB3w4+HuQSCQEw5D65ZJ+MZ0tNRhlesDz4cRDhvs7Xl8kg16ngtUyjk3HAvmCWOMg7EvT5LLq+toJJPYsM0AnHuLznuP81IVw6Ov/jlAwAPcxB+/lWeIhv90/5H3/O/I+yezIMxw8bf73vY5NAAAAAElFTkSuQmCC"
+              alt=""
+            />
+            <img
+              class="zoom"
+              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAiCAYAAAA6RwvCAAAACXBIWXMAAAPoAAAD6AG1e1JrAAABy0lEQVR4nO3W3ytDYRzH8fN3iJJSbtz7F1y4d6OEIinFBeZKuDCGOJuhXTDGsSZMJ5th8mszvyWODfNjtmRmP05h9NEeWkIp5pyTvOt7d3rOq+d5Th0KEomCRKIgkShIJAoSiYJEovAXIE+PURyts+JDXA4jNGUZiD7ciQsxd5dCVZiEky2zuBB9fTaBzGjKxYXsLzJQFSWjpzQdd/yteJBYK/oGsivz2mqICvFwNgJRFibh4mBZPIjfwxFIbNiOfOEhXtcaJhS50FZlxSHq4lRE73lhISZ1SRzwdnzHG8JCDI05n0OOBIZY+6s+ILpL0oQ/GvfhFjTlmXFEV1EKbGNt313ue5AZkwG0oga0vBLKujzQ9QVQyitAK2RYs1uFgzi5bcyaR7EwNwlVWy1BWab0MLMMztxO4SBv02qaCeTGf4Wf9GNIX28TgQRuroWFBAN+7O06yLFMGXVQtsoIZJodweqyBU5uB3w4+HuQSCQEw5D65ZJ+MZ0tNRhlesDz4cRDhvs7Xl8kg16ngtUyjk3HAvmCWOMg7EvT5LLq+toJJPYsM0AnHuLznuP81IVw6Ov/jlAwAPcxB+/lWeIhv90/5H3/O/I+yezIMxw8bf73vY5NAAAAAElFTkSuQmCC"
+              alt=""
+            />
+          </div>
+          <figcaption>kindled · 24px, then the same 24px at 9×</figcaption>
+        </figure>
+      </div>
+      <p>
+        One closed mass with a bite out of the front. The bite is eight units at
+        its mouth and still closes: a concave notch has an inside, and at two
+        pixels deep the inside is one pixel. It delivers as a blob on a stick.
+      </p>
+    </section>
+    <section>
+      <h2><span class="key">E</span> Ash and fire</h2>
+      <div class="grid">
+        <figure>
+          <div class="pair">
+            <img
+              class="ship"
+              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAiCAYAAAA6RwvCAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAB1ElEQVR4nGMQ4Of9Pxgww0A7QGDUIfyjIcI7mkb+j+xco6EsOfAOkRQX/D+zJnDgHVKaYPd/14zEgXWItor0/5NLMv+fXZ4NZg+YQ3KjrMGOAGEXC3WwmJiIwP/mbFf6OmRqlT/cITqqkBBpyXH7P7Hch54O4fm/f3Yy2BH756SA+Y5mqmD+8o4I+jlEW0UaHhrTqvzBYplhlnCHCdLLIT72WnCHFMTagsXcrNThYr722vRxSFqIOdzSEDc9sJigAO//9f3RYLElbWH0cUhhrC3cIa6WkBwDwnF+JmCx00uz/ouLCtDeIRmhFhghAsKJgaZgsVNLMv+LCvPT3iEeNppwh9SkOcPF5zYEgcUWt4TSJ2pkJIX/n1qcAbZ0w4QYsJimshQ4SkBiyYFm9HGIAD/v/wXNIfBQkRQT/J8YAImWYwvS/stJCdPPIVHehmCLd89M+m+orfw/xtcEHCKgHEWOeSQ5hJ+P57+assx/b0fT/xnRHv8b84L+l6T6/c+N9wHjjBj3/+72Rv9VFaVo5xBjPZX/sUGOcEsJ4ZhAx/8muqrUd4iKgvR/I13V/zam2v+drPTAPseGHS31/lsaa4CjS1FWcgS2WQVGHcI/GiK8dEkjAAHozBiVdSCHAAAAAElFTkSuQmCC"
+              alt=""
+            />
+            <img
+              class="zoom"
+              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAiCAYAAAA6RwvCAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAB1ElEQVR4nGMQ4Of9Pxgww0A7QGDUIfyjIcI7mkb+j+xco6EsOfAOkRQX/D+zJnDgHVKaYPd/14zEgXWItor0/5NLMv+fXZ4NZg+YQ3KjrMGOAGEXC3WwmJiIwP/mbFf6OmRqlT/cITqqkBBpyXH7P7Hch54O4fm/f3Yy2BH756SA+Y5mqmD+8o4I+jlEW0UaHhrTqvzBYplhlnCHCdLLIT72WnCHFMTagsXcrNThYr722vRxSFqIOdzSEDc9sJigAO//9f3RYLElbWH0cUhhrC3cIa6WkBwDwnF+JmCx00uz/ouLCtDeIRmhFhghAsKJgaZgsVNLMv+LCvPT3iEeNppwh9SkOcPF5zYEgcUWt4TSJ2pkJIX/n1qcAbZ0w4QYsJimshQ4SkBiyYFm9HGIAD/v/wXNIfBQkRQT/J8YAImWYwvS/stJCdPPIVHehmCLd89M+m+orfw/xtcEHCKgHEWOeSQ5hJ+P57+assx/b0fT/xnRHv8b84L+l6T6/c+N9wHjjBj3/+72Rv9VFaVo5xBjPZX/sUGOcEsJ4ZhAx/8muqrUd4iKgvR/I13V/zam2v+drPTAPseGHS31/lsaa4CjS1FWcgS2WQVGHcI/GiK8dEkjAAHozBiVdSCHAAAAAElFTkSuQmCC"
+              alt=""
+            />
+          </div>
+          <figcaption>hollowed · 24px, then the same 24px at 9×</figcaption>
+        </figure>
+        <figure>
+          <div class="pair">
+            <img
+              class="ship"
+              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAiCAYAAAA6RwvCAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAB7ElEQVR4nO2US0tbQRiG53eILrrThbgXuhZ0IbgS2o2o4ELxstOFIgpW0VqJqXfjIgGxNYomlkRPMKKtjfFoorEVIh6vURGveImavOV8KbNQoSjmZCg+8MHMuzjz8A5nGASBQRAYBIFBEBgEgUEQGASBQRAY/heRkwMl9iLByzOMNGXHXuT7QA0MpSmxFTkOrKEtPwGfc+NoHTMR13AjSaizseSg7CZ4CYehTFsRy6f3XOQo4KdM6inBmC5HQ5FwGN1FSSTRU5hI+03fFO2/VKdpJ3IcWONtjDa/o8xtaeFioVBIGxG/28JFZs0fKFM8Ezzzz41qIyKP6fmhv2cGKAuH7mCqeEvZ19p0bURmB+u4iOKVeO6VeinT58bhNngRfZF5q+5BIyqL9s5InheP25vr6IusL9q5iNNYwfOh+qy/V5Px5G8+S+T64gRteZFX1VieStnpwTpdiZot2Dq0EVEx12XyVoJX5/CMd9G6o+ANrs4PoZmIz2mKvBvFyVhdkSGPG6gR9Y96Dk8UCWNrww+btR/tLZXQ1+ajtaEMrU3lNF26Kki2QexuK9ET8XldMPZ+5If+a0x9zVj2/Hx5kd0dBStLbrh+SJietMJhNz86M85vkOem8MsnY39v++VFos2ryH1eG7mPMI38AYcxXTY0uzwzAAAAAElFTkSuQmCC"
+              alt=""
+            />
+            <img
+              class="zoom"
+              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAiCAYAAAA6RwvCAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAB7ElEQVR4nO2US0tbQRiG53eILrrThbgXuhZ0IbgS2o2o4ELxstOFIgpW0VqJqXfjIgGxNYomlkRPMKKtjfFoorEVIh6vURGveImavOV8KbNQoSjmZCg+8MHMuzjz8A5nGASBQRAYBIFBEBgEgUEQGASBQRAY/heRkwMl9iLByzOMNGXHXuT7QA0MpSmxFTkOrKEtPwGfc+NoHTMR13AjSaizseSg7CZ4CYehTFsRy6f3XOQo4KdM6inBmC5HQ5FwGN1FSSTRU5hI+03fFO2/VKdpJ3IcWONtjDa/o8xtaeFioVBIGxG/28JFZs0fKFM8Ezzzz41qIyKP6fmhv2cGKAuH7mCqeEvZ19p0bURmB+u4iOKVeO6VeinT58bhNngRfZF5q+5BIyqL9s5InheP25vr6IusL9q5iNNYwfOh+qy/V5Px5G8+S+T64gRteZFX1VieStnpwTpdiZot2Dq0EVEx12XyVoJX5/CMd9G6o+ANrs4PoZmIz2mKvBvFyVhdkSGPG6gR9Y96Dk8UCWNrww+btR/tLZXQ1+ajtaEMrU3lNF26Kki2QexuK9ET8XldMPZ+5If+a0x9zVj2/Hx5kd0dBStLbrh+SJietMJhNz86M85vkOem8MsnY39v++VFos2ryH1eG7mPMI38AYcxXTY0uzwzAAAAAElFTkSuQmCC"
+              alt=""
+            />
+          </div>
+          <figcaption>kindled · 24px, then the same 24px at 9×</figcaption>
+        </figure>
+      </div>
+      <p>
+        The sword dropped, the mound drawn as mass. The clearest fire of the six
+        and the least like a bonfire — without the sword it is a campfire, and
+        the mark loses the thing it was named for.
+      </p>
+    </section>
+    <section>
+      <h2><span class="key">✔</span> As it ships</h2>
+      <div class="grid">
+        <figure>
+          <div class="pair">
+            <img
+              class="ship"
+              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAiCAYAAAA6RwvCAAAACXBIWXMAAAPoAAAD6AG1e1JrAAACSUlEQVR4nO3UTU8TURQGYH4AdaalQz+mQgulhJaOKP1Ibam0OFI6aCktIoXaVKC2VIzRsNBIkBiJicYmLhA1GiEYFy5cuNAY48bIQuNvek1P48SdH9RbTbo4ubknM3eenHlnWnhOg3+hWhoN4JsQrjkRDZuMhD3d4LnWxobV7RDx8dkitHwDvxrR2IbX98/i64synHZz4yDzSR8hqqWEndSTA73osRrYQjavJVTIoKsDBoHHq8ocUrLEDmI26LC3fZ4Q77byFNbymaO0r6yMs4Ocivar01grHafexsVR2u9uTLODXC+MqJBYqI96i2k/7b88X4JfsrGBPFydUCFWi6B+RR8ez1Pv3hWFDeTpelqFVPPyvX+zLFPv5d0ZNpBby7U8VCvqd1BPaOPwdjNPvTuX42wgKVlSIbcvKbBaDMhPeNVexNfDBmIyaOnXXn3o3k4RpcwJNR9P1lO/fd4fQ7ScBpWVk+oEtm5kaP28W4LPbWUDMbbrkEtFsVpO4tN2Ee8fFbB2YRJvHiygcvU0jrjtbCAhrwvZ5DDSY0GEff1YmJaxnBtHOhZEJjGMSIDhL57/oc5NjRDEbNLv65x9Q0qZGEH0Oo4tpFNsx6BkRzQgQYl4UZqNozg7htHwYQz5XDjU1wXRKPw9iKNLRC5dew2/UtnJCOyd5vpCLCYBxbnaK6hOYEoJQQ4NIOhxUmDloQFa4xEPZhLHsJRV6NpCJkb31g3CHWilAx02EXod/9PrBb0Wvd0HYeswsQsrX6dqQvjmRLj/JCPfADfI2kgJ2cOhAAAAAElFTkSuQmCC"
+              alt=""
+            />
+            <img
+              class="zoom"
+              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAiCAYAAAA6RwvCAAAACXBIWXMAAAPoAAAD6AG1e1JrAAACSUlEQVR4nO3UTU8TURQGYH4AdaalQz+mQgulhJaOKP1Ibam0OFI6aCktIoXaVKC2VIzRsNBIkBiJicYmLhA1GiEYFy5cuNAY48bIQuNvek1P48SdH9RbTbo4ubknM3eenHlnWnhOg3+hWhoN4JsQrjkRDZuMhD3d4LnWxobV7RDx8dkitHwDvxrR2IbX98/i64synHZz4yDzSR8hqqWEndSTA73osRrYQjavJVTIoKsDBoHHq8ocUrLEDmI26LC3fZ4Q77byFNbymaO0r6yMs4Ocivar01grHafexsVR2u9uTLODXC+MqJBYqI96i2k/7b88X4JfsrGBPFydUCFWi6B+RR8ez1Pv3hWFDeTpelqFVPPyvX+zLFPv5d0ZNpBby7U8VCvqd1BPaOPwdjNPvTuX42wgKVlSIbcvKbBaDMhPeNVexNfDBmIyaOnXXn3o3k4RpcwJNR9P1lO/fd4fQ7ScBpWVk+oEtm5kaP28W4LPbWUDMbbrkEtFsVpO4tN2Ee8fFbB2YRJvHiygcvU0jrjtbCAhrwvZ5DDSY0GEff1YmJaxnBtHOhZEJjGMSIDhL57/oc5NjRDEbNLv65x9Q0qZGEH0Oo4tpFNsx6BkRzQgQYl4UZqNozg7htHwYQz5XDjU1wXRKPw9iKNLRC5dew2/UtnJCOyd5vpCLCYBxbnaK6hOYEoJQQ4NIOhxUmDloQFa4xEPZhLHsJRV6NpCJkb31g3CHWilAx02EXod/9PrBb0Wvd0HYeswsQsrX6dqQvjmRLj/JCPfADfI2kgJ2cOhAAAAAElFTkSuQmCC"
+              alt=""
+            />
+          </div>
+          <figcaption>hollowed · 24px, then the same 24px at 9×</figcaption>
+        </figure>
+        <figure>
+          <div class="pair">
+            <img
+              class="ship"
+              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAiCAYAAAA6RwvCAAAACXBIWXMAAAPoAAAD6AG1e1JrAAACTUlEQVR4nO3U708ScRwH8Ps7XFutnuUD17O2HvWwJ221tR70LEqzFi3barKyVet3iZl3SoIY4SKzMBwaBAZNyaHTNFmpE3+AAwoCTBQSeDc+1T3gkVP8cmu+t9vd97O7773uc987DhIJB4mEg0TCQSLhIJFw+F8g/i/9QDZbXEg0MIknlbuQzaSLB1lZikF/aS8EWQmiQW/xICMWFSFy2/SQmWqzY3Yshv1sIV3KYyLk+9w4VlMJtFXvw4Srgx0kmYijqXw7IbTny2ixDnbV0binQcYOMuU2id1w6C5SzaaW0/jl9QPsIE69QoTMfLJSbbhHoDEvK0FwepgN5M2DoyIkEQuJX5FGXko1S+NJNhDjnUMiJLde/qVXW0U1Q81+NhC75pwI8Y07qbb6K4nWC3v+dqSCDWTC1SFC3jadQfhbAKPvmsXavOcDG0hqeZF+7XTj8h1oFa5BI99NY+Pdw+uZcn2QdDoNU/1xsQO84uCf4xPbEPKOsIEs/YxDp74P/lYlhIqdEE6Xgr95CvzZMgg1R+D5PMgG4v5oR5tWic52NQb6rFALN9DwsBrG9mY8f/oI/c5uNpD8aFW3CRKP/cBGsmFIY90VgqRSSbaQSDgIz5gbfQ4zLGYDBOVlwvRaX8PtsmHy6yhi0cjmQfw+L3Tqe/T0a9n0LbUILMwVFhKPRsRXkOvAK4MKDlsnhgbe04J12k20t3a/gOHZY/C1CjpXVX+Vri0YBMjShAu+mTWtheTKMuZnpxAK+pHJZAoJ2fxsQfKz1ZH8SKYjvwGEG0Y72s5tXgAAAABJRU5ErkJggg=="
+              alt=""
+            />
+            <img
+              class="zoom"
+              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAiCAYAAAA6RwvCAAAACXBIWXMAAAPoAAAD6AG1e1JrAAACTUlEQVR4nO3U708ScRwH8Ps7XFutnuUD17O2HvWwJ221tR70LEqzFi3barKyVet3iZl3SoIY4SKzMBwaBAZNyaHTNFmpE3+AAwoCTBQSeDc+1T3gkVP8cmu+t9vd97O7773uc987DhIJB4mEg0TCQSLhIJFw+F8g/i/9QDZbXEg0MIknlbuQzaSLB1lZikF/aS8EWQmiQW/xICMWFSFy2/SQmWqzY3Yshv1sIV3KYyLk+9w4VlMJtFXvw4Srgx0kmYijqXw7IbTny2ixDnbV0binQcYOMuU2id1w6C5SzaaW0/jl9QPsIE69QoTMfLJSbbhHoDEvK0FwepgN5M2DoyIkEQuJX5FGXko1S+NJNhDjnUMiJLde/qVXW0U1Q81+NhC75pwI8Y07qbb6K4nWC3v+dqSCDWTC1SFC3jadQfhbAKPvmsXavOcDG0hqeZF+7XTj8h1oFa5BI99NY+Pdw+uZcn2QdDoNU/1xsQO84uCf4xPbEPKOsIEs/YxDp74P/lYlhIqdEE6Xgr95CvzZMgg1R+D5PMgG4v5oR5tWic52NQb6rFALN9DwsBrG9mY8f/oI/c5uNpD8aFW3CRKP/cBGsmFIY90VgqRSSbaQSDgIz5gbfQ4zLGYDBOVlwvRaX8PtsmHy6yhi0cjmQfw+L3Tqe/T0a9n0LbUILMwVFhKPRsRXkOvAK4MKDlsnhgbe04J12k20t3a/gOHZY/C1CjpXVX+Vri0YBMjShAu+mTWtheTKMuZnpxAK+pHJZAoJ2fxsQfKz1ZH8SKYjvwGEG0Y72s5tXgAAAABJRU5ErkJggg=="
+              alt=""
+            />
+          </div>
+          <figcaption>kindled · 24px, then the same 24px at 9×</figcaption>
+        </figure>
+      </div>
+      <p>
+        B, with three corrections made after it won and none of them visible in
+        the source: the two tongues were brought together at the foot, so the
+        fire is one fire that forks rather than two prongs on a stand; the guard
+        was widened past the flame and dropped six units clear of it, because an
+        arm that ends inside the fire's own width is not a crossguard and two
+        marks less than a pixel apart are one mark; and the guard's arms were
+        made unequal in length and in drop, because a blade under a level bar of
+        equal arms is a cross.
+      </p>
+    </section>
+  </body>
+</html>
