@@ -21,16 +21,17 @@ reader actually feels.
 
 **Where it stands**
 
-| Measure                       | Now                                             | Note                                      |
-| ----------------------------- | ----------------------------------------------- | ----------------------------------------- |
-| Built output                  | 14MB                                            | includes the Pagefind index and OG images |
-| HTML per page                 | 41KB min / 63KB median / 162KB max              | inline critical CSS and inline SVG scenes |
-| Page script entry             | **257KB**                                       | mermaid + d3, on **25 of 71** pages       |
-| Posts that contain a diagram  | **3**                                           | so 22 pages pay 257KB for nothing         |
-| Largest lazy chunks           | 1.4MB flowchart-elk, 529KB mindmap, 255KB katex | mermaid's own splits                      |
-| Posts using maths             | **0**                                           | katex is built regardless                 |
-| Font files linked from a page | 4 woff2 (12–19KB) **and 4 TTF (56–386KB)**      | see below                                 |
-| Third-party asset hosts       | **none**                                        | fonts self-hosted, no analytics, no CDN   |
+| Measure                      | Now                                             | Note                                      |
+| ---------------------------- | ----------------------------------------------- | ----------------------------------------- |
+| Built output                 | 14MB                                            | includes the Pagefind index and OG images |
+| HTML per page                | 41KB min / 63KB median / 162KB max              | inline critical CSS and inline SVG scenes |
+| Page script entry            | 257KB → **1.3KB**                               | mermaid is a lazy chunk now (TODO 1)      |
+| Posts that contain a diagram | **3**                                           | the other 22 never fetch mermaid          |
+| Largest lazy chunks          | 1.4MB flowchart-elk, 529KB mindmap, 255KB katex | mermaid's own splits; fetched by 3 posts  |
+| Posts using maths            | **0**                                           | katex is built regardless                 |
+| Font bytes fetched per page  | 378KB TTF → **15KB woff2**                      | see below (TODO 2)                        |
+| A post, total over the wire  | **103KB in 7 requests**                         | 30KB HTML + 73KB subresources             |
+| Third-party asset hosts      | **none**                                        | fonts self-hosted, no analytics, no CDN   |
 
 **The two real defects.**
 
@@ -176,14 +177,29 @@ metrics dashboard.
    2019-07-03; the archive and the feed now order by when things were written
    rather than by when they were imported. No post carries `modDatetime`, so
    nothing else was overriding the sort.
-5. **Keyboard and screen-reader pass**, header through pagination, both worlds.
-   Nothing here is known broken; nothing here has been checked either.
-6. **Check the site with JavaScript off**, and decide what degrades and what
-   must not.
+5. ~~**Keyboard pass**~~ **Done, 27 August — nothing broken.** 16 tab stops on
+   a post, the skip link first, every one carrying a visible 1px `--torch`
+   focus ring, and the order follows the page. The world control's label is
+   plain language on purpose ("Dark theme. Switch to light.") — `world.ts`
+   carries the reasoning, that the internal world names mean nothing to
+   someone who cannot see which theme is on. Still unrun: an actual screen
+   reader, and forced-colours mode.
+6. ~~**Check the site with JavaScript off.**~~ **Done, 27 August — it reads.**
+   A post renders in full with scripts disabled; the chrome, the nav and the
+   search link are all present. One finding, and it is a decision rather than
+   a repair: with no JS the inline script never stamps `data-theme`, so the
+   page falls through to `prefers-color-scheme` and a light-OS reader lands in
+   **kindled**. "First visit always lands hollowed" is therefore a promise the
+   _script_ keeps, not the stylesheet. Making it true without JS means
+   dropping the `prefers-color-scheme` block from `build-tokens.mjs`, which
+   changes the default for every reader — the author's call, not a fix.
 7. **Confirm the old URLs still resolve** after the Docusaurus migration, and
    add redirects for any that do not.
-8. **Measure LCP and CLS on a throttled connection**, once 1 and 2 are done, so
-   the number means something.
+8. **Partly done, 27 August.** With 1 and 2 landed, a post is **30KB of HTML
+   plus 73KB of subresources over 7 requests — 103KB total**, against roughly
+   460KB this morning, and requirement 3 above is met with room. First
+   contentful paint is 128ms, but that is localhost and means little. Still to
+   do: LCP and CLS on a throttled connection against the real origin.
 9. ~~**`twitter:` tags on posts and `rel="me"` in the head**~~ **Done, 27
    August.** The Twitter tags were there all along under `property=`, which is
    RDFa and is what `og:*` takes; the card spec is plain meta and its own
