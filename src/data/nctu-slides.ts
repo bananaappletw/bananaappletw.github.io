@@ -232,9 +232,11 @@ export const slides: Slide[] = [
   },
   {
     kind: "question",
-    prompt: "交大近期新建的二館，興建預算大約是多少？",
+    prompt: "資訊二館「啟航計畫」的募款目標是多少？",
     options: ["4 億", "6 億", "8 億", "10 億"],
-    answer: "B",
+    answer: "C",
+    explain:
+      "主體工程的 6 億已經募到，內裝工程還需要 2 億，合計 8 億。截至 2026/08/28 已募得 615,092,000 元，進度 77%，仍在持續募款中。（cs2-fundraising.cs.nycu.edu.tw）",
   },
   {
     kind: "question",
