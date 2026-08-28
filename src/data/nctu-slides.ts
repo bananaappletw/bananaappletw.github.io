@@ -84,7 +84,7 @@ export type Slide =
 export const slides: Slide[] = [
   {
     kind: "cover",
-    title: "NCTU Alumni at Tokyo",
+    title: "2026 陽明交大資訊系友日 ＠ 東京",
     subtitle: "2026 / 08 / 29",
     note: "→ 或空白鍵 下一步 · ← 上一步 · 數字 + Enter 跳頁 · F 全螢幕 · B 黑屏 · T 開燈關燈 · O 目錄",
   },
