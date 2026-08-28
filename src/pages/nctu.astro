@@ -12,6 +12,7 @@
  */
 import { Font } from "astro:assets";
 import { getAssetPath } from "@/utils/withBase";
+import { moon, sunCore, sunRays } from "@/utils/marks";
 import { slides } from "@/data/nctu-slides";
 import "@/styles/global.css";
 
@@ -45,6 +46,8 @@ const tocTitle = (slide: (typeof slides)[number], label: string) => {
     case "cover":
     case "section":
       return slide.title;
+    case "agenda":
+      return slide.title ?? "流程";
     case "bingo":
       return slide.title ?? "賓果卡";
     case "text":
@@ -68,10 +71,45 @@ const tocTitle = (slide: (typeof slides)[number], label: string) => {
       preload={[{ subset: "latin", weight: 400, style: "normal" }]}
     />
     <Font cssVariable="--font-body" />
+
+    <!--
+      Same contract as Layout.astro: localStorage decides, hollowed is the
+      default. Inline and before paint, or the deck flashes the wrong world
+      onto the projector at the start of the event.
+    -->
+    <script is:inline>
+      (function () {
+        const stored = localStorage.getItem("world");
+        const world =
+          stored === "kindled" || stored === "hollowed" ? stored : "hollowed";
+        document.firstElementChild?.setAttribute("data-theme", world);
+      })();
+    </script>
   </head>
 
   <body class="deck">
     <div class="rail"><span class="rail-fill" id="rail"></span></div>
+
+    <button
+      id="world-btn"
+      type="button"
+      aria-label="Dark theme. Switch to light."
+    >
+      <svg
+        class="world-icon"
+        viewBox="0 0 64 64"
+        width="20"
+        height="20"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path class="moon" d={moon}></path>
+        <g class="sun">
+          <path d={sunCore}></path>
+          {sunRays.map(d => <path d={d} />)}
+        </g>
+      </svg>
+    </button>
 
     <main id="stage">
       {
@@ -97,6 +135,23 @@ const tocTitle = (slide: (typeof slides)[number], label: string) => {
                       ))}
                     </ul>
                   )}
+                </>
+              )}
+
+              {slide.kind === "agenda" && (
+                <>
+                  {slide.title && <h2 class="head">{slide.title}</h2>}
+                  <ol class="agenda">
+                    {slide.rows.map(row => (
+                      <li>
+                        <span class="when">{row.time}</span>
+                        <span class="what">
+                          {row.item}
+                          {row.note && <span class="who">{row.note}</span>}
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
                 </>
               )}
 
@@ -217,6 +272,7 @@ const tocTitle = (slide: (typeof slides)[number], label: string) => {
         <dt>數字 + Enter</dt><dd>跳到該頁</dd>
         <dt>F</dt><dd>全螢幕</dd>
         <dt>B</dt><dd>黑屏（再按一次回來）</dd>
+        <dt>T · 右上角按鈕</dt><dd>開燈／關燈</dd>
         <dt>O</dt><dd>目錄</dd>
         <dt>Esc</dt><dd>關閉浮層</dd>
       </dl>
@@ -443,6 +499,50 @@ const tocTitle = (slide: (typeof slides)[number], label: string) => {
         color: var(--text);
       }
 
+      /* The run of show. Times are a fixed column so the eye can run down
+         them; the segment and who is doing it sit together to its right. */
+      .agenda {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: grid;
+        gap: 0.5em;
+        width: min(100%, 34em);
+        margin-inline: auto;
+        font-size: 0.78em;
+        text-align: start;
+      }
+
+      .agenda li {
+        display: grid;
+        grid-template-columns: 4.6em 1fr;
+        gap: 1.4em;
+        align-items: baseline;
+        padding-bottom: 0.5em;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .agenda li:last-child {
+        border-bottom: 0;
+      }
+
+      .when {
+        color: var(--text-4);
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0.06em;
+      }
+
+      .what {
+        color: var(--text);
+      }
+
+      .who {
+        display: block;
+        margin-top: 0.15em;
+        font-size: 0.76em;
+        color: var(--text-3);
+      }
+
       .bullets {
         margin: 0;
         padding: 0;
@@ -557,6 +657,50 @@ const tocTitle = (slide: (typeof slides)[number], label: string) => {
 
       body:hover .hud-keys {
         opacity: 1;
+      }
+
+      /* Lights. Top right, dim until you go looking for it — during the talk
+         it should read as part of the room's furniture, not as a control
+         competing with the slide. */
+      #world-btn {
+        position: fixed;
+        inset: 1.6vh 1.6vw auto auto;
+        z-index: 4;
+        display: grid;
+        place-items: center;
+        padding: 0.6em;
+        border: 0;
+        background: none;
+        color: var(--text-4);
+        opacity: 0.45;
+        transition:
+          opacity 200ms ease,
+          color 200ms ease;
+      }
+
+      #world-btn:hover,
+      #world-btn:focus-visible {
+        opacity: 1;
+        color: var(--text-2);
+      }
+
+      .moon {
+        fill: currentColor;
+      }
+
+      .sun {
+        display: none;
+        fill: currentColor;
+      }
+
+      :root[data-theme="kindled"] .moon,
+      :root[data-theme="light"] .moon {
+        display: none;
+      }
+
+      :root[data-theme="kindled"] .sun,
+      :root[data-theme="light"] .sun {
+        display: block;
       }
 
       .overlay {
@@ -681,7 +825,8 @@ const tocTitle = (slide: (typeof slides)[number], label: string) => {
         .rail,
         .hud,
         .overlay,
-        .blackout {
+        .blackout,
+        #world-btn {
           display: none;
         }
       }
@@ -696,6 +841,34 @@ const tocTitle = (slide: (typeof slides)[number], label: string) => {
       const toc = document.getElementById("toc")!;
       const help = document.getElementById("help")!;
       const blackout = document.getElementById("blackout")!;
+
+      /**
+       * Lights. Same localStorage key as the rest of the site, so a world
+       * chosen here is the one the blog opens in and the other way round.
+       * The deck re-fits after a flip: the two worlds do not set type at
+       * identical weights, and a slide that just fit can stop fitting.
+       */
+      const worldBtn = document.getElementById("world-btn")!;
+
+      function reflectWorld(world: "hollowed" | "kindled") {
+        document.firstElementChild?.setAttribute("data-theme", world);
+        worldBtn.setAttribute(
+          "aria-label",
+          world === "kindled"
+            ? "Light theme. Switch to dark."
+            : "Dark theme. Switch to light.",
+        );
+      }
+
+      function flipWorld() {
+        const next =
+          localStorage.getItem("world") === "kindled" ? "hollowed" : "kindled";
+        localStorage.setItem("world", next);
+        reflectWorld(next);
+        fit(slides[i]);
+      }
+
+      worldBtn.addEventListener("click", flipWorld);
 
       /** Reveal steps per slide: the highest `data-step` it declares. */
       const stepsOf = (slide: HTMLElement) =>
@@ -848,6 +1021,9 @@ const tocTitle = (slide: (typeof slides)[number], label: string) => {
           case "b":
           case ".":
             blackout.hidden = !blackout.hidden;
+            break;
+          case "t":
+            flipWorld();
             break;
           case "o":
             toggle(toc);

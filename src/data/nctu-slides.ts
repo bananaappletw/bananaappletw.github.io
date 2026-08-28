@@ -1,13 +1,19 @@
 /**
  * Slides for the /nctu deck — NCTU Alumni at Tokyo, 2026/08/29.
  *
- * Content transcribed from the event's Notion page (the 賓果 and 猜謎
- * sections). This is the whole content model: edit this file, nothing else.
- * The page at `src/pages/nctu.astro` renders whatever is in `slides` and
- * derives its keyboard sequence from the reveal steps each kind declares.
+ * The deck is the run of show. A host drives it from the front and the room
+ * watches, so it follows the day in order — 流程, 致詞, 大合照, 賓果, 猜謎,
+ * 系友分享 — rather than being a bare question bank. Content transcribed from
+ * the event's Notion page; the internal logistics rows (訂便當, 拿收據,
+ * 收拾場地) are deliberately not here, because they are not for the room.
+ *
+ * This is the whole content model: edit this file, nothing else. The page at
+ * `src/pages/nctu.astro` renders whatever is in `slides` and derives its
+ * keyboard sequence from the reveal steps each kind declares.
  *
  * Reveal order per kind (one press of the next key advances one step):
  *   cover     — one step
+ *   agenda    — one step
  *   section   — one step
  *   text      — one step, plus one per bullet if `revealBullets` is set
  *   bingo     — one step
@@ -29,6 +35,12 @@ export type Slide =
       title: string;
       /** Optional lines under the title — the rules of the round. */
       body?: string[];
+    }
+  | {
+      kind: "agenda";
+      title?: string;
+      /** One row per segment of the day, in order. */
+      rows: { time: string; item: string; note?: string }[];
     }
   | {
       kind: "text";
@@ -76,11 +88,40 @@ export const slides: Slide[] = [
     subtitle: "2026 / 08 / 29",
     note: "→ 或空白鍵 下一步 · ← 上一步 · F 全螢幕 · O 目錄",
   },
+  {
+    kind: "agenda",
+    title: "今日流程",
+    rows: [
+      { time: "13:00", item: "報到接待" },
+      {
+        time: "13:30",
+        item: "致詞",
+        note: "黃俊龍副院長、張立平系主任、大河馬會長",
+      },
+      { time: "13:45", item: "場地方代表開場" },
+      { time: "13:50", item: "大合照" },
+      { time: "14:00", item: "分組破冰＆下午茶", note: "賓果、猜謎" },
+      { time: "15:30", item: "主題分享／系友分享", note: "簡士強" },
+      { time: "16:00", item: "活動結束", note: "交流到 16:30" },
+    ],
+  },
+  {
+    kind: "section",
+    label: "13:30",
+    title: "致詞",
+    body: ["黃俊龍 副院長", "張立平 系主任", "大河馬 會長", "場地方代表開場"],
+  },
+  {
+    kind: "section",
+    label: "13:50",
+    title: "大合照",
+    body: ["請大家往前集中"],
+  },
 
   // 賓果, 30 min
   {
     kind: "section",
-    label: "破冰",
+    label: "14:00 · 破冰",
     title: "賓果",
     body: [
       "和別人聊天，請對方幫自己簽名",
@@ -121,7 +162,7 @@ export const slides: Slide[] = [
   // 猜謎, 1 h
   {
     kind: "section",
-    label: "第二關",
+    label: "14:30",
     title: "猜謎",
     body: ["分成幾組", "每題給大家看幾分鐘討論", "最後一起解答"],
   },
@@ -215,6 +256,12 @@ export const slides: Slide[] = [
       "1962 年台灣第一台 IBM 650 電腦由基隆港運抵新竹交大，當時沒有防震用的氣墊車，只好用牛車以極慢速度運送。雕塑就在光復校區工程三館前的草地上。（剪綵當天因冷氣不足、溫度過高，真空管燒壞，最後報廢）",
   },
 
+  {
+    kind: "section",
+    label: "15:30",
+    title: "主題分享／系友分享",
+    body: ["簡士強"],
+  },
   {
     kind: "cover",
     title: "謝謝大家",
