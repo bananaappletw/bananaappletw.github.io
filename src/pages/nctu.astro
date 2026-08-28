@@ -1,6 +1,6 @@
 ---
 /**
- * /nctu — a keyboard-driven slide deck, built to be projected from a laptop.
+ * /nctu: a keyboard-driven slide deck, built to be projected from a laptop.
  *
  * Deliberately not wrapped in `Layout.astro`: a deck wants the whole viewport,
  * no header, no footer, no scroll and no view-transition router taking over
@@ -29,7 +29,7 @@ const numbered = slides.map(slide => {
 /**
  * With options, `answer` is a letter. Resolve it to an index so the right row
  * can be marked, and to "B. CSIE" so the reveal reads on its own from the back
- * of the room — a lone letter does not.
+ * of the room. A lone letter does not.
  */
 const resolveAnswer = (answer: string, options?: string[]) => {
   if (!options) return { index: -1, text: answer };
@@ -53,7 +53,7 @@ const tocTitle = (slide: (typeof slides)[number], label: string) => {
     case "text":
       return slide.title ?? slide.body[0];
     default:
-      return `${label} — ${slide.prompt}`;
+      return `${label} · ${slide.prompt}`;
   }
 };
 ---
@@ -246,7 +246,6 @@ const tocTitle = (slide: (typeof slides)[number], label: string) => {
 
     <footer class="hud">
       <span id="counter">1 / {slides.length}</span>
-      <span class="hud-keys">→ 下一步 · O 目錄 · ? 說明</span>
     </footer>
 
     <div class="overlay" id="toc" hidden>
@@ -262,20 +261,6 @@ const tocTitle = (slide: (typeof slides)[number], label: string) => {
           ))
         }
       </ol>
-    </div>
-
-    <div class="overlay" id="help" hidden>
-      <dl class="keys">
-        <dt>→ ↓ 空白鍵 Enter PageDown</dt><dd>下一步</dd>
-        <dt>← ↑ Backspace PageUp</dt><dd>上一步</dd>
-        <dt>Home / End</dt><dd>第一頁 / 最後一頁</dd>
-        <dt>數字 + Enter</dt><dd>跳到該頁</dd>
-        <dt>F</dt><dd>全螢幕</dd>
-        <dt>B</dt><dd>黑屏（再按一次回來）</dd>
-        <dt>T · 右上角按鈕</dt><dd>開燈／關燈</dd>
-        <dt>O</dt><dd>目錄</dd>
-        <dt>Esc</dt><dd>關閉浮層</dd>
-      </dl>
     </div>
 
     <div class="blackout" id="blackout" hidden></div>
@@ -309,7 +294,7 @@ const tocTitle = (slide: (typeof slides)[number], label: string) => {
       }
 
       /* Block, not grid. As a grid item a slide's `height: 100%` resolves
-         against an auto-sized row — which is sized by the slide's own content,
+         against an auto-sized row, which is sized by the slide's own content,
          so a tall slide grew the row and reported itself as fitting while it
          ran off the screen. A plain block child of a fixed, inset-0 parent has
          a definite height to measure against. */
@@ -348,7 +333,7 @@ const tocTitle = (slide: (typeof slides)[number], label: string) => {
       }
 
       /* Reveal steps. Hidden ones keep their box so the slide does not jump
-         when the answer appears — the single most distracting thing a deck
+         when the answer appears, the single most distracting thing a deck
          can do mid-question. */
       [data-step] {
         opacity: 0;
@@ -488,8 +473,8 @@ const tocTitle = (slide: (typeof slides)[number], label: string) => {
         color: var(--text-4);
       }
 
-      /* Once the answer is up, the wrong options recede rather than vanish —
-         the group still wants to see what it argued about. */
+      /* Once the answer is up, the wrong options recede rather than vanish,
+         because the group still wants to see what it argued about. */
       .inner:has(.answer.is-shown) .options li:not(.is-correct) {
         opacity: 0.34;
       }
@@ -650,17 +635,8 @@ const tocTitle = (slide: (typeof slides)[number], label: string) => {
         z-index: 3;
       }
 
-      .hud-keys {
-        opacity: 0;
-        transition: opacity 200ms ease;
-      }
-
-      body:hover .hud-keys {
-        opacity: 1;
-      }
-
-      /* Lights. Top right, dim until you go looking for it — during the talk
-         it should read as part of the room's furniture, not as a control
+      /* Lights. Top right, dim until you go looking for it. During the talk it
+         should read as part of the room's furniture, not as a control
          competing with the slide. */
       #world-btn {
         position: fixed;
@@ -758,25 +734,6 @@ const tocTitle = (slide: (typeof slides)[number], label: string) => {
         white-space: nowrap;
       }
 
-      .keys {
-        display: grid;
-        grid-template-columns: auto auto;
-        gap: 0.6em 2em;
-        margin: 0;
-        font-size: 0.62em;
-        color: var(--text-3);
-      }
-
-      .keys dt {
-        color: var(--text-4);
-        text-align: end;
-      }
-
-      .keys dd {
-        margin: 0;
-        color: var(--text-2);
-      }
-
       .blackout {
         position: fixed;
         inset: 0;
@@ -839,7 +796,6 @@ const tocTitle = (slide: (typeof slides)[number], label: string) => {
       const rail = document.getElementById("rail")!;
       const counter = document.getElementById("counter")!;
       const toc = document.getElementById("toc")!;
-      const help = document.getElementById("help")!;
       const blackout = document.getElementById("blackout")!;
 
       /**
@@ -880,8 +836,8 @@ const tocTitle = (slide: (typeof slides)[number], label: string) => {
       /**
        * Shrink a slide until it fits the viewport.
        *
-       * A slide is measured with every reveal step laid out — hidden steps
-       * keep their box — so the scale is chosen once and does not change when
+       * A slide is measured with every reveal step laid out (hidden steps
+       * keep their box), so the scale is chosen once and does not change when
        * the answer appears. Without this, the long questions ran off the
        * bottom of the screen and the answer was simply never visible.
        */
@@ -930,8 +886,8 @@ const tocTitle = (slide: (typeof slides)[number], label: string) => {
 
         // Replace rather than push: holding → should not fill the history
         // stack, or Back becomes useless for leaving the deck. The step rides
-        // in the hash too ("#11.1"), so reloading mid-question — the projector
-        // dropped out, the laptop slept — comes back exactly where it was.
+        // in the hash too ("#11.1"), so reloading mid-question (the projector
+        // dropped out, the laptop slept) comes back exactly where it was.
         history.replaceState(
           null,
           "",
@@ -959,13 +915,6 @@ const tocTitle = (slide: (typeof slides)[number], label: string) => {
 
       function closeOverlays() {
         toc.hidden = true;
-        help.hidden = true;
-      }
-
-      function toggle(el: HTMLElement) {
-        const opening = el.hidden;
-        closeOverlays();
-        el.hidden = !opening;
       }
 
       document.addEventListener("keydown", event => {
@@ -993,7 +942,7 @@ const tocTitle = (slide: (typeof slides)[number], label: string) => {
           case " ":
           case "Enter":
           case "n":
-            if (!toc.hidden || !help.hidden) closeOverlays();
+            if (!toc.hidden) closeOverlays();
             else next();
             event.preventDefault();
             break;
@@ -1002,7 +951,7 @@ const tocTitle = (slide: (typeof slides)[number], label: string) => {
           case "PageUp":
           case "Backspace":
           case "p":
-            if (!toc.hidden || !help.hidden) closeOverlays();
+            if (!toc.hidden) closeOverlays();
             else prev();
             event.preventDefault();
             break;
@@ -1026,11 +975,7 @@ const tocTitle = (slide: (typeof slides)[number], label: string) => {
             flipWorld();
             break;
           case "o":
-            toggle(toc);
-            break;
-          case "?":
-          case "/":
-            toggle(help);
+            toc.hidden = !toc.hidden;
             break;
           case "Escape":
             closeOverlays();
@@ -1039,7 +984,7 @@ const tocTitle = (slide: (typeof slides)[number], label: string) => {
         }
       });
 
-      // Click/tap the right half to advance, left half to go back — a wireless
+      // Click/tap the right half to advance, left half to go back. A wireless
       // clicker that sends mouse buttons behaves like the arrow keys do.
       document.getElementById("stage")!.addEventListener("click", event => {
         if (event.clientX > window.innerWidth / 2) next();

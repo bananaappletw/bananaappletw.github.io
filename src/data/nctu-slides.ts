@@ -1,9 +1,9 @@
 /**
- * Slides for the /nctu deck — NCTU Alumni at Tokyo, 2026/08/29.
+ * Slides for the /nctu deck. NCTU Alumni at Tokyo, 2026/08/29.
  *
  * The deck is the run of show. A host drives it from the front and the room
- * watches, so it follows the day in order — 流程, 致詞, 大合照, 賓果, 猜謎,
- * 系友分享 — rather than being a bare question bank. Content transcribed from
+ * watches, so it follows the day in order (流程, 致詞, 大合照, 賓果, 猜謎,
+ * 系友分享) rather than being a bare question bank. Content transcribed from
  * the event's Notion page; the internal logistics rows (訂便當, 拿收據,
  * 收拾場地) are deliberately not here, because they are not for the room.
  *
@@ -12,13 +12,13 @@
  * keyboard sequence from the reveal steps each kind declares.
  *
  * Reveal order per kind (one press of the next key advances one step):
- *   cover     — one step
- *   agenda    — one step
- *   section   — one step
- *   text      — one step, plus one per bullet if `revealBullets` is set
- *   bingo     — one step
- *   riddle    — prompt → hint (if any) → answer (+ explain, if any)
- *   question  — prompt (+ options) → answer (+ explain, if any)
+ *   cover:     one step
+ *   agenda:    one step
+ *   section:   one step
+ *   text:      one step, plus one per bullet if `revealBullets` is set
+ *   bingo:     one step
+ *   riddle:    prompt → hint (if any) → answer (+ explain, if any)
+ *   question:  prompt (+ options) → answer (+ explain, if any)
  */
 
 export type Slide =
@@ -33,7 +33,7 @@ export type Slide =
       /** Small line above the title, e.g. "第一關". */
       label?: string;
       title: string;
-      /** Optional lines under the title — the rules of the round. */
+      /** Optional lines under the title: the rules of the round. */
       body?: string[];
     }
   | {
@@ -68,7 +68,7 @@ export type Slide =
       kind: "question";
       index?: string;
       prompt: string;
-      /** Labels A, B, C… are added by the renderer — do not repeat them here. */
+      /** Labels A, B, C… are added by the renderer, so do not repeat them here. */
       options?: string[];
       /**
        * The option letter when `options` is set ("B"), otherwise free text.
@@ -86,7 +86,7 @@ export const slides: Slide[] = [
     kind: "cover",
     title: "NCTU Alumni at Tokyo",
     subtitle: "2026 / 08 / 29",
-    note: "→ 或空白鍵 下一步 · ← 上一步 · F 全螢幕 · O 目錄",
+    note: "→ 或空白鍵 下一步 · ← 上一步 · 數字 + Enter 跳頁 · F 全螢幕 · B 黑屏 · T 開燈關燈 · O 目錄",
   },
   {
     kind: "agenda",
