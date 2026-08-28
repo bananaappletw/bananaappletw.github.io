@@ -163,8 +163,8 @@ export const slides: Slide[] = [
   {
     kind: "section",
     label: "14:30",
-    title: "猜謎",
-    body: ["分成幾組", "每題給大家看幾分鐘討論", "最後一起解答"],
+    title: "猜謎時間",
+    body: ["請同一組的人一起討論", "然後一起回答", "不要查手機喔"],
   },
   {
     kind: "question",
@@ -205,12 +205,6 @@ export const slides: Slide[] = [
       "地上 8 層地下 2 層",
     ],
     answer: "B",
-  },
-  {
-    kind: "section",
-    label: "換個玩法",
-    title: "開放討論",
-    body: ["現場搶答", "無標準答案"],
   },
   {
     kind: "question",

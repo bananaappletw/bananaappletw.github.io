@@ -14,7 +14,15 @@ import { Font } from "astro:assets";
 import { getAssetPath } from "@/utils/withBase";
 import { moon, sunCore, sunRays } from "@/utils/marks";
 import { slides } from "@/data/nctu-slides";
+import { story } from "@/data/nctu-story";
 import "@/styles/global.css";
+
+/**
+ * The corner story runs one drawing per slide, in order. The index is clamped
+ * so that adding a slide reuses the closing image rather than throwing: a
+ * missing drawing must never be what stops the deck from rendering.
+ */
+const frameFor = (i: number) => story[Math.min(i, story.length - 1)];
 
 /** Running count so questions get a number without hand-typing one. */
 let riddleNo = 0;
@@ -115,6 +123,13 @@ const tocTitle = (slide: (typeof slides)[number], label: string) => {
       {
         numbered.map(({ slide, label }, i) => (
           <section class="slide" data-i={i} data-kind={slide.kind}>
+            <svg
+              class="story"
+              viewBox="0 0 240 200"
+              aria-hidden="true"
+              focusable="false"
+              set:html={frameFor(i)}
+            />
             <div class="inner">
               {slide.kind === "cover" && (
                 <>
@@ -305,6 +320,7 @@ const tocTitle = (slide: (typeof slides)[number], label: string) => {
 
       .slide {
         display: none;
+        position: relative;
         width: 100%;
         height: 100%;
         place-items: center;
@@ -314,6 +330,29 @@ const tocTitle = (slide: (typeof slides)[number], label: string) => {
 
       .slide.is-current {
         display: grid;
+      }
+
+      /* Absolutely positioned, so `fit()` never measures it and a tall slide
+         does not shrink itself to make room for a decoration. Behind the
+         content, and dim: it is something you notice between questions, not
+         something competing with the one being asked. */
+      .story {
+        position: absolute;
+        inset-inline-end: 2vw;
+        inset-block-end: 3.5vh;
+        width: clamp(84px, 8.4vw, 148px);
+        height: auto;
+        color: var(--ornament);
+        opacity: 0.5;
+        z-index: 0;
+        pointer-events: none;
+        font-family: inherit;
+      }
+
+      /* The bingo card already fills the frame; a drawing in its corner would
+         land on top of a cell. */
+      .slide[data-kind="bingo"] .story {
+        display: none;
       }
 
       /* `--fit` is set by the script: a slide whose content is taller than the
