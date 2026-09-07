@@ -17,12 +17,11 @@
     --tw-prose-td-borders: var(--border);
 
     font-family: var(--font-body);
-    /* 19px on a phone, 23px at the hall's full width, putting the x-height
-       at 8.6px and 10.4px. The upper figure matches Medium's Charter
-       setting. Sized by x-height rather than by font-size because Cardo's
-       is 0.450em, Times-class and one of the smallest in common use, so a
-       px number here renders a size larger than the same number in a sans. */
-    font-size: clamp(19px, 0.62vw + 16.69px, 23px);
+    /* 18.5px on a phone, 22.5px at the hall's full width, putting the
+       x-height at 8.4px and 10.2px. The upper figure sits alongside
+       Medium's Charter setting. Solved from Alegreya's 0.452em x-height,
+       not chosen in px: see design.md section 5. */
+    font-size: clamp(18.5px, 0.62vw + 16.19px, 22.5px);
     line-height: 1.75;
     /* The measure never grows with the hall: a wider page is more room
        around the text, not longer lines.
@@ -32,20 +31,23 @@
        hangs off the hall's left edge. Centring the prose alone stepped it
        in by ~40px and the page read as two competing left margins.
 
-       60ch, not 66ch, and the same value the `measure` utility carries.
-       Cardo's zero is 0.5em wide, so ch is half the font-size, while its
-       average advance including spaces is 0.442em. 66ch therefore set 75
-       characters to the line, the ceiling of the comfortable band. 60ch
-       sets 68. */
-    max-width: 60ch;
+       52ch, and the same value the `measure` utility carries. `ch` is the
+       width of the zero, which in Alegreya is 0.533em, while its average
+       advance including spaces is 0.4057em. 52ch therefore sets 68
+       characters to the line, mid-band. The 66ch this once carried was 80
+       characters in Alegreya and 80 in Cardo before it, well over the
+       ceiling; the number has to be re-solved whenever the family changes,
+       because ch tracks the zero and nothing else. */
+    max-width: 52ch;
     margin-inline: 0;
 
     p {
       margin-block: 0 30px;
     }
 
-    /* Cardo's bold is 700. Tailwind's prose sets strong to 600, which this
-       family does not ship — the browser would synthesise it. */
+    /* Tailwind's prose sets strong to 600. Alegreya ships as a variable font
+       with a 400-900 weight axis, so 600 would in fact render here, but the
+       theme's bold is 700 and this keeps it from drifting with the family. */
     strong,
     b {
       font-weight: 700;
@@ -59,7 +61,7 @@
     h2 {
       font-family: var(--font-display);
       font-weight: 400;
-      font-size: clamp(24px, 0.92vw + 20.55px, 30px);
+      font-size: clamp(26px, 1vw + 22.25px, 32.5px);
       letter-spacing: 0.06em;
       line-height: 1.3;
       color: var(--text-2);
@@ -69,7 +71,7 @@
     h3 {
       font-family: var(--font-body);
       font-weight: 700;
-      font-size: clamp(21px, 0.46vw + 19.28px, 24px);
+      font-size: clamp(20.5px, 0.46vw + 18.78px, 23.5px);
       font-style: normal;
       letter-spacing: 0.01em;
       color: var(--text);
@@ -79,7 +81,7 @@
     h4 {
       font-family: var(--font-display);
       font-weight: 400;
-      font-size: clamp(17.5px, 0.23vw + 16.64px, 19px);
+      font-size: clamp(19px, 0.23vw + 18.14px, 20.5px);
       letter-spacing: 0.05em;
       color: var(--text-3);
       margin-block: 36px 10px;
@@ -177,17 +179,16 @@
     }
 
     table {
-      font-size: clamp(16.5px, 0.31vw + 15.34px, 18.5px);
+      font-size: clamp(16px, 0.31vw + 14.84px, 18px);
       font-variant-numeric: tabular-nums;
     }
 
-    /* The one place the label voice is not set in Cardo. A column head is
-       short, tracked out and small, and Cardo's 0.450em x-height put 15px
-       here at a 6.8px x-height, under any legibility floor, and shrinking
-       it with the rest of the scale would only have made that worse. Google
-       Sans Code carries 0.523em, so 14px of it reads larger than 15px of
-       Cardo while taking less room, and the mono register suits a column
-       head. */
+    /* The one place the label voice is not set in the body face. A column
+       head is short, tracked out and small, and Cardo's 0.4395em x-height
+       put 15px here at a 6.6px x-height, under any legibility floor.
+       Alegreya would fix most of that on its own, but Google Sans Code
+       carries 0.523em and an even, open drawing that holds better still at
+       this size, and the mono register suits a column head. */
     th {
       font-family: var(--font-mono);
       font-weight: 400;
@@ -203,7 +204,7 @@
 
     figcaption {
       color: var(--text-4);
-      font-size: 16px;
+      font-size: 15.5px;
     }
 
     hr {
@@ -236,7 +237,7 @@
 
   .app-prose > p:first-of-type {
     color: var(--text);
-    font-size: clamp(21px, 0.62vw + 18.69px, 25px);
+    font-size: clamp(20.5px, 0.62vw + 18.19px, 24.5px);
     line-height: 1.72;
   }
 }

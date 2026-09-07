@@ -423,23 +423,36 @@ is no feature branch.
 
 - **The palette settled.** Ground dropped to `#100f0d`, a step below the Dark
   Souls ramp's darkest value — every ink level gains about a point of contrast.
-- **One type family: Cardo**, for display and body alike, replacing
-  Cinzel → Marcellus → Cardo and dropping Spectral entirely. **No capitals
-  anywhere.** See `design.md` §5 for why each face was replaced.
+- **One type family: Alegreya**, for display and body alike, replacing
+  Cinzel → Marcellus → Cardo → Alegreya and dropping Spectral entirely.
+  **No capitals anywhere.** See `design.md` §5 for why each face was replaced.
+  Cardo came off on **8 September 2026** for a measured reason: its stroke
+  contrast is 2.45:1, which put its thinnest stroke at **0.77 CSS pixels**
+  once the scale came down to a comfortable x-height, and a sub-pixel light
+  stroke on a dark ground is smeared rather than drawn. Thirteen faces were
+  measured; Alegreya runs **1.49:1** and holds **1.21px** at prose size.
+  **The check before adopting any face here** is that number: thin stroke in
+  CSS pixels at the size that gives the intended x-height, and under 1.0px it
+  will not hold on `--ground`.
 - **The scale is fluid**, solved at 375px and the hall's full 1024px, and was
   raised 15% when the family changed — Cardo's x-height is shorter than
   Spectral's, so the same numbers read smaller. A further 20% went on top of
   that, came back off on 19 August, and went back on at the author's request on
   27 August. **On 8 September 2026 the whole scale came down about 23%**, this
-  time solved rather than eyeballed: **23px prose at full width, 19px at 375**.
-  The reasoning is in `design.md` §5, and the short form is that px is the
-  wrong unit to judge a face in. Cardo's x-height is 0.450em, Times-class, so
-  30px prose was a 13.5px x-height against the 8.5-to-11px band that iOS body,
-  newspaper serifs and Medium all sit in. 23px puts it at 10.4. The measure
-  came to **60ch** with it, which sets 68 characters a line rather than 66ch's
-  75, and a phone went from 32 characters a line to 39. Prose is
-  **left-aligned** in the hall, not centred, and now visibly so again: 690px of
+  time solved rather than eyeballed, and then was re-solved again the same day
+  for Alegreya: **22.5px prose at full width, 18.5px at 375**. The reasoning is
+  in `design.md` §5, and the short form is that px is the wrong unit to judge a
+  face in. 30px prose in Cardo was a 13.2px x-height against the 8.5-to-11px
+  band that iOS body, newspaper serifs and Medium all sit in; prose now sits at
+  **10.2**. The measure came to **52ch**, which sets 68 characters a line
+  against 66ch's 80, and a phone went from 32 characters a line to 44. Prose is
+  **left-aligned** in the hall, not centred, and now visibly so again: 624px of
   column against ~944px of usable hall.
+- **Running text and display use different normalisers**, and mixing them up is
+  how a family swap goes wrong: prose is solved on **x-height**, titles on
+  **ascender height**, because every title here is lowercase. Cardo to Alegreya
+  wanted 3% smaller by the first and 8% larger by the second, which is why that
+  change moved prose down and titles up at once.
 - **The hall is 64rem**, and the atmosphere's geometry now tracks the column
   rather than the viewport.
 - **The world flip is instant** — the veil is gone.

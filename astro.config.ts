@@ -116,15 +116,18 @@ export default defineConfig({
   },
   fonts: [
     {
-      // Cardo: a Bembo descendant cut for medievalists and classicists, to
-      // set old texts with all their odd glyphs. It reads as easily as any
-      // book face and carries the air of an academic edition of something
-      // much older — good reading with a little mystery, which is the brief.
+      // Alegreya: drawn by Huerta Tipografica for long-form literature,
+      // Renaissance-rooted and a little irregular by design, so it keeps the
+      // air of an old book without the fragility of one. It replaced Cardo
+      // on 8 September 2026 for a measured reason, recorded in design.md
+      // section 5: Cardo's stroke contrast is 2.45:1, which put its thinnest
+      // stroke at 0.77 CSS pixels once the scale came down to a comfortable
+      // x-height. A sub-pixel light stroke on a dark ground cannot be drawn,
+      // only smeared. Alegreya runs 1.49:1, the lowest of thirteen faces
+      // measured, and holds 1.18px at the same x-height.
       //
-      // Weights are 400 and 700 because those are the two Cardo actually
-      // has. The previous entry asked Marcellus for 600, a weight it does
-      // not ship, so the browser was synthesising a fake bold.
-      name: "Cardo",
+      // Weights are 400 and 700, both of which Alegreya ships.
+      name: "Alegreya",
       cssVariable: "--font-display",
       provider: fontProviders.google(),
       fallbacks: ["Palatino", "Georgia", "serif"],
@@ -133,14 +136,14 @@ export default defineConfig({
       formats: ["woff2"],
     },
     {
-      // Body is Cardo too — one family for the whole site. Cardo was drawn
-      // for setting long scholarly text, so it can carry running copy as
-      // well as titles, and a single voice suits a theme whose argument is
-      // that space and size carry hierarchy rather than contrast between
-      // faces. Registered separately from --font-display because the OG
-      // image generator resolves both variables through astro:fonts; the
-      // pipeline shares the underlying files.
-      name: "Cardo",
+      // Body is Alegreya too — one family for the whole site. It was drawn
+      // for book-length text, so it can carry running copy as well as
+      // titles, and a single voice suits a theme whose argument is that
+      // space and size carry hierarchy rather than contrast between faces.
+      // Registered separately from --font-display because the OG image
+      // generator resolves both variables through astro:fonts; the pipeline
+      // shares the underlying files.
+      name: "Alegreya",
       cssVariable: "--font-body",
       provider: fontProviders.google(),
       fallbacks: ["Palatino", "Georgia", "serif"],
@@ -168,7 +171,7 @@ export default defineConfig({
       // so the cascade handed the browser a 378KB TTF and the 15KB woff2 was
       // never fetched at all. Measured, not assumed. Under its own variable
       // the face is declared and never referenced, so it is never loaded.
-      name: "Cardo",
+      name: "Alegreya",
       cssVariable: "--font-og",
       provider: fontProviders.google(),
       fallbacks: ["serif"],

@@ -65,9 +65,12 @@ const palette = tokens.diagram;
     mermaid.initialize({
       startOnLoad: false,
       theme: "base",
-      // Cardo sets everything on this site; Cinzel was dropped in August
-      // 2026 and a diagram asking for it fell back silently to Georgia.
-      fontFamily: "Cardo, Georgia, serif",
+      // Mermaid takes a family name, not a custom property, so this is the
+      // one place the body face is spelled out and therefore the one place a
+      // family swap goes stale without failing. It has happened twice:
+      // Cinzel in August 2026, Cardo in September. Grep this file whenever
+      // --font-body changes.
+      fontFamily: "Alegreya, Georgia, serif",
       themeVariables: {
         background: r.bg,
         mainBkg: r.surface,

@@ -203,15 +203,30 @@ Four levels per world. `--text-4` sits near 3.0:1 on ground and is legal for orn
 
 ### Faces
 
-**One family: Cardo**, for display and for body alike. It is a Bembo descendant cut for medievalists and classicists to set old texts with all their odd glyphs — it reads as easily as any book face and carries the air of an academic edition of something much older. Good reading with a little mystery.
+**One family: Alegreya**, for display and for body alike. Drawn by Huerta Tipografica for long-form literature, Renaissance-rooted and deliberately a little irregular, it keeps the air of an old book without the fragility of one. Good reading with a little mystery.
 
-Display sits at **400**: Cardo at regular weight is already substantial at title size, and the theme's own rule is that space and size carry hierarchy, not weight. Bold is **700**, the only other weight the family ships — Tailwind's prose defaults `strong` to 600, which Cardo does not have, so that is overridden rather than left to synthesise.
+Display sits at **400**: Alegreya at regular weight is already substantial at title size, and the theme's own rule is that space and size carry hierarchy, not weight. Bold is **700**. Tailwind's prose defaults `strong` to 600; that is overridden to 700 rather than left to a weight the static family does not ship.
 
 Dropping the second family is deliberate rather than thrifty. A display face exists to contrast with a body face; this theme argues that _space_ creates hierarchy, and running two faces to say what clearance already says is the same duplication as putting a rule under a heading that has 90px above it. Mono still appears, but only inside code.
 
 **Nothing on this site is set in capitals.** Not titles, not the HUD, not eyebrows, dates or footers. This replaced a scheme where titles were small caps and every label was uppercase at `0.14em`, and it was decided on one criterion: reading. Capitals are slower to read than lowercase because word shapes collapse to rectangles, and a blog is a thing to read rather than a thing to look at.
 
-Two faces preceded it. **Cinzel** — the open relative of Trajan, and the closest thing to what Dark Souls uses — was replaced because it is a **capitals** face: its lowercase sprawls at display size, which is why every title had to be forced into small caps to hide it. **A workaround that load-bearing is a sign the face is wrong for the job**, not a sign the job needs a workaround. **Marcellus** replaced it briefly and reads well, but is architectural where this blog wanted something scholarly.
+Three faces preceded it. **Cinzel** — the open relative of Trajan, and the closest thing to what Dark Souls uses — was replaced because it is a **capitals** face: its lowercase sprawls at display size, which is why every title had to be forced into small caps to hide it. **A workaround that load-bearing is a sign the face is wrong for the job**, not a sign the job needs a workaround. **Marcellus** replaced it briefly and reads well, but is architectural where this blog wanted something scholarly. **Cardo**, a Bembo descendant cut for medievalists, held the job from August until 8 September 2026 and was right about register and wrong about medium — see below.
+
+**Why Cardo came off, and the rule it leaves behind: a face has to survive the ground it is set on.** Cardo's stroke contrast, the width of the `o` at its thickest over its width at its thinnest, measured by scanline across the shipped outline, is **2.45:1**, and its thin stroke is **0.0333em**. A Renaissance book face runs high like that because it was cut for metal type, where ink spreads on damp paper and _fattens_ the thin strokes. A screen does the reverse, and a light stroke on a dark ground thins further still, because a bright edge bleeds outward into the dark rather than the dark into it.
+
+At the 30px prose the theme carried until 8 September, that thin stroke was **1.00px** — exactly on the edge, and holding. Bringing the scale down to a comfortable x-height that same day took it to **0.77px**. Below a pixel a stroke is not drawn, it is smeared, and the page stopped reading as type. **The size correction was right; it is what exposed the face underneath.**
+
+Thirteen faces were measured the same way. Alegreya runs **1.49:1**, the lowest of them, and holds **1.18px** at the size that gives it the same x-height. The five that clear a 1.05px thin stroke at that x-height are Alegreya (1.20), Faustina (1.19), Literata (1.16), Source Serif 4 (1.13) and Vollkorn (1.07). Alegreya wins on more than the number: it is a literature face, which is the register §5 asked for in the first place.
+
+**The check to run before adopting any face here:** thin stroke, in CSS pixels, at the size that gives the intended x-height. Under 1.0px it will not hold on `--ground`. Contrast alone is not the test and neither is x-height alone; it is the two together, resolved into pixels.
+
+**One place the family is spelled out, and it does not fail loudly.** Mermaid
+takes a family _name_, not a custom property, so `Mermaid.astro` carries the
+literal string. It has gone stale twice now: Cinzel in August 2026, Cardo in
+September, both times falling back silently to Georgia in diagrams while the
+rest of the page was correct. Grep for the face name whenever `--font-body`
+changes.
 
 **Check the weights a face actually ships.** Marcellus was configured asking for 600, a weight it does not have, so the browser synthesised a fake bold for a day. The same mistake broke the build outright when the face changed: `ogTemplate.ts` looks the display font up _by weight_, and a missing weight throws. That generator now names its families by **role** rather than by typeface, so it cannot go stale the next time this changes.
 
@@ -226,79 +241,112 @@ Every step is fluid, solved for two anchors: a 375px phone and the hall's full
 down cleanly below it, so the min and max below are what you actually see at
 those two widths.
 
-| Role           | 375px | Full | x-height at full | Tracking |
-| -------------- | ----- | ---- | ---------------- | -------- |
-| Home title     | 31    | 45   | 31.0 cap         | +0.03em  |
-| Post title     | 32    | 46   | 31.6 cap         | +0.03em  |
-| Lead paragraph | 21    | 25   | 11.3             | 0        |
-| Prose          | 19    | 23   | 10.4             | 0        |
-| Body (chrome)  | 17    | 21   | 9.5              | 0        |
-| H1 / H2        | 24    | 30   | 20.6 cap         | +0.06em  |
-| H3             | 21    | 24   | 10.8             | +0.01em  |
-| H4             | 17.5  | 19   | 13.1 cap         | +0.05em  |
-| Listing title  | 22    | 26   | 17.9 cap         | +0.03em  |
-| Label / HUD    | 15    | 17   | 11.7 cap         | +0.06em  |
-| Date           | 15    | 15   | 10.3 cap         | +0.1em   |
-| Code (mono)    | 15.5  | 17   | 8.9              | 0        |
-| Table          | 16.5  | 18.5 | 8.3              | 0        |
-| Table head     | 14    | 14   | 7.3 (mono)       | +0.06em  |
-| Figcaption     | 16    | 16   | 7.2              | 0        |
+| Role           | 375px | Full | at full width | Tracking |
+| -------------- | ----- | ---- | ------------- | -------- |
+| Home title     | 33.5  | 48.5 | 36.0 asc      | +0.03em  |
+| Post title     | 34.5  | 50   | 37.1 asc      | +0.03em  |
+| Lead paragraph | 20.5  | 24.5 | 11.1 x        | 0        |
+| Prose          | 18.5  | 22.5 | 10.2 x        | 0        |
+| Body (chrome)  | 16.5  | 20.5 | 9.3 x         | 0        |
+| H1 / H2        | 26    | 32.5 | 24.1 asc      | +0.06em  |
+| H3             | 20.5  | 23.5 | 10.6 x        | +0.01em  |
+| H4             | 19    | 20.5 | 15.2 asc      | +0.05em  |
+| Listing title  | 24    | 28   | 20.8 asc      | +0.03em  |
+| Label / HUD    | 14.5  | 16.5 | 7.5 x         | +0.06em  |
+| Date           | 15    | 15   | 6.8 x         | +0.1em   |
+| Code (mono)    | 15.5  | 17   | 8.9 x         | 0        |
+| Table          | 16    | 18   | 8.1 x         | 0        |
+| Table head     | 14    | 14   | 7.3 x (mono)  | +0.06em  |
+| Figcaption     | 15.5  | 15.5 | 7.0 x         | 0        |
 
-The Face column is gone because there is only one now (§5). Display roles are
-given as cap height because that is the dimension the eye measures on a
-title; running text is given as x-height.
+The Face column is gone because there is only one now (§5).
+
+**Two normalisers, and using the wrong one is how a family swap goes wrong.**
+Running text is solved on **x-height**, because that is what the eye resolves
+in a paragraph. Display roles are solved on **ascender height**, because a
+title on this site is set in lowercase (§5: nothing is in capitals), so its
+apparent size is carried by the tall letters rather than by the x-height.
+The two disagree, and by a lot: going from Cardo to Alegreya, x-height parity
+wants every size **3% smaller** and ascender parity wants every size **8%
+larger**. Applying either one to everything would have thrown the page's
+hierarchy out. Hence the table above moves prose _down_ and titles _up_ in the
+same change, with no design intent altered.
 
 **Sizes are a property of the face, not of the design, and px is the wrong
 unit to argue about them in.** The reader's eye resolves x-height, not the
-em box, and the em box is what `font-size` names. Cardo, measured off the
-shipped TTF:
+em box, and the em box is what `font-size` names. Both faces, measured off
+their shipped outlines:
 
-|                                                             | value               |
-| ----------------------------------------------------------- | ------------------- |
-| units per em                                                | 1000                |
-| `sxHeight`                                                  | 450, so **0.450em** |
-| `capHeight`                                                 | 660, so 0.660em     |
-| advance of `0` (the `ch` unit)                              | 500, so 0.5em       |
-| average advance, letter-frequency weighted, spaces included | 442, so 0.442em     |
+|                                                             | Alegreya (now) | Cardo (was) |
+| ----------------------------------------------------------- | -------------- | ----------- |
+| units per em                                                | 1000           | 2048        |
+| x-height                                                    | **0.4520em**   | 0.4395em    |
+| cap height                                                  | 0.6370em       | 0.6885em    |
+| ascender (`d`, `h`, `l`)                                    | **0.7420em**   | 0.8032em    |
+| advance of `0` (the `ch` unit)                              | **0.5330em**   | 0.5122em    |
+| average advance, letter-frequency weighted, spaces included | **0.4057em**   | 0.4218em    |
+| stem of `l`                                                 | 0.0688em       | 0.0762em    |
+| thin stroke of `o`                                          | **0.0536em**   | 0.0333em    |
+| stroke contrast                                             | **1.49:1**     | 2.45:1      |
 
-0.450 is Times-class, one of the smallest x-heights in common use. Georgia is
-0.481, SF and Segoe about 0.52, Inter 0.727. That is why the scale went up 15%
-when the family changed from Spectral to Cardo without one design intent
-changing, and why any future change of family must re-measure rather than
-inherit these numbers.
+Note how little the x-heights differ and how much everything else does.
+Alegreya is the compact design: a large x-height for its ascenders, a wider
+zero, a narrower average advance. That is why the family swap moved the
+measure by eight `ch` while barely moving prose in px.
+
+**Measure the file, not the specimen.** The first pass at this measured
+`.astro/fonts/font-body-400-normal-0912b4299bb67c50.ttf`, which is a
+**Spectral** left behind in Astro's font cache from before the family
+changed; the cache keys on role, not on family, so a stale face sits there
+under the current name indefinitely. The build was shipping real Cardo
+throughout, but every derived number was wrong by a little: x-height read
+0.450 instead of 0.4395, the `ch` unit 0.5 instead of 0.5122, and the
+measure came out eight characters short of what it actually set. Read the
+`name` table of whatever file you measure, and prefer `dist/_astro/fonts/`
+over `.astro/fonts/` — the first is what shipped.
 
 It then went up a further 20%, came back off on 19 August, and went back on on
-27 August 2026. **On 8 September 2026 the whole scale came down about 23%** to
-the table above, this time solved rather than eyeballed. Comfortable screen
-reading sits at an x-height of roughly 8.5 to 11px: iOS body is 8.8 (17px SF),
-a New York Times article about 9.1 (19px Georgia), Medium 10.1 (21px Charter).
-30px prose in Cardo was 13.5, a third above the generous end of that band, and
-it read as presentation type rather than as a page.
+27 August 2026. **On 8 September 2026 the whole scale came down about 23%**,
+this time solved rather than eyeballed. Comfortable screen reading sits at an
+x-height of roughly 8.5 to 11px: iOS body is 8.8 (17px SF), a New York Times
+article about 9.1 (19px Georgia), Medium 10.1 (21px Charter). 30px prose in
+Cardo was 13.2, well above the generous end of that band, and it read as
+presentation type rather than as a page. Prose now sits at **10.2**.
 
-Two things the old scale cost, both fixed here:
+**That correction is what forced the family change the same day** — see §5.
+Nothing else about the scale's intent moved.
 
-**The line was at its ceiling on desktop and far under the floor on a phone.**
-`ch` is Cardo's zero at 0.5em while its true average advance is 0.442em, so
-66ch set 75 characters to the line, the top of the 45-to-75 band; the cap is
-now 60ch, which sets 68. On a 375px phone the gutters leave 330px, and at
-23.5px that was 32 characters a line, well below the floor and a return sweep
-every few words. At 19px it is 39. It cannot go much higher without dropping
-the x-height under 8.5px, and legibility wins that trade.
+Three things the old scale cost, all fixed here:
 
-**`th` was illegible.** 15px of Cardo is a 6.8px x-height. It is the one place
-the label voice is not set in Cardo: Google Sans Code carries 0.523em, so 14px
-of it reads larger than 15px of Cardo while taking less room, and the mono
-register suits a column head.
+**The line was over its ceiling on desktop and far under the floor on a
+phone.** `ch` is the zero's advance and nothing else, so it has to be
+re-solved for every family: 66ch was 80 characters in Cardo, and the cap is
+now **52ch**, which is 68 in Alegreya. On a 375px phone the gutters leave
+330px, which at 23.5px was 32 characters a line, well below the 45 floor and a
+return sweep every few words. It is now **44**.
 
-Labels and the HUD barely moved, 17.5px to 17px, because at 17.5px Cardo they
-were already at a 7.9px x-height with no room to follow body copy down.
-Hierarchy against a 30px heading carries them; the tracking and `--text-4` do
-the rest.
+**`th` was illegible.** 15px of Cardo is a 6.6px x-height, under any floor.
+It is the one place the label voice is not set in the body face: Google Sans
+Code carries a 0.523em x-height and an even, open drawing that holds at that
+size, and the mono register suits a column head.
 
-**The measure never grows with the page.** Prose stays capped at 60ch, so a
-wider window buys room around the text rather than longer lines: 39 characters
+**Labels sit at their floor and stay there.** 16.5px of Alegreya is a 7.5px
+x-height, which is about as low as the label voice can go; it does not follow
+body copy up or down. Hierarchy against a 32.5px heading carries it, and the
+tracking and `--text-4` do the rest.
+
+**One honest caveat on the 1px floor.** It is a CSS-pixel figure and therefore
+a device-pixel-ratio-1 figure — a plain desktop monitor. At DPR 2 or 3 a
+0.77px stroke still lands on two or three device pixels and degrades rather
+than disappears, so the failure is worst on exactly the screens most likely to
+be used for long reading. Alegreya clears 1px on desktop at every role
+(**1.21px** for prose, 1.10px for chrome) and sits at 0.99px for prose on a
+375px phone, where DPR is never 1.
+
+**The measure never grows with the page.** Prose stays capped at 52ch, so a
+wider window buys room around the text rather than longer lines: 44 characters
 a line on a phone, 68 at full width. It is **left-aligned inside the hall, not
-centred**: at 60ch the column is 690px against ~944px of usable hall, so
+centred**: at 52ch the column is 624px against ~944px of usable hall, so
 breadcrumb, title, date, tags and footer all hang off the hall's left edge.
 Centring the prose alone stepped it in by about 40px and the page read as two
 competing left margins. The centring survived unnoticed only while the measure
@@ -334,7 +382,7 @@ Viewport-relative units are deliberate: on a tall screen the gate should grow, b
 
 **The proximity law.** The gap below a heading is at most half the gap above it. An H2 takes 128px above and 26px below.
 
-**Measure.** Prose holds at 60ch; the page shell at 46rem.
+**Measure.** Prose holds at 52ch; the page shell at 46rem.
 
 ---
 
@@ -389,7 +437,7 @@ The reasoning generalises. An icon costs the reader a thing to learn, and that c
 
 **Code block** — `--panel` fill and a single 1px `--border-recess` rule on the left, the same mark blockquote carries. No frame, no blur, no shadow, no radius: a darker patch of the same room rather than a surface laid on top of it (§0). The rule reads `--border-recess` rather than `--border` because it lands on the panel instead of on the ground; blockquote, whose rule sits on the ground, keeps `--border`. Both tokens are the same hairline — see §12.
 
-**Prose** — 60ch measure, 16.5px at 1.85. Headings are small, wide-tracked and dim: a marker you pass, not a banner. The first paragraph steps up to `--text` at 19px.
+**Prose** — 52ch measure, 16.5px at 1.85. Headings are small, wide-tracked and dim: a marker you pass, not a banner. The first paragraph steps up to `--text` at 19px.
 
 **Adjacent post nav** — "Further In", then titles in Display, bordered rows.
 
@@ -411,7 +459,7 @@ RSS, sitemap, dynamic OG images, Pagefind search, tags, archives and pagination 
 
 Single column, centered, inside **the hall** — `--hall`, one custom property at `64rem` (1024px) that `app-layout` and the atmosphere both read, so the content width and the room built around it cannot drift apart.
 
-**The hall and the measure are different things, and this is the rule that matters:** the hall widened from 46rem to 60rem and then to 64rem in August 2026 — first because at 736px the page occupied under a third of a large monitor, then because the measure outgrew it. The reading measure did **not** widen with it. `.app-prose` stays capped at 60ch and sits against the hall's left edge, so a wider window buys more room around the text and never longer sentences. Gutters `clamp(22px, 6vw, 40px)`.
+**The hall and the measure are different things, and this is the rule that matters:** the hall widened from 46rem to 60rem and then to 64rem in August 2026 — first because at 736px the page occupied under a third of a large monitor, then because the measure outgrew it. The reading measure did **not** widen with it. `.app-prose` stays capped at 52ch and sits against the hall's left edge, so a wider window buys more room around the text and never longer sentences. Gutters `clamp(22px, 6vw, 40px)`.
 
 **The hall is borderless.** It has no edges of its own; the only thing marking where the content ends is the falloff in `.air`. Vertical hairlines at its edges were built and removed the same day — even as two rules rather than four, they gave the column a container, and Ash does not put the reader inside a box (§0). If the page feels unmoored on a wide screen the lever is the atmosphere, not an edge.
 
@@ -630,5 +678,5 @@ If it ever returns, the smallest honest version is a single glyph: `>` before "r
 
 - **Illustration policy.** No rule yet for post header images; a full-bleed photo would flatten the atmosphere and needs its own treatment before one is introduced.
 - **The `list` page.** Its filter buttons still use a generic pill treatment inherited from before the theme; the category colours were neutralised but the layout has not been reconsidered.
-- **`about` page.** Renders through the shared gate but its prose has not been reviewed against the 60ch measure.
+- **`about` page.** Renders through the shared gate but its prose has not been reviewed against the 52ch measure.
 - **Reduced-motion grain.** Grain is static so it is safe, but it has not been tested against high-contrast or forced-colours modes.

@@ -48,12 +48,12 @@
        --text is reserved for the lead and for emphasis. */
     color: var(--text-2);
     font-family: var(--font-body);
-    /* Sized by x-height, not by font-size. Cardo's x-height is 0.450em —
-       Times-class, one of the smallest in common use — so a px number that
-       looks modest here renders larger than the same number in a sans.
-       17px on a phone and 21px at the hall's full width put the x-height at
-       7.7px and 9.5px, the band iOS body text and newspaper serifs sit in. */
-    font-size: clamp(17px, 0.62vw + 14.69px, 21px);
+    /* Sized by x-height, not by font-size, because x-height is what the eye
+       resolves and the em box is what font-size names. Alegreya's x-height
+       is 0.452em, so 16.5px on a phone and 20.5px at the hall's full width
+       put it at 7.5px and 9.3px, the band iOS body text and newspaper
+       serifs sit in. See design.md section 5 before changing any of these. */
+    font-size: clamp(16.5px, 0.62vw + 14.19px, 20.5px);
     line-height: 1.8;
     -webkit-font-smoothing: antialiased;
   }
@@ -200,5 +200,8 @@
 }
 
 @utility measure {
-  max-width: 60ch;
+  /* 52ch, not 60ch. `ch` is the width of the zero, which in Alegreya is
+     0.533em, while its average advance including spaces is 0.4057em. 52ch
+     therefore sets 68 characters to the line, mid-band; 60ch would set 79. */
+  max-width: 52ch;
 }
