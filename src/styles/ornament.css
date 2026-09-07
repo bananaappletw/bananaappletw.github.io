@@ -21,7 +21,11 @@
   .label {
     font-family: var(--font-display);
     font-weight: 400;
-    font-size: clamp(15.5px, 0.34vw + 14.22px, 17.5px);
+    /* Barely moves while the rest of the scale comes down. At 17.5px Cardo
+       the label was already at a 7.9px x-height, near the floor, so it has
+       no room to follow body copy down. Hierarchy against a 30px title
+       carries it; the tracking and --text-4 do the rest. */
+    font-size: clamp(15px, 0.31vw + 13.84px, 17px);
     letter-spacing: 0.06em;
     color: var(--text-4);
     font-variant-numeric: tabular-nums;

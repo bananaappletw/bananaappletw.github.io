@@ -48,8 +48,12 @@
        --text is reserved for the lead and for emphasis. */
     color: var(--text-2);
     font-family: var(--font-body);
-    /* fluid: 23px at 375, 27.5px at the hall's full width */
-    font-size: clamp(23px, 0.77vw + 20.12px, 27.5px);
+    /* Sized by x-height, not by font-size. Cardo's x-height is 0.450em —
+       Times-class, one of the smallest in common use — so a px number that
+       looks modest here renders larger than the same number in a sans.
+       17px on a phone and 21px at the hall's full width put the x-height at
+       7.7px and 9.5px, the band iOS body text and newspaper serifs sit in. */
+    font-size: clamp(17px, 0.62vw + 14.69px, 21px);
     line-height: 1.8;
     -webkit-font-smoothing: antialiased;
   }

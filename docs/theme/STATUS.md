@@ -426,16 +426,20 @@ is no feature branch.
 - **One type family: Cardo**, for display and body alike, replacing
   Cinzel → Marcellus → Cardo and dropping Spectral entirely. **No capitals
   anywhere.** See `design.md` §5 for why each face was replaced.
-- **The scale is fluid**, solved at 375px and 960px, and was raised 15% when
-  the family changed — Cardo's x-height is shorter than Spectral's, so the same
-  numbers read smaller. A further 20% went on top of that, came back off on
-  19 August, and went back on at the author's request on 27 August. The scale
-  that ships is the larger one: 30px prose at full width, 23.5px at 375.
-  The known cost is recorded in `design.md` §5 — at 30px a 66ch line wants
-  about 930px and the hall offers ~944, so the measure fills the hall with
-  about 14px to spare instead of 164. Prose is **left-aligned** in the hall,
-  not centred; at the smaller scale that mattered, and at this one it is nearly
-  moot until the fluid ramp takes the prose down below ~1000px.
+- **The scale is fluid**, solved at 375px and the hall's full 1024px, and was
+  raised 15% when the family changed — Cardo's x-height is shorter than
+  Spectral's, so the same numbers read smaller. A further 20% went on top of
+  that, came back off on 19 August, and went back on at the author's request on
+  27 August. **On 8 September 2026 the whole scale came down about 23%**, this
+  time solved rather than eyeballed: **23px prose at full width, 19px at 375**.
+  The reasoning is in `design.md` §5, and the short form is that px is the
+  wrong unit to judge a face in. Cardo's x-height is 0.450em, Times-class, so
+  30px prose was a 13.5px x-height against the 8.5-to-11px band that iOS body,
+  newspaper serifs and Medium all sit in. 23px puts it at 10.4. The measure
+  came to **60ch** with it, which sets 68 characters a line rather than 66ch's
+  75, and a phone went from 32 characters a line to 39. Prose is
+  **left-aligned** in the hall, not centred, and now visibly so again: 690px of
+  column against ~944px of usable hall.
 - **The hall is 64rem**, and the atmosphere's geometry now tracks the column
   rather than the viewport.
 - **The world flip is instant** — the veil is gone.

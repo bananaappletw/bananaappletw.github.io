@@ -222,54 +222,88 @@ One exception, and it is deliberate: the OG social card still sets its label in 
 ### Scale
 
 Every step is fluid, solved for two anchors: a 375px phone and the hall's full
-960px. The scale reaches its designed size exactly at full width and steps down
-cleanly below it, so the min and max below are what you actually see at those
-two widths.
+1024px. The scale reaches its designed size exactly at full width and steps
+down cleanly below it, so the min and max below are what you actually see at
+those two widths.
 
-| Role           | 375px | Full | Tracking |
-| -------------- | ----- | ---- | -------- |
-| Home title     | 40    | 58   | +0.03em  |
-| Post title     | 41    | 60   | +0.03em  |
-| Lead paragraph | 26.5  | 33   | 0        |
-| Prose          | 23.5  | 30   | 0        |
-| Body (chrome)  | 23    | 27.5 | 0        |
-| H1 / H2        | 30    | 39.5 | +0.06em  |
-| H3             | 26    | 31   | +0.01em  |
-| H4             | 21.5  | 25   | +0.05em  |
-| Listing title  | 27.5  | 33   | +0.03em  |
-| Label / HUD    | 15.5  | 17.5 | +0.06em  |
-| Date           | 15    | 15   | +0.1em   |
-| Code           | 18    | 21   | 0        |
+| Role           | 375px | Full | x-height at full | Tracking |
+| -------------- | ----- | ---- | ---------------- | -------- |
+| Home title     | 31    | 45   | 31.0 cap         | +0.03em  |
+| Post title     | 32    | 46   | 31.6 cap         | +0.03em  |
+| Lead paragraph | 21    | 25   | 11.3             | 0        |
+| Prose          | 19    | 23   | 10.4             | 0        |
+| Body (chrome)  | 17    | 21   | 9.5              | 0        |
+| H1 / H2        | 24    | 30   | 20.6 cap         | +0.06em  |
+| H3             | 21    | 24   | 10.8             | +0.01em  |
+| H4             | 17.5  | 19   | 13.1 cap         | +0.05em  |
+| Listing title  | 22    | 26   | 17.9 cap         | +0.03em  |
+| Label / HUD    | 15    | 17   | 11.7 cap         | +0.06em  |
+| Date           | 15    | 15   | 10.3 cap         | +0.1em   |
+| Code (mono)    | 15.5  | 17   | 8.9              | 0        |
+| Table          | 16.5  | 18.5 | 8.3              | 0        |
+| Table head     | 14    | 14   | 7.3 (mono)       | +0.06em  |
+| Figcaption     | 16    | 16   | 7.2              | 0        |
 
-The Face column is gone because there is only one now (§5).
+The Face column is gone because there is only one now (§5). Display roles are
+given as cap height because that is the dimension the eye measures on a
+title; running text is given as x-height.
 
-**Sizes are a property of the face, not of the design.** The scale went up 15%
-when the family changed from Spectral to Cardo, without a single design intent
-changing: Cardo's x-height is shorter, so identical numbers render visibly
-smaller. Any future change of family must re-measure rather than inherit these.
+**Sizes are a property of the face, not of the design, and px is the wrong
+unit to argue about them in.** The reader's eye resolves x-height, not the
+em box, and the em box is what `font-size` names. Cardo, measured off the
+shipped TTF:
 
-It then went up a further 20%. That increase was taken back off on 19 August —
-30px prose fills the hall edge to edge and leaves a post with no air in it —
-and put back on 27 August 2026 at the author's request. **The table above is
-the larger scale**, the 15% Cardo correction and the 20% on top of it both
-standing.
+|                                                             | value               |
+| ----------------------------------------------------------- | ------------------- |
+| units per em                                                | 1000                |
+| `sxHeight`                                                  | 450, so **0.450em** |
+| `capHeight`                                                 | 660, so 0.660em     |
+| advance of `0` (the `ch` unit)                              | 500, so 0.5em       |
+| average advance, letter-frequency weighted, spaces included | 442, so 0.442em     |
 
-Know what that costs, because it is the reason it came off once. At 30px a 66ch
-line wants about 930px and the hall offers ~944 usable, so the measure now
-fills the hall almost exactly: the ch cap is still what limits the line, but
-with roughly 14px of margin rather than 164, and a post reads as a column that
-touches both edges. The left-alignment below is nearly moot at full width for
-the same reason. Below about 1000px the fluid ramp takes the prose down and the
-margin returns.
+0.450 is Times-class, one of the smallest x-heights in common use. Georgia is
+0.481, SF and Segoe about 0.52, Inter 0.727. That is why the scale went up 15%
+when the family changed from Spectral to Cardo without one design intent
+changing, and why any future change of family must re-measure rather than
+inherit these numbers.
 
-**The measure never grows with the page.** Prose stays capped at 66ch, so a
-wider window buys room around the text rather than longer lines — 39 characters
-a line on a phone, 66 at full width. It is **left-aligned inside the hall, not
-centred**: at 66ch the column is narrower than the hall, and breadcrumb, title,
-date, tags and footer all hang off the hall's left edge. Centring the prose
-alone stepped it in by about 40px and the page read as two competing left
-margins. The centring survived unnoticed only while the measure and the hall
-happened to be the same width.
+It then went up a further 20%, came back off on 19 August, and went back on on
+27 August 2026. **On 8 September 2026 the whole scale came down about 23%** to
+the table above, this time solved rather than eyeballed. Comfortable screen
+reading sits at an x-height of roughly 8.5 to 11px: iOS body is 8.8 (17px SF),
+a New York Times article about 9.1 (19px Georgia), Medium 10.1 (21px Charter).
+30px prose in Cardo was 13.5, a third above the generous end of that band, and
+it read as presentation type rather than as a page.
+
+Two things the old scale cost, both fixed here:
+
+**The line was at its ceiling on desktop and far under the floor on a phone.**
+`ch` is Cardo's zero at 0.5em while its true average advance is 0.442em, so
+66ch set 75 characters to the line, the top of the 45-to-75 band; the cap is
+now 60ch, which sets 68. On a 375px phone the gutters leave 330px, and at
+23.5px that was 32 characters a line, well below the floor and a return sweep
+every few words. At 19px it is 39. It cannot go much higher without dropping
+the x-height under 8.5px, and legibility wins that trade.
+
+**`th` was illegible.** 15px of Cardo is a 6.8px x-height. It is the one place
+the label voice is not set in Cardo: Google Sans Code carries 0.523em, so 14px
+of it reads larger than 15px of Cardo while taking less room, and the mono
+register suits a column head.
+
+Labels and the HUD barely moved, 17.5px to 17px, because at 17.5px Cardo they
+were already at a 7.9px x-height with no room to follow body copy down.
+Hierarchy against a 30px heading carries them; the tracking and `--text-4` do
+the rest.
+
+**The measure never grows with the page.** Prose stays capped at 60ch, so a
+wider window buys room around the text rather than longer lines: 39 characters
+a line on a phone, 68 at full width. It is **left-aligned inside the hall, not
+centred**: at 60ch the column is 690px against ~944px of usable hall, so
+breadcrumb, title, date, tags and footer all hang off the hall's left edge.
+Centring the prose alone stepped it in by about 40px and the page read as two
+competing left margins. The centring survived unnoticed only while the measure
+and the hall happened to be the same width, which the 30px scale had made
+accidentally true.
 
 Body was 16.5px for most of the build, on the theory that a little text in a
 large dark space is the point. Read on a real screen it was simply hard work.
@@ -377,7 +411,7 @@ RSS, sitemap, dynamic OG images, Pagefind search, tags, archives and pagination 
 
 Single column, centered, inside **the hall** — `--hall`, one custom property at `64rem` (1024px) that `app-layout` and the atmosphere both read, so the content width and the room built around it cannot drift apart.
 
-**The hall and the measure are different things, and this is the rule that matters:** the hall widened from 46rem to 60rem and then to 64rem in August 2026 — first because at 736px the page occupied under a third of a large monitor, then because the measure outgrew it. The reading measure did **not** widen with it. `.app-prose` stays capped at 66ch and sits against the hall's left edge, so a wider window buys more room around the text and never longer sentences. Gutters `clamp(22px, 6vw, 40px)`.
+**The hall and the measure are different things, and this is the rule that matters:** the hall widened from 46rem to 60rem and then to 64rem in August 2026 — first because at 736px the page occupied under a third of a large monitor, then because the measure outgrew it. The reading measure did **not** widen with it. `.app-prose` stays capped at 60ch and sits against the hall's left edge, so a wider window buys more room around the text and never longer sentences. Gutters `clamp(22px, 6vw, 40px)`.
 
 **The hall is borderless.** It has no edges of its own; the only thing marking where the content ends is the falloff in `.air`. Vertical hairlines at its edges were built and removed the same day — even as two rules rather than four, they gave the column a container, and Ash does not put the reader inside a box (§0). If the page feels unmoored on a wide screen the lever is the atmosphere, not an edge.
 
