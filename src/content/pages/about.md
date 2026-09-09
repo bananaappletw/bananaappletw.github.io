@@ -38,13 +38,14 @@ I worked pretty hard during my student days, diving deep into security, reverse 
 
 I've contributed to the open source community through speaking engagements at major security conferences:
 
-- **DEF CON China**: Spoke about Triton and symbolic execution on GDB
-- **HITCON Community**: Shared knowledge on CTF for beginners
+- **DEF CON China, 2018**: [Triton and Symbolic Execution on GDB](https://media.defcon.org/DEF%20CON%20China%20beta/DEF%20CON%20China%20beta%20presentations/DEF%20CON%20China%20beta%20-%20bananaappletw-Triton-and-Symbolic-Execution.pdf) — slides on DEF CON's own archive, and the [talk listing](https://infocondb.org/con/def-con/def-con-china-beta/triton-and-symbolic-execution-on-gdb)
+- **HITCON CMT, 2017**: [Triton and Symbolic Execution on GDB](https://hitcon.org/2017/CMT/slide-files/d2_s1_r0.pdf) — there is a [recording](https://www.youtube.com/watch?v=LOTQIAVXdCI) of this one
+- **HITCON CMT, 2015**: [CTF for Beginners](https://hitcon.org/2015/CMT/download/day1-d-r2.pdf)
 
 Some projects I've worked on:
 
-- **SymGDB**: A plugin bringing symbolic execution capabilities to GDB
-- **Bamboofox CTF Training Platform**: Educational resources for CTF competitions
+- **[SymGDB](https://github.com/SQLab/symgdb)**: A plugin bringing symbolic execution capabilities to GDB
+- **[Bamboofox CTF Training Platform](https://github.com/bamboofox/bamboofox-website-old)**: Educational resources for CTF competitions
 
 My GitHub profile reflects my journey through infrastructure, security, and developer tools.
 
@@ -55,4 +56,4 @@ My GitHub profile reflects my journey through infrastructure, security, and deve
 - 💼 LinkedIn: [bananaappletw](https://www.linkedin.com/in/bananaappletw/)
 - 𝕏 Twitter: [@bananaappletw](https://x.com/bananaappletw)
 
-Feel free to reach out if you'd like to discuss infrastructure, DevOps, security, or anything else. I'm always happy to chat!
+Feel free to reach out if you'd like to get to know me better.
