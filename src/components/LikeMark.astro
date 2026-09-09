@@ -1,0 +1,45 @@
+---
+import { note, screen, axe } from "@/utils/marks";
+
+interface Props {
+  /** which of the three "What I Like" marks to draw */
+  name: "note" | "screen" | "axe";
+}
+
+const { name } = Astro.props;
+const marks = { note, screen, axe };
+const paths = marks[name];
+---
+
+{
+  /*
+  Stands in for the rune bullet on the about page's "What I Like" list, rather
+  than sitting beside it — one ornament per line, not two. The list carries
+  `class="likes"`, which suppresses the default bullet in typography.css.
+
+  Drawn with the same pen as every other mark and reading --ornament, so it
+  goes to bone when the world is hollowed and to warm grey on paper. Never
+  gold: three marks in a viewport would spend the whole budget on a list.
+*/
+}
+<svg
+  class="like-mark"
+  viewBox="0 0 64 64"
+  width="17"
+  height="17"
+  aria-hidden="true"
+>
+  {paths.map(d => <path d={d} />)}
+</svg>
+
+<style>
+  /* Positioned exactly where the rune bullet was, so a wrapped line still
+     hangs off the same left edge. */
+  .like-mark {
+    position: absolute;
+    left: -3px;
+    top: 0.16em;
+    fill: var(--ornament);
+    overflow: visible;
+  }
+</style>

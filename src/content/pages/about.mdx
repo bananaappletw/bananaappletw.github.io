@@ -3,6 +3,8 @@ title: "About Me"
 description: "Learn more about Weibo Chen, a Senior DevOps Engineer passionate about infrastructure, cloud systems, and security."
 ---
 
+import LikeMark from "@/components/LikeMark.astro";
+
 I'm a **Senior DevOps Engineer** based in Tokyo, with a passion for building scalable infrastructure, designing cloud systems, and exploring the intersection of security and software engineering.
 
 Currently, I work at **メルカリ (Mercari)**, where I operate and maintain one of Japan's largest e-commerce platforms serving **10M+ monthly active users**. I lead infrastructure modernization initiatives, design developer experience improvements, and architect solutions that empower thousands of engineers to ship faster and more reliably.
@@ -20,9 +22,12 @@ My expertise spans the modern DevOps and infrastructure landscape:
 
 ## What I Like
 
-- Playing pianos <3 I plan to record more, but currently this is what I have [check it out on Instagram](https://www.instagram.com/stories/highlights/17917500531032477/)
-- Watching Anime and Japanese TV shows. I loved anime & manga growing up, but funny enough living in Japan changed things a bit. I still watch sometimes for Japanese learning and the joy, just not as frequently as before.
-- Playing [Survival Chaos](https://www.w3sur5al.com/Home/surchaos), a custom [Warcraft III](https://en.wikipedia.org/wiki/Warcraft_III:_Reign_of_Chaos) map from 2002 that's still actively maintained. I'm an old-school person who appreciates nostalgia. sometimes the best gems are the ones that have stuck around.
+{/* prettier-ignore */}
+<ul class="likes">
+  <li><LikeMark name="note" />Playing pianos &lt;3 I plan to record more, but currently this is what I have <a href="https://www.instagram.com/stories/highlights/17917500531032477/">check it out on Instagram</a></li>
+  <li><LikeMark name="screen" />Watching Anime and Japanese TV shows. I loved anime &amp; manga growing up, but funny enough living in Japan changed things a bit. I still watch sometimes for Japanese learning and the joy, just not as frequently as before.</li>
+  <li><LikeMark name="axe" />Playing <a href="https://www.w3sur5al.com/Home/surchaos">Survival Chaos</a>, a custom <a href="https://en.wikipedia.org/wiki/Warcraft_III:_Reign_of_Chaos">Warcraft III</a> map from 2002 that&rsquo;s still actively maintained. I&rsquo;m an old-school person who appreciates nostalgia. sometimes the best gems are the ones that have stuck around.</li>
+</ul>
 
 ## Education
 

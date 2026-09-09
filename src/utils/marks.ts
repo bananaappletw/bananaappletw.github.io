@@ -343,3 +343,196 @@ export const bonfireAsh: string[] = [
     { width: 4.2, entry: 0.5, exit: 0.5, taper: 5, wobble: 0.12, seed: 96 },
   ),
 ];
+
+/**
+ * Three marks for the about page's "What I Like", drawn in the same pen and
+ * reading the ornament channel like every other mark here.
+ *
+ * They ship at ~17px in a 64-unit box, so one pixel is a little under four
+ * units — the same arithmetic that broke the bonfire. Every body is at least
+ * eight units across and every gap at least six, because a gap the rasteriser
+ * closes is not a gap, it is a smudge.
+ */
+
+/**
+ * A note, for the piano.
+ *
+ * Two drawings were tried and thrown away first, and both failed the same
+ * way. A keyboard in elevation — top rule, front rule, three key bars — read
+ * as a gate: parallel bars of equal weight between two equal rules is a fence
+ * at any size, because the eye has nothing asymmetric to hold. Then the grand
+ * piano's plan view, the one silhouette nothing else in the world has, which
+ * at 17px is a pebble; the shape only works when the curve and the keyboard
+ * notch are both several pixels, and here neither is.
+ *
+ * So the smaller claim. A quaver says music rather than piano, and the bullet
+ * beside it already says which instrument. Head, stem and flag are three
+ * marks of unequal weight, which is what the other two drawings were missing.
+ */
+export const note: string[] = [
+  // the head, an oval leaning the way a written note leans
+  loop(
+    (() => {
+      const rnd = seeded(404);
+      return Array.from({ length: 9 }, (_, i) => {
+        const a = (i / 9) * Math.PI * 2;
+        const x = Math.cos(a) * 10.4;
+        const y = Math.sin(a) * 7.4;
+        const lean = -0.34;
+        return [
+          22 + x + y * lean + (rnd() - 0.5) * 0.9,
+          42 + y + (rnd() - 0.5) * 0.9,
+        ] as Pt;
+      });
+    })(),
+    { samples: 110 },
+  ),
+  // the stem, off the right shoulder
+  nib(
+    [
+      [31.4, 41],
+      [32.6, 28],
+      [33.2, 13],
+    ],
+    {
+      width: 3.4,
+      entry: 0.95,
+      exit: 0.7,
+      taperIn: 3,
+      taperOut: 6,
+      wobble: 0.12,
+      seed: 66,
+    },
+  ),
+  // the flag
+  nib(
+    [
+      [33, 13.5],
+      [41, 19],
+      [43, 27],
+      [40, 33],
+    ],
+    {
+      width: 3.9,
+      entry: 0.5,
+      exit: 0.28,
+      taperIn: 4,
+      taperOut: 11,
+      wobble: 0.22,
+      seed: 71,
+    },
+  ),
+];
+
+/**
+ * A screen. The corners are two strokes that CROSS rather than a mitred
+ * rectangle — see nib.ts, it is what keeps the mark from reading as a box
+ * drawn by a machine.
+ */
+export const screen: string[] = [
+  nib(
+    [
+      [13.4, 16],
+      [32, 15.2],
+      [50.6, 16],
+    ],
+    { width: 4, entry: 0.7, exit: 0.7, taper: 5, wobble: 0.16, seed: 7 },
+  ),
+  nib(
+    [
+      [13.4, 40],
+      [32, 40.8],
+      [50.6, 40],
+    ],
+    { width: 4, entry: 0.7, exit: 0.7, taper: 5, wobble: 0.16, seed: 23 },
+  ),
+  nib(
+    [
+      [14.6, 14.8],
+      [13.8, 28],
+      [14.6, 41.2],
+    ],
+    { width: 3.9, entry: 0.72, exit: 0.72, taper: 5, wobble: 0.14, seed: 51 },
+  ),
+  nib(
+    [
+      [49.4, 14.8],
+      [50.2, 28],
+      [49.4, 41.2],
+    ],
+    { width: 3.9, entry: 0.72, exit: 0.72, taper: 5, wobble: 0.14, seed: 77 },
+  ),
+  // stand and foot
+  nib(
+    [
+      [32, 41],
+      [32.4, 47.5],
+    ],
+    { width: 3.6, entry: 0.9, exit: 0.8, taper: 3, wobble: 0.1, seed: 88 },
+  ),
+  nib(
+    [
+      [23, 49.4],
+      [32, 48.8],
+      [41, 49.4],
+    ],
+    { width: 3.6, entry: 0.6, exit: 0.6, taper: 4, wobble: 0.12, seed: 95 },
+  ),
+];
+
+/**
+ * An axe, for the Warcraft III map. A sword was the obvious mark and is
+ * already taken — the bonfire is a coiled sword driven into ash — so a haft
+ * and a crescent head instead, which is nearer the game's own iconography
+ * than a straight blade anyway.
+ *
+ * The first attempt read as a ladle: a fat crescent whose inner edge touched
+ * the haft along its whole length, so the two filled into one blob. The blade
+ * is thinner now and struck on a wider radius, and its concave side stands
+ * clear of the haft except where it is mounted — the gap between them is what
+ * makes it an axe rather than a spoon.
+ */
+export const axe: string[] = [
+  // haft, vertical and running the whole height
+  nib(
+    [
+      [29.5, 57],
+      [30.6, 40],
+      [31.4, 24],
+      [32, 6],
+    ],
+    {
+      width: 4.2,
+      entry: 0.95,
+      exit: 0.72,
+      taperIn: 4,
+      taperOut: 9,
+      wobble: 0.18,
+      seed: 12,
+    },
+  ),
+  // The head CROSSES the haft rather than hanging off it — a short poll on the
+  // left, a long curved cutting edge on the right, and haft showing above and
+  // below. The overhangs are unequal — symmetric about the haft is a hammer —
+  // but the poll cannot be shrunk much further: cut it back to a nub and the
+  // mark falls straight back into a flag on a pole.
+  //
+  // Two earlier versions put a rounded mass beside the top of a diagonal haft.
+  // The first read as a pennant, and the second, drawn heavier, read as the
+  // quaver two items above it in the same list: stem leaning right, blob at
+  // the top right. Anything mounted on one side of a stick is one of those
+  // two things. Only a head the stick passes through is an axe.
+  loop(
+    [
+      [21.5, 20.5],
+      [26.5, 15],
+      [40, 13],
+      [51, 18.5],
+      [55, 27],
+      [48.5, 36],
+      [37, 37.5],
+      [27.5, 33],
+    ] as Pt[],
+    { samples: 140 },
+  ),
+];

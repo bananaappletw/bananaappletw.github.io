@@ -128,6 +128,24 @@
       transform: rotate(45deg);
     }
 
+    /* A list whose items carry their own drawn mark (LikeMark.astro) gives up
+       the rune, because the mark IS the bullet. Two ornaments on one line is
+       one more than the budget allows and reads as a bullet with a sticker
+       next to it. */
+    ul.likes > li::before {
+      content: none;
+    }
+
+    ul.likes > li {
+      padding-left: 32px;
+    }
+
+    /* Each item is authored on one line in about.mdx, behind a
+       prettier-ignore. Broken across lines, MDX reads the pieces as separate
+       blocks and wraps them in <p> — which takes the prose paragraph's 30px
+       bottom margin and pushes the list apart, and worse, puts a <p> inside
+       the <a> when a link ends the line. */
+
     :not(pre) > code {
       font-family: var(--font-mono);
       font-size: 0.82em;
