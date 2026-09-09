@@ -4,9 +4,14 @@
 a website: what it costs to load, whether it can be read by anyone who arrives,
 whether it survives being linked to in five years.
 
-Every number below was measured on the `dist/` of 27 August 2026, not estimated.
-Anything not measured says so. The TODO list at the end is ordered by what a
-reader actually feels.
+Every number below was measured on `dist/`, not estimated, and re-measured on
+9 September 2026. Anything not measured says so. The TODO list at the end is
+ordered by what a reader actually feels.
+
+The three findings that were only ever numbers in this file are now assertions
+in [`tests/dist.test.ts`](../tests/dist.test.ts) — no TrueType linked to a
+browser, no mermaid on a post without a diagram, and every redirect resolving
+at both ends. They run against a build, with `npm run test:dist`.
 
 ---
 
@@ -33,24 +38,24 @@ reader actually feels.
 | A post, total over the wire  | **103KB in 7 requests**                         | 30KB HTML + 73KB subresources             |
 | Third-party asset hosts      | **none**                                        | fonts self-hosted, no analytics, no CDN   |
 
-**The two real defects.**
+**The two defects that produced those numbers, both fixed and both now
+asserted.**
 
-`src/components/Mermaid.astro` does `import mermaid from "mermaid"` at the top
-of its `<script>`. A static import is bundled into the route's shared entry, so
-every post carries mermaid whether or not it draws one. The fix is a gated
-dynamic import — `if (document.querySelector(".mermaid")) await import("mermaid")` —
-which moves 257KB off 22 pages and costs the three diagram posts one round trip.
+`Mermaid.astro` imported mermaid statically. Astro bundles page scripts per
+ROUTE, so that put mermaid and d3 — 257KB — into the entry every post loads,
+for the three posts in twenty-five that draw a diagram. The import is dynamic
+and gated on a `.mermaid` node now, and the entry is 1.3KB.
 
-The fonts ship **twice**. The page declares Cardo four times in woff2 with a
-`unicode-range`, and four more times in TrueType with **no** `unicode-range` —
-386KB, 340KB, 252KB and 56KB. `STATUS.md` §6b describes the intended shape,
-`src: [woff2, ttf]` inside one `@font-face` so the browser takes the first and
-`satori` takes the second; what shipped is separate blocks, which is a different
-thing. Any character outside the woff2 blocks' Latin ranges pulls a TTF. The OG
-generator needs TrueType at _build_ time and nothing needs it at _read_ time.
+The fonts shipped **twice**, and the browser was taking the wrong one. Astro
+emits one `@font-face` per format; the woff2 blocks carry a `unicode-range`
+and the TrueType blocks do not, and they came last — so for every Latin
+codepoint both matched, the later declaration won, and a reader fetched 378KB
+of TTF while the 15KB woff2 went untouched. `satori` needs TrueType at _build_
+time and nothing needs it at _read_ time, so it lives under its own
+`--font-og` variable: declared, never referenced by a rule, never loaded.
 
-Not measured yet: real LCP/CLS on a cold connection, and whether the inline
-critical CSS is worth its 40KB floor.
+Still not measured: real LCP/CLS on a cold connection against the origin, and
+whether the inline critical CSS is worth its 40KB floor.
 
 ---
 
@@ -63,8 +68,9 @@ critical CSS is worth its 40KB floor.
 3. One type family, sized for its own x-height.
 4. Marks measured over the surface they land on.
 
-**Where it stands.** Done, and enforced: `npm test` is 26 assertions over
-`tokens.json`, including the ceiling and the no-hex rule. See `docs/theme/`.
+**Where it stands.** Done, and enforced: `npm test` is 40 assertions — the
+contrast floors and the ceiling over `tokens.json`, the no-hex rule, and the
+gates in `tests/gates.test.ts`. See `docs/theme/`.
 
 One open consequence: at the 30px scale restored on 27 August, a 66ch line wants
 ~930px and the hall offers ~944, so the measure now fills the hall. Recorded in
@@ -113,8 +119,9 @@ actually written.
 no `<img>` at all, so rule 4 is untested rather than met — it becomes real the
 moment the post header image rule (`design.md` §15) is settled.
 
-Not measured yet: a keyboard pass over the header, search and pagination; a
-screen-reader pass over the world control; forced-colours mode.
+The keyboard pass was run on 27 August and found nothing broken (TODO 5).
+Still unrun: an actual screen reader over the world control, and
+forced-colours mode.
 
 ---
 

@@ -41,6 +41,13 @@ export default defineConfig([
   // TypeScript-aware rule instead, and let the compiler own undefined names.
   // .astro keeps the parser astro/flat/recommended gave it — that one already
   // routes frontmatter through the TypeScript parser.
+  //
+  // `no-undef` stays off because TypeScript owns undefined names and the rule
+  // cannot see ambient declarations like `astro:content`. The compiler that
+  // owns them is `npm run check`, which for most of this project's life was
+  // never executed anywhere: this comment delegated to a gate that did not
+  // run, which is how two checks each assume the other covers it. That script
+  // now runs in CI, and tests/gates.test.ts fails if it stops.
   {
     files: ["**/*.ts"],
     languageOptions: { parser: tseslint.parser },
