@@ -31,11 +31,22 @@
 
 export type NodeId =
   | "laptop"
+  | "phone"
+  | "printer"
   | "switch"
   | "router"
   | "isp"
   | "resolver"
   | "server";
+
+/** One port, socket or radio on a device — a device is its interfaces. */
+export type Iface = {
+  name: string;
+  mac?: string;
+  ip?: string;
+  /** what this particular interface is for, where that is not obvious */
+  note?: string;
+};
 
 export type Node = {
   id: NodeId;
@@ -44,8 +55,13 @@ export type Node = {
   role: string;
   /** which layer it actually reads — the reason it does what it does */
   reads: string;
+  /** the paragraph the sidebar leads with when this device is selected */
+  about: string;
+  ifaces: Iface[];
   ip?: string;
   mac?: string;
+  /** which of the switch's ports it hangs off, for the MAC table */
+  port?: number;
   /** position on the canvas, 0..1 across and 0..1 down */
   x: number;
   y: number;
@@ -57,63 +73,144 @@ export const NODES: Node[] = [
     name: "Laptop",
     role: "where the request starts",
     reads: "all seven",
+    about:
+      "The only machine on this page that runs the whole stack for its own sake. It holds the socket, counts the bytes, checks the certificate and draws the page — everything between here and the server exists to move its bytes and understands less of them the further out you go.",
+    ifaces: [
+      {
+        name: "en0",
+        mac: "a4:83:e7:1c:9d:40",
+        ip: "192.168.1.42/24",
+        note: "address leased by the router's DHCP, valid only inside the house",
+      },
+    ],
     ip: "192.168.1.42",
     mac: "a4:83:e7:1c:9d:40",
-    x: 0.06,
-    y: 0.5,
+    port: 1,
+    x: 0.09,
+    y: 0.22,
+  },
+  {
+    id: "phone",
+    name: "Phone",
+    role: "someone else's traffic, on the same wire",
+    reads: "all seven",
+    about:
+      "It is not sending anything on this page, and it matters anyway: it already holds a connection through the same router, which is why the NAT table has an entry that is nothing to do with the laptop. One public address, several machines — the port number is the only thing keeping them apart.",
+    ifaces: [
+      { name: "wlan0", mac: "6e:1a:bb:04:c7:93", ip: "192.168.1.57/24" },
+    ],
+    ip: "192.168.1.57",
+    mac: "6e:1a:bb:04:c7:93",
+    port: 2,
+    x: 0.09,
+    y: 0.55,
+  },
+  {
+    id: "printer",
+    name: "Printer",
+    role: "silent, and therefore invisible",
+    reads: "layers 1–4",
+    about:
+      "It has said nothing since the switch powered on, so the switch has never learned which port it is on. A frame addressed to it would be flooded out of every port — which is exactly what a switch does when it does not know, and exactly what it stops doing the moment the printer speaks once.",
+    ifaces: [{ name: "eth0", mac: "00:17:c8:2d:41:08", ip: "192.168.1.90/24" }],
+    ip: "192.168.1.90",
+    mac: "00:17:c8:2d:41:08",
+    port: 3,
+    x: 0.09,
+    y: 0.86,
   },
   {
     id: "switch",
     name: "Switch",
     role: "the cable the house shares",
     reads: "layer 2 only",
-    mac: "—",
-    x: 0.26,
-    y: 0.5,
+    about:
+      "It reads a destination MAC, looks up which port that address was last heard on, and forwards. It never opens the IP header, which is why nothing it touches comes out different — and why it cannot route, filter by address or translate anything. Watch its table fill as the page runs: it learns by listening to source addresses, never by being told.",
+    ifaces: [
+      { name: "port 1", note: "Laptop" },
+      { name: "port 2", note: "Phone" },
+      { name: "port 3", note: "Printer" },
+      { name: "port 4", note: "Router" },
+    ],
+    port: 4,
+    x: 0.3,
+    y: 0.54,
   },
   {
     id: "router",
     name: "Router",
     role: "the edge of the house, and the NAT",
     reads: "layers 2–4",
+    about:
+      "Two interfaces in two different worlds: a private address inside, one public address outside. Everything leaving gets that public address and a port the router picks, written into a table so the answer can be sent back to whichever machine asked. It is also the first device here that opens the IP header, decrements the TTL, and therefore has to compute the checksum again.",
+    ifaces: [
+      {
+        name: "br-lan",
+        mac: "f0:9f:c2:11:aa:01",
+        ip: "192.168.1.1/24",
+        note: "the gateway every machine in the house points at",
+      },
+      {
+        name: "eth-wan",
+        mac: "f0:9f:c2:11:aa:02",
+        ip: "203.0.113.7/30",
+        note: "the one address the rest of the internet ever sees",
+      },
+    ],
     ip: "192.168.1.1 · 203.0.113.7",
     mac: "f0:9f:c2:11:aa:01",
-    x: 0.47,
-    y: 0.5,
+    x: 0.51,
+    y: 0.54,
   },
   {
     id: "isp",
     name: "ISP",
     role: "the first hop that is not yours",
     reads: "layers 2–3",
+    about:
+      "A router like the one in the hallway, with a routing table instead of a NAT: it holds no state about this connection at all, and could not reassemble it if it wanted to. It forwards on the destination address alone, and the only thing it changes is the MAC pair and one off the TTL.",
+    ifaces: [
+      { name: "ge-0/0/1", mac: "00:1b:21:3c:77:02", ip: "203.0.113.1/30" },
+      { name: "ae0", note: "upstream, toward everything else" },
+    ],
     ip: "203.0.113.1",
-    mac: "00:1b:21:3c:77:02",
-    x: 0.68,
-    y: 0.5,
+    x: 0.71,
+    y: 0.54,
   },
   {
     id: "resolver",
     name: "Resolver",
     role: "answers what an address is",
     reads: "all seven",
+    about:
+      "A public DNS resolver. It answers one question — what address stands behind this name — and it is the only machine on this page the laptop talks to without having been told an address by anyone: 1.1.1.1 is configured, not discovered.",
+    ifaces: [{ name: "anycast", ip: "1.1.1.1" }],
     ip: "1.1.1.1",
-    mac: "—",
     x: 0.92,
-    y: 0.22,
+    y: 0.16,
   },
   {
     id: "server",
     name: "Server",
     role: "example.com",
     reads: "all seven",
+    about:
+      "The far end of the socket. It has never heard of the laptop: everything it knows about this connection is 203.0.113.7 and a port number the router invented, which is what makes the NAT table the only record tying the two together.",
+    ifaces: [{ name: "eth0", ip: "93.184.216.34" }],
     ip: "93.184.216.34",
-    mac: "—",
     x: 0.92,
-    y: 0.78,
+    y: 0.9,
   },
 ];
 
-export type LinkId = "lan" | "trunk" | "wan" | "core-dns" | "core-web";
+export type LinkId =
+  | "lan"
+  | "lan-phone"
+  | "lan-printer"
+  | "trunk"
+  | "wan"
+  | "core-dns"
+  | "core-web";
 
 export type Link = {
   id: LinkId;
@@ -121,19 +218,64 @@ export type Link = {
   to: NodeId;
   /** what this cable is, since the frame's MACs only mean anything on it */
   medium: string;
+  /** largest frame payload this link will carry */
+  mtu: number;
+  /** true for the cables this page's request never touches */
+  idle?: boolean;
 };
 
 export const LINKS: Link[] = [
-  { id: "lan", from: "laptop", to: "switch", medium: "Ethernet, your desk" },
+  {
+    id: "lan",
+    from: "laptop",
+    to: "switch",
+    medium: "Ethernet, your desk · port 1",
+    mtu: 1500,
+  },
+  {
+    id: "lan-phone",
+    from: "phone",
+    to: "switch",
+    medium: "Wi-Fi, bridged to port 2",
+    mtu: 1500,
+    idle: true,
+  },
+  {
+    id: "lan-printer",
+    from: "printer",
+    to: "switch",
+    medium: "Ethernet, the shelf · port 3",
+    mtu: 1500,
+    idle: true,
+  },
   {
     id: "trunk",
     from: "switch",
     to: "router",
-    medium: "Ethernet, the hallway",
+    medium: "Ethernet, the hallway · port 4",
+    mtu: 1500,
   },
-  { id: "wan", from: "router", to: "isp", medium: "the line to the street" },
-  { id: "core-dns", from: "isp", to: "resolver", medium: "the internet" },
-  { id: "core-web", from: "isp", to: "server", medium: "the internet" },
+  {
+    id: "wan",
+    from: "router",
+    to: "isp",
+    medium: "the line to the street",
+    mtu: 1492,
+  },
+  {
+    id: "core-dns",
+    from: "isp",
+    to: "resolver",
+    medium: "the internet",
+    mtu: 1500,
+  },
+  {
+    id: "core-web",
+    from: "isp",
+    to: "server",
+    medium: "the internet",
+    mtu: 1500,
+  },
 ];
 
 /* ── bytes ─────────────────────────────────────────────────────────────── */
@@ -1269,7 +1411,7 @@ const arpOut = (): Step => {
   });
   return {
     id: "arp-request",
-    label: "ARP · who has 192.168.1.1?",
+    label: "ARP · who has the router?",
     phase: "name",
     summary:
       "Nothing has left the house yet. The laptop knows the router's IP address and cannot put an IP address on a cable — Ethernet carries MACs — so it asks the whole segment, and every machine on it hears the question.",
@@ -1297,7 +1439,7 @@ const arpBack = (): Step => {
   });
   return {
     id: "arp-reply",
-    label: "ARP · it is at f0:9f:c2:11:aa:01",
+    label: "ARP · it is at f0:9f…",
     phase: "name",
     summary:
       "One machine recognises its own address and answers directly. The laptop writes the pair into its ARP table, and every frame on this page from here on carries that MAC without asking again.",
@@ -1370,6 +1512,43 @@ export const STEPS: Step[] = [
     29,
   ),
 ];
+
+/* ── time ──────────────────────────────────────────────────────────────
+   The page runs a clock, not a slideshow, so every cable needs a length and
+   every device needs a moment to think. These are the numbers that give the
+   picture its rhythm — and the rhythm IS the lesson: two hops inside the
+   house cost less than a tenth of a millisecond, and the single hop to the
+   server costs two hundred times that. Nearly all of a page load is the
+   speed of light and the queue at the far end; almost none of it is the
+   machinery this page draws. */
+
+/** one-way time on each cable, in milliseconds */
+export const LINK_MS: Record<LinkId, number> = {
+  lan: 0.08,
+  "lan-phone": 0.4,
+  "lan-printer": 0.08,
+  trunk: 0.08,
+  wan: 4,
+  "core-dns": 11,
+  "core-web": 19,
+};
+
+/**
+ * How long a device holds a frame before passing it on. A switch forwards
+ * almost as fast as it reads; a router has to open the IP header, rewrite
+ * the addresses, fix two checksums and consult a table; a server has to do
+ * actual work.
+ */
+export const THINK_MS: Record<NodeId, number> = {
+  laptop: 0.15,
+  phone: 0.2,
+  printer: 0.1,
+  switch: 0.02,
+  router: 0.35,
+  isp: 0.2,
+  resolver: 1.4,
+  server: 2.2,
+};
 
 /** The hops, flattened — the page's timeline is one list of these. */
 export type Tick = {

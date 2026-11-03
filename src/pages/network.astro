@@ -1,28 +1,42 @@
 ---
 /**
- * /network — one HTTPS request, watched from outside the machine.
+ * /network — one HTTPS request, simulated.
  *
- * The page exists to answer a question a diagram of seven stacked boxes never
- * does: what is actually on the wire, and why is it different on the next
- * wire along. So the stage is a line of devices, the packet moves between
- * them, and the two panels below it are the same packet twice — once as the
- * layers that wrap it, once as the bytes that leave the port.
+ * The first version of this page was a slideshow: one frame at a time, a
+ * scrubber over a list of hops. It taught the encapsulation and it got the
+ * most important thing wrong, which is that a network is a CONTINUOUS
+ * system — so this one runs a clock.
  *
- * Three decisions worth keeping:
+ * ── what the simulation is ───────────────────────────────────────────────
  *
- * - **A hop is the unit, not a step.** The timeline advances one CABLE at a
- *   time, because the thing being taught is that the frame is rewritten
- *   between them. Stepping request-by-request would hide exactly the part
- *   worth seeing.
- * - **Nothing moves until the reader asks.** `design.md` §11 allows the page
- *   one ambient animation and the grain already has it; this one is driven,
- *   and it starts paused.
- * - **The packet is the gold.** The header spends two (the sigil, the world
- *   control) and §4 allows three, so the one lit thing in the room is the
- *   packet in flight. Every other mark on this page is a neutral.
+ * Every cable has a length in milliseconds (`LINK_MS`) and every device a
+ * moment in which it thinks (`THINK_MS`), both in `network-flow.ts`. From
+ * those the page builds a SCHEDULE: for each packet and each cable it
+ * crosses, a departure and an arrival, with causality carried by a cursor —
+ * a hop cannot leave before the hop before it has landed and the device it
+ * landed on has finished with it.
  *
- * The frames come from `src/data/network-flow.ts`, which builds them the way
- * a stack does — real lengths, real checksums. This file only draws them.
+ * Drawing is then a pure function of one number. Every packet in flight is
+ * a lerp between two devices at time `t`; every table on the page is a fold
+ * over the hops that have already landed by `t`. That is what lets the
+ * scrubber work on a running simulation: dragging it rewinds nothing, it
+ * asks for a different `t`.
+ *
+ * ── the rhythm is the lesson ─────────────────────────────────────────────
+ *
+ * Two hops across the house cost less than a fifth of a millisecond; one hop
+ * to the server costs nineteen. Watch it run and the shape of a page load is
+ * obvious: nearly all of it is distance and the queue at the far end, and
+ * almost none of it is the machinery this page draws.
+ *
+ * ── the other devices ────────────────────────────────────────────────────
+ *
+ * A phone and a printer hang off the same switch. The printer never speaks,
+ * so the switch never learns which port it is on — and the sidebar says so.
+ * The phone keeps a connection of its own alive, so the NAT table has a row
+ * that has nothing to do with the laptop. One public address, several
+ * machines, told apart by a port number: that is a sentence everyone has
+ * read, and this is the picture of it.
  */
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
@@ -30,43 +44,119 @@ import Breadcrumb from "@/components/Breadcrumb.astro";
 import Main from "@/components/Main.astro";
 import Footer from "@/components/Footer.astro";
 import config from "@/config";
-import { NODES, LINKS, TICKS, OSI, PHASES } from "@/data/network-flow";
+import {
+  NODES,
+  LINKS,
+  TICKS,
+  STEPS,
+  LINK_MS,
+  THINK_MS,
+  type NodeId,
+} from "@/data/network-flow";
 
 const title = "The network";
 const description =
-  "One HTTPS request, hop by hop: the packet on the wire, the layers around it, and the bytes themselves — rewritten at every device it crosses.";
+  "A live simulation of one HTTPS request: packets crossing a house and the internet in real proportion, with every frame, header and byte open to inspection.";
 
-/* The stage is drawn in a 1000×320 box and scaled by CSS, so every number
-   below is in those units and none of them is a pixel. */
 const W = 1000;
-const H = 360;
-const px = (n: { x: number; y: number }) => ({ x: n.x * W, y: n.y * H });
+const H = 430;
+const at = (n: { x: number; y: number }) => ({ x: n.x * W, y: n.y * H });
+const pos = Object.fromEntries(NODES.map(n => [n.id, at(n)]));
+const portOf = Object.fromEntries(NODES.map(n => [n.id, n.port ?? null]));
 
-const nodePos = Object.fromEntries(NODES.map(n => [n.id, px(n)]));
-const linkPath = LINKS.map(l => ({
-  id: l.id,
-  from: nodePos[l.from],
-  to: nodePos[l.to],
-  medium: l.medium,
-}));
+/** the MAC a frame was sent FROM, which is the only thing a switch learns */
+const sourceMac = (tickIndex: number) =>
+  TICKS[tickIndex].hop.frame.blocks[0].fields[1].value.split(" · ")[0];
+
+const portOfTick = (i: number, side: "src") => {
+  const l4 = TICKS[i].hop.frame.blocks.find(
+    b => b.name === "TCP" || b.name === "UDP",
+  );
+  return side === "src" ? (l4?.fields[0].value ?? "—") : "—";
+};
 
 /**
- * The timeline, flattened for the client: one entry per cable crossed, with
- * the frame already reduced to what the panels draw. Bytes travel as hex
- * strings rather than arrays — the same information in a third of the
- * characters, on a page whose own budget is in `docs/site-quality.md`.
+ * What each hop teaches the devices it touches, worked out here rather than
+ * in the browser: the client should hold a schedule and a fold, and nothing
+ * should be parsing a frame sixty times a second.
  */
+const effects = TICKS.map(({ hop, step }, i) => {
+  const ip = hop.frame.blocks.find(b => b.name === "IPv4");
+  const l4 = hop.frame.blocks.find(b => b.name === "TCP" || b.name === "UDP");
+
+  return {
+    /** a switch learns a source address on the port it arrived by */
+    switchLearn:
+      hop.to === "switch" && portOf[hop.from]
+        ? { mac: sourceMac(i), port: portOf[hop.from]!, who: hop.from }
+        : null,
+
+    /** each end of an ARP exchange comes away with one new row */
+    arpLearn:
+      step.id === "arp-reply" && hop.to === "laptop"
+        ? {
+            on: "laptop" as NodeId,
+            ip: "192.168.1.1",
+            mac: sourceMac(i),
+            who: "router" as NodeId,
+          }
+        : step.id === "arp-request" && hop.to === "router"
+          ? {
+              on: "router" as NodeId,
+              ip: "192.168.1.42",
+              mac: sourceMac(i),
+              who: "laptop" as NodeId,
+            }
+          : null,
+
+    /** the NAT row is written the moment a packet leaves for the street */
+    nat:
+      hop.link === "wan" && hop.from === "router" && ip && l4
+        ? {
+            proto: l4.name,
+            inside: `192.168.1.42:${portOfTick(Math.max(0, i - 1), "src")}`,
+            outside: `${ip.fields[8].value}:${l4.fields[0].value}`,
+            why: step.label,
+          }
+        : null,
+  };
+});
+
 const payload = {
-  ticks: TICKS.map(({ step, hop, stepIndex }) => ({
+  nodes: Object.fromEntries(
+    NODES.map(n => [
+      n.id,
+      {
+        name: n.name,
+        role: n.role,
+        reads: n.reads,
+        about: n.about,
+        ifaces: n.ifaces,
+        ...pos[n.id],
+      },
+    ]),
+  ),
+  links: LINKS.map(l => ({
+    id: l.id,
+    from: l.from,
+    to: l.to,
+    medium: l.medium,
+    mtu: l.mtu,
+    idle: l.idle ?? false,
+    ms: LINK_MS[l.id],
+  })),
+  think: THINK_MS,
+  steps: STEPS.map(s => ({ id: s.id, label: s.label, summary: s.summary })),
+  ticks: TICKS.map(({ step, hop, stepIndex, hopIndex }, i) => ({
     step: stepIndex,
-    id: step.id,
+    hop: hopIndex,
     label: step.label,
-    phase: step.phase,
-    summary: step.summary,
     link: hop.link,
     from: hop.from,
     to: hop.to,
+    ms: LINK_MS[hop.link],
     changed: hop.frame.changed ?? null,
+    effects: effects[i],
     blocks: hop.frame.blocks.map(b => ({
       osi: b.osi,
       name: b.name,
@@ -80,9 +170,6 @@ const payload = {
       })),
     })),
   })),
-  nodes: Object.fromEntries(
-    NODES.map(n => [n.id, { name: n.name, ...nodePos[n.id] }]),
-  ),
 };
 ---
 
@@ -94,191 +181,165 @@ const payload = {
   <Main pageTitle={title}>
     <div class="app-prose intro">
       <p>
-        Everything below is one request for <code>https://example.com/</code>,
-        taken apart. The laptop never speaks to the server: it speaks to the
-        cable in front of it, and five devices pass the message along, each
-        rewriting the parts that were only ever true of the hop behind them.
+        One request for <code>https://example.com/</code>, running. Every cable
+        here has a length in milliseconds and every device takes a moment to
+        think, so the proportions are the real ones: two hops across the house
+        cost less than a fifth of a millisecond, and one hop to the server costs
+        nineteen.
       </p>
       <p>
-        Press play, or drag the line. The packet is the only lit thing on the
-        page, and the panels under the stage are that same packet twice — the
-        layers wrapped around it, and the bytes that actually leave the port.
+        Click anything — a device, a cable, a packet in flight — and the panel
+        beside the map says what it is and what it is doing. The tables fill in
+        as the simulation runs, because that is how the devices themselves
+        learn.
       </p>
     </div>
+  </Main>
 
-    <figure class="stage" aria-label="A packet crossing five devices">
-      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-hidden="true">
+  <!-- The bench breaks the hall. A map with a panel beside it needs more than
+       64rem, and §9's rule governs the reading measure, which this is not. -->
+  <section class="bench">
+    <div class="map-wrap">
+      <svg
+        class="map"
+        viewBox={`0 0 ${W} ${H}`}
+        role="img"
+        aria-label="A live map of one HTTPS request crossing eight devices"
+      >
+        <g class="house" aria-hidden="true">
+          <rect x="18" y="34" width="356" height="368" rx="10"></rect>
+          <text class="house-label" x="34" y="60">
+            192.168.1.0/24 &middot; the house
+          </text>
+        </g>
+
         <g class="wires">
           {
-            linkPath.map(l => (
-              <line
-                class="wire"
-                data-link={l.id}
-                x1={l.from.x}
-                y1={l.from.y}
-                x2={l.to.x}
-                y2={l.to.y}
-              />
+            LINKS.map(l => (
+              <g class="link" data-link={l.id}>
+                <line
+                  class:list={["wire", { idle: l.idle }]}
+                  x1={pos[l.from].x}
+                  y1={pos[l.from].y}
+                  x2={pos[l.to].x}
+                  y2={pos[l.to].y}
+                />
+                <line
+                  class="hit"
+                  x1={pos[l.from].x}
+                  y1={pos[l.from].y}
+                  x2={pos[l.to].x}
+                  y2={pos[l.to].y}
+                />
+              </g>
             ))
           }
         </g>
 
         <g class="nodes">
           {
-            NODES.map(n => {
-              const p = nodePos[n.id];
-              return (
-                <g
-                  class="node"
-                  data-node={n.id}
-                  transform={`translate(${p.x} ${p.y}) scale(1.35)`}
-                >
-                  <circle class="halo" r="24" />
-                  {n.id === "laptop" && (
-                    <path
-                      class="glyph"
-                      d="M-16 -10h32v18h-32zM-22 10h44l-3 5h-38z"
-                    />
-                  )}
-                  {n.id === "switch" && (
-                    <path
-                      class="glyph"
-                      d="M-18 -6h36v14h-36zM-12 8v5M-4 8v5M4 8v5M12 8v5"
-                    />
-                  )}
-                  {n.id === "router" && (
-                    <path
-                      class="glyph"
-                      d="M-18 -2h36v12h-36zM-10 -2l-6 -14M10 -2l6 -14"
-                    />
-                  )}
-                  {n.id === "isp" && (
-                    <path
-                      class="glyph"
-                      d="M0 12v-22M-12 12l12 -22l12 22M-7 -14a9 9 0 0 1 14 0"
-                    />
-                  )}
-                  {(n.id === "resolver" || n.id === "server") && (
-                    <path
-                      class="glyph"
-                      d="M-14 -12h28v10h-28zM-14 2h28v10h-28zM-9 -7h4M-9 7h4"
-                    />
-                  )}
-                  <text class="name" y="40">
-                    {n.name}
-                  </text>
-                  <text class="role" y="54">
-                    {n.reads}
-                  </text>
-                </g>
-              );
-            })
-          }
-        </g>
-
-        <g class="packet" aria-hidden="true">
-          <rect class="glow" x="-26" y="-13" width="52" height="26" rx="6"
-          ></rect>
-          <rect class="body" x="-17" y="-8" width="34" height="16" rx="3"
-          ></rect>
-          <text class="tag" y="-20"></text>
-        </g>
-      </svg>
-
-      <figcaption class="legend">
-        <span class="label">Reads</span>
-        {
-          NODES.filter(n => n.id !== "resolver").map(n => (
-            <span class="legend-item">
-              <b>{n.name}</b> {n.role}
-            </span>
-          ))
-        }
-      </figcaption>
-    </figure>
-
-    <div class="controls">
-      <button id="play" type="button" aria-label="Play">
-        <span class="glyph-play" aria-hidden="true"></span>
-        <span class="play-word">Play</span>
-      </button>
-      <button id="back" type="button" aria-label="Previous hop">Back</button>
-      <button id="next" type="button" aria-label="Next hop">Next</button>
-      <input
-        id="scrub"
-        type="range"
-        min="0"
-        max={TICKS.length - 1}
-        value="0"
-        step="1"
-        aria-label="Timeline"
-      />
-      <span class="count"><span id="tick-no">1</span> / {TICKS.length}</span>
-    </div>
-
-    <ol class="phases" aria-hidden="true">
-      {
-        PHASES.map(p => (
-          <li data-phase={p.id}>
-            <b>{p.name}</b>
-            <span>{p.blurb}</span>
-          </li>
-        ))
-      }
-    </ol>
-
-    <section class="now">
-      <p class="label" id="now-label">DNS query</p>
-      <p class="now-summary" id="now-summary"></p>
-      <p class="now-wire">
-        <span id="now-from"></span>
-        <span class="arrow" aria-hidden="true">→</span>
-        <span id="now-to"></span>
-        <span class="medium" id="now-medium"></span>
-      </p>
-      <p class="changed" id="now-changed"></p>
-    </section>
-
-    <div class="panels">
-      <section class="stack" aria-label="The layers around this packet">
-        <p class="label">The stack</p>
-        <ul class="osi">
-          {
-            OSI.map(l => (
-              <li data-osi={l.n}>
-                <span class="n">{l.n}</span>
-                <span class="osi-name">{l.name}</span>
-                <span class="osi-blurb">{l.blurb}</span>
-                <span class="osi-header" data-slot={l.n} />
-              </li>
+            NODES.map(n => (
+              <g
+                class="node"
+                data-node={n.id}
+                transform={`translate(${pos[n.id].x} ${pos[n.id].y}) scale(1.45)`}
+                tabindex="0"
+                role="button"
+                aria-label={`${n.name}: ${n.role}`}
+              >
+                <circle class="hit-dot" r="34" />
+                <circle class="halo" r="24" />
+                {n.id === "laptop" && (
+                  <path
+                    class="glyph"
+                    d="M-16 -10h32v18h-32zM-22 10h44l-3 5h-38z"
+                  />
+                )}
+                {n.id === "phone" && (
+                  <path class="glyph" d="M-8 -13h16v26h-16zM-3 9h6" />
+                )}
+                {n.id === "printer" && (
+                  <path
+                    class="glyph"
+                    d="M-13 -2h26v11h-26zM-8 -2v-8h16v8M-8 9v6h16v-6"
+                  />
+                )}
+                {n.id === "switch" && (
+                  <path
+                    class="glyph"
+                    d="M-18 -6h36v14h-36zM-12 8v5M-4 8v5M4 8v5M12 8v5"
+                  />
+                )}
+                {n.id === "router" && (
+                  <path
+                    class="glyph"
+                    d="M-18 -2h36v12h-36zM-10 -2l-6 -14M10 -2l6 -14"
+                  />
+                )}
+                {n.id === "isp" && (
+                  <path
+                    class="glyph"
+                    d="M0 12v-22M-12 12l12 -22l12 22M-7 -14a9 9 0 0 1 14 0"
+                  />
+                )}
+                {(n.id === "resolver" || n.id === "server") && (
+                  <path
+                    class="glyph"
+                    d="M-14 -12h28v10h-28zM-14 2h28v10h-28zM-9 -7h4M-9 7h4"
+                  />
+                )}
+                <text class="name" y="40">
+                  {n.name}
+                </text>
+              </g>
             ))
           }
-        </ul>
-        <p class="hint">
-          Lit layers are the ones present in this frame. Hover a header to find
-          it in the bytes.
-        </p>
-      </section>
+        </g>
 
-      <section class="inspector" aria-label="The bytes on the wire">
-        <p class="label">
-          On the wire <span class="size" id="frame-size"></span>
-        </p>
+        <g class="packets" aria-hidden="true"></g>
+      </svg>
 
-        <!-- Encapsulation, to scale: every header is a segment as wide as it
-             is long in bytes, wrapped around the one inside it. This is the
-             picture the seven stacked boxes of a textbook never draw. -->
-        <div class="encap" id="encap" aria-hidden="true"></div>
+      <div class="transport">
+        <button id="play" type="button" aria-label="Play">Play</button>
+        <input
+          id="scrub"
+          type="range"
+          min="0"
+          max="1000"
+          value="0"
+          step="1"
+          aria-label="Time"
+        />
+        <span class="clock"><span id="clock-ms">0.00</span> ms</span>
+        <span class="speeds">
+          <button type="button" data-speed="0.25">&frac14;&times;</button>
+          <button type="button" data-speed="1" class="on">1&times;</button>
+          <button type="button" data-speed="4">4&times;</button>
+        </span>
+      </div>
+      <p class="map-hint">
+        Virtual milliseconds, slowed about forty times. Space plays, arrows
+        nudge.
+      </p>
 
-        <div class="hex" id="hex"></div>
-        <dl class="fields" id="fields"></dl>
-      </section>
+      <!-- Where the clock is, and a way to put it somewhere else. Filled at
+           runtime because the times come out of the schedule. -->
+      <ol class="steps" id="steps"></ol>
     </div>
-  </Main>
+
+    <aside class="sidebar" id="sidebar" aria-live="polite">
+      <p class="label" id="side-kind">Following the packet</p>
+      <div id="side-body">
+        <p class="side-empty">Loading the simulation.</p>
+      </div>
+    </aside>
+  </section>
 
   <Footer />
 
+  <!-- Data, not code: is:inline keeps Astro's bundler out of it. -->
   <script
+    is:inline
     type="application/json"
     id="flow"
     set:html={JSON.stringify(payload)}
@@ -298,424 +359,744 @@ const payload = {
       offWire: boolean;
       fields: Field[];
     };
+    type Effects = {
+      switchLearn: { mac: string; port: number; who: string } | null;
+      arpLearn: { on: string; ip: string; mac: string; who: string } | null;
+      nat: {
+        proto: string;
+        inside: string;
+        outside: string;
+        why: string;
+      } | null;
+    };
     type Tick = {
       step: number;
-      id: string;
+      hop: number;
       label: string;
-      phase: string;
-      summary: string;
       link: string;
       from: string;
       to: string;
+      ms: number;
       changed: string | null;
+      effects: Effects;
       blocks: Block[];
     };
+    type NodeInfo = {
+      name: string;
+      role: string;
+      reads: string;
+      about: string;
+      ifaces: { name: string; mac?: string; ip?: string; note?: string }[];
+      x: number;
+      y: number;
+    };
+    type LinkInfo = {
+      id: string;
+      from: string;
+      to: string;
+      medium: string;
+      mtu: number;
+      idle: boolean;
+      ms: number;
+    };
     type Flow = {
+      nodes: Record<string, NodeInfo>;
+      links: LinkInfo[];
+      think: Record<string, number>;
+      steps: { id: string; label: string; summary: string }[];
       ticks: Tick[];
-      nodes: Record<string, { name: string; x: number; y: number }>;
     };
 
-    /**
-     * Every listener is bound inside this function and the function runs on
-     * load AND after a client-side navigation — but the page is torn down in
-     * between, so nothing stacks. The trap is the other way round: binding at
-     * module scope would bind once and then lose the elements.
-     */
+    /** one scheduled crossing of one cable by one packet */
+    type Flight = {
+      id: string;
+      tick: number | null;
+      label: string;
+      link: string;
+      from: string;
+      to: string;
+      t0: number;
+      t1: number;
+      /** the phone's own traffic: present, and not the subject */
+      bg: boolean;
+    };
+
+    type World = {
+      macTable: { mac: string; port: number; who: string }[];
+      arp: Record<string, { ip: string; mac: string; who: string }[]>;
+      nat: { proto: string; inside: string; outside: string; why: string }[];
+    };
+
+    type Selection =
+      | { kind: "node"; id: string }
+      | { kind: "link"; id: string }
+      /**
+       * A clicked packet pins the STEP, not the one crossing. Pinning the
+       * crossing freezes the panel the moment that hop lands, which is the
+       * opposite of what clicking a moving thing means: the reader picked it
+       * to follow it, so the panel follows it from cable to cable and stops
+       * on the last hop when it arrives.
+       */
+      | { kind: "packet"; step: number; bg: boolean }
+      | { kind: "auto" };
+
     const start = () => {
       const data = document.getElementById("flow");
-      const stage = document.querySelector<SVGSVGElement>(".stage svg");
-      if (!data || !stage) return;
+      const svg = document.querySelector<SVGSVGElement>(".map");
+      if (!data || !svg) return;
 
       const flow: Flow = JSON.parse(data.textContent ?? "{}");
-      const { ticks, nodes } = flow;
+      const { nodes, links, think, ticks } = flow;
+      const linkById: Record<string, LinkInfo> = Object.fromEntries(
+        links.map(l => [l.id, l]),
+      );
 
-      const packet = stage.querySelector<SVGGElement>(".packet")!;
+      /* ── the schedule ─────────────────────────────────────────────────
+         Built once, in virtual milliseconds. Causality is one cursor: a hop
+         departs only after the hop before it landed and the device it landed
+         on finished thinking. */
+
+      const flights: Flight[] = [];
+      let cursor = 0;
+
+      ticks.forEach((tick, i) => {
+        if (tick.hop === 0) cursor += think[tick.from] ?? 0.1;
+        const t0 = cursor;
+        const t1 = t0 + tick.ms;
+        flights.push({
+          id: `t${i}`,
+          tick: i,
+          label: tick.label,
+          link: tick.link,
+          from: tick.from,
+          to: tick.to,
+          t0,
+          t1,
+          bg: false,
+        });
+        cursor = t1 + (think[tick.to] ?? 0.1);
+      });
+
+      const END = cursor + 5;
+
+      /* The phone, using the same house the whole time. */
+      const BG_EVERY = 9;
+      for (let launch = 1.5, n = 0; launch < END; launch += BG_EVERY, n++) {
+        const path: [string, string, string][] = [
+          ["lan-phone", "phone", "switch"],
+          ["trunk", "switch", "router"],
+          ["wan", "router", "isp"],
+        ];
+        let c = launch;
+        path.forEach(([link, from, to], k) => {
+          const ms = linkById[link].ms;
+          flights.push({
+            id: `bg${n}-${k}`,
+            tick: null,
+            label: "Phone · a connection of its own",
+            link,
+            from,
+            to,
+            t0: c,
+            t1: c + ms,
+            bg: true,
+          });
+          c += ms + (think[to] ?? 0.1);
+        });
+      }
+
+      flights.sort((a, b) => a.t0 - b.t0);
+
+      /* ── the world, as a fold over everything that has landed ──────── */
+
+      /* The phone's row is already there when the page opens: it has been
+         talking since before the laptop asked anything. */
+      const SEED_NAT = [
+        {
+          proto: "TCP",
+          inside: "192.168.1.57:51214",
+          outside: "203.0.113.7:60002",
+          why: "Phone, already connected",
+        },
+      ];
+
+      const worldAt = (t: number): World => {
+        const world: World = {
+          macTable: [],
+          arp: { laptop: [], router: [] },
+          nat: [...SEED_NAT],
+        };
+
+        for (const f of flights) {
+          if (f.t1 > t) continue;
+
+          if (f.bg) {
+            if (
+              f.to === "switch" &&
+              !world.macTable.some(m => m.who === "phone")
+            ) {
+              world.macTable.push({
+                mac: "6e:1a:bb:04:c7:93",
+                port: 2,
+                who: "phone",
+              });
+            }
+            continue;
+          }
+
+          const e = ticks[f.tick as number].effects;
+          if (
+            e.switchLearn &&
+            !world.macTable.some(m => m.mac === e.switchLearn!.mac)
+          ) {
+            world.macTable.push({ ...e.switchLearn });
+          }
+          if (e.arpLearn) {
+            const rows = world.arp[e.arpLearn.on] ?? [];
+            if (!rows.some(r => r.ip === e.arpLearn!.ip)) {
+              rows.push({
+                ip: e.arpLearn.ip,
+                mac: e.arpLearn.mac,
+                who: e.arpLearn.who,
+              });
+            }
+            world.arp[e.arpLearn.on] = rows;
+          }
+          if (e.nat && !world.nat.some(r => r.outside === e.nat!.outside)) {
+            world.nat.push({ ...e.nat });
+          }
+        }
+        return world;
+      };
+
+      /* ── state ──────────────────────────────────────────────────────── */
+
+      const layer = svg.querySelector<SVGGElement>(".packets")!;
       const scrub = document.getElementById("scrub") as HTMLInputElement;
       const playBtn = document.getElementById("play") as HTMLButtonElement;
-      const hex = document.getElementById("hex")!;
-      const fields = document.getElementById("fields")!;
+      const clockOut = document.getElementById("clock-ms")!;
+      const kindOut = document.getElementById("side-kind")!;
+      const bodyOut = document.getElementById("side-body")!;
 
       const reduced = window.matchMedia(
         "(prefers-reduced-motion: reduce)",
       ).matches;
 
-      let index = 0;
-      let progress = 0;
-      /**
-       * Which header the fields pane shows, remembered BY NAME rather than by
-       * position. Pinning an index would drift the moment a frame has a
-       * different shape — and the whole point of stepping hop by hop is to
-       * hold one header still and watch it be rewritten.
-       *
-       * Null means "whatever is innermost", which is what a step is about
-       * before the reader has pointed at anything.
-       */
-      let pinned: string | null = null;
-      let selected = 0;
+      /** real milliseconds per virtual millisecond at 1× */
+      const SLOWDOWN = 42;
 
-      const resolveSelected = (tick: Tick) => {
-        if (pinned) {
-          const byName = tick.blocks.findIndex(b => b.name === pinned);
-          if (byName >= 0) return byName;
-        }
-        return tick.blocks.length - 1;
-      };
+      let t = 0;
       let playing = false;
+      let speed = 1;
       let raf = 0;
-      let last = 0;
+      let lastFrame = 0;
+      let selection: Selection = { kind: "auto" };
+      /** which header the packet panel is opened at; innermost by default */
+      let pickedBlock = Infinity;
 
-      /** A hop takes this long at play speed; a long frame is not slower. */
-      const HOP_MS = 1500;
+      const inFlight = (now: number) =>
+        flights.filter(f => now >= f.t0 && now <= f.t1);
 
-      const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+      /** landed, and being thought about rather than travelling */
+      const held = (now: number) =>
+        flights.filter(f => {
+          if (now < f.t1) return false;
+          const next = flights.find(
+            g => g.bg === f.bg && g.t0 >= f.t1 && g.from === f.to,
+          );
+          const until = next ? next.t0 : f.t1 + 0.8;
+          return now < until;
+        });
 
-      const place = () => {
-        const tick = ticks[index];
-        const from = nodes[tick.from];
-        const to = nodes[tick.to];
-        /* Paused, the packet sits mid-cable rather than on a device: a mark
-           parked on top of the router reads as part of the router. */
-        const t = playing && !reduced ? progress : 0.5;
-        packet.setAttribute(
-          "transform",
-          `translate(${lerp(from.x, to.x, t)} ${lerp(from.y, to.y, t)})`,
-        );
+      /* ── drawing the packets ────────────────────────────────────────── */
+
+      const drawPackets = (now: number) => {
+        const live = inFlight(now);
+        const sitting = held(now);
+        const keep = new Set<string>();
+
+        const put = (f: Flight, x: number, y: number, state: string) => {
+          keep.add(f.id);
+          let g = layer.querySelector<SVGGElement>(`[data-packet="${f.id}"]`);
+          if (!g) {
+            g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            g.setAttribute("data-packet", f.id);
+            g.innerHTML =
+              `<rect class="glow" x="-24" y="-12" width="48" height="24" rx="6"></rect>` +
+              `<rect class="body" x="-15" y="-7" width="30" height="14" rx="3"></rect>` +
+              `<text class="tag" y="-17"></text>`;
+            // outbound rides above the cable, inbound below it
+            const back = ["resolver", "server", "isp"].includes(f.from);
+            g.querySelector("text")!.setAttribute("y", back ? "25" : "-17");
+            layer.appendChild(g);
+            g.querySelector<SVGTextElement>(".tag")!.textContent = f.bg
+              ? ""
+              : f.label;
+          }
+          g.setAttribute("transform", `translate(${x} ${y})`);
+          g.setAttribute(
+            "class",
+            [
+              "packet",
+              f.bg ? "bg" : "",
+              state === "held" ? "held" : "",
+              selection.kind === "packet" &&
+              (f.tick !== null
+                ? ticks[f.tick].step === selection.step
+                : selection.bg)
+                ? "picked"
+                : "",
+            ]
+              .filter(Boolean)
+              .join(" "),
+          );
+        };
+
+        live.forEach(f => {
+          const a = nodes[f.from];
+          const b = nodes[f.to];
+          const p = (now - f.t0) / (f.t1 - f.t0);
+          put(f, a.x + (b.x - a.x) * p, a.y + (b.y - a.y) * p, "wire");
+        });
+
+        sitting.forEach(f => put(f, nodes[f.to].x, nodes[f.to].y - 32, "held"));
+
+        layer.querySelectorAll<SVGGElement>("[data-packet]").forEach(g => {
+          if (!keep.has(g.getAttribute("data-packet")!)) g.remove();
+        });
+
+        return [...live, ...sitting];
       };
 
-      const paintStage = () => {
-        const tick = ticks[index];
-        stage.querySelectorAll(".wire").forEach(w => {
-          w.classList.toggle("live", w.getAttribute("data-link") === tick.link);
+      const paintMap = (visible: Flight[]) => {
+        const liveLinks = new Set(visible.map(f => f.link));
+        svg.querySelectorAll<SVGGElement>(".link").forEach(l => {
+          const id = l.getAttribute("data-link")!;
+          l.classList.toggle("live", liveLinks.has(id));
+          l.classList.toggle(
+            "picked",
+            selection.kind === "link" && selection.id === id,
+          );
         });
-        stage.querySelectorAll(".node").forEach(n => {
-          const id = n.getAttribute("data-node");
-          n.classList.toggle("active", id === tick.from || id === tick.to);
-        });
-        document.querySelectorAll(".phases li").forEach(li => {
-          li.classList.toggle(
-            "on",
-            li.getAttribute("data-phase") === tick.phase,
+
+        const busy = new Set(visible.flatMap(f => [f.from, f.to]));
+        svg.querySelectorAll<SVGGElement>(".node").forEach(n => {
+          const id = n.getAttribute("data-node")!;
+          n.classList.toggle("active", busy.has(id));
+          n.classList.toggle(
+            "picked",
+            selection.kind === "node" && selection.id === id,
           );
         });
       };
 
-      /** The hex pane, with one span per byte carrying the field it belongs to. */
-      const paintBytes = (tick: Tick) => {
-        const cells: string[] = [];
-        let offset = 0;
-        let fieldNo = 0;
+      /* ── the sidebar ────────────────────────────────────────────────── */
 
+      const bytesIn = (b: Block) =>
+        b.fields.reduce((n, f) => n + f.hex.length / 2, 0);
+
+      const hexOf = (tick: Tick) => {
+        let fieldNo = 0;
+        const cells: string[] = [];
         tick.blocks.forEach((block, bi) => {
           block.fields.forEach(field => {
-            if (block.offWire) {
-              fieldNo += 1;
-              return;
-            }
-            const bytes = field.hex.match(/../g) ?? [];
-            bytes.forEach(b => {
-              cells.push(
-                `<span class="b" data-field="${fieldNo}" data-block="${bi}" data-osi="${block.osi}">${b}</span>`,
+            if (!block.offWire) {
+              (field.hex.match(/../g) ?? []).forEach(b =>
+                cells.push(
+                  `<span class="b" data-field="${fieldNo}" data-block="${bi}">${b}</span>`,
+                ),
               );
-              offset += 1;
-            });
+            }
             fieldNo += 1;
           });
         });
-
-        hex.innerHTML = cells.join("");
-        document.getElementById("frame-size")!.textContent = `${offset} bytes`;
+        return cells.join("");
       };
 
-      /**
-       * One block at a time. A whole frame is sixty fields and five pages of
-       * scrolling; a reader wants the header they are pointing at, and the
-       * hex pane above is what says where it sits in the whole.
-       */
-      const paintFields = (tick: Tick) => {
-        const block = tick.blocks[selected] ?? tick.blocks[0];
-        if (!block) return;
-        const bi = tick.blocks.indexOf(block);
+      const packetPanel = (f: Flight) => {
+        if (f.tick === null) {
+          return (
+            `<p class="side-lead">The phone, keeping a connection of its own ` +
+            `alive. It is here so the map is a network rather than a diagram — ` +
+            `and so the router's table has a row the laptop did not put there.</p>`
+          );
+        }
+
+        const tick = ticks[f.tick];
+        const wire = tick.blocks.filter(b => !b.offWire);
+        const total = wire.reduce((n, b) => n + bytesIn(b), 0);
+        const bi = Math.min(pickedBlock, tick.blocks.length - 1);
+        const block = tick.blocks[bi];
         let fieldNo = 0;
         tick.blocks.forEach((b, i) => {
           if (i < bi) fieldNo += b.fields.length;
         });
 
-        const rows = [
-          `<div class="block-head${block.offWire ? " off-wire" : ""}" data-block="${bi}">` +
-            `<span class="layer-no">L${block.osi}</span>` +
-            `<span class="block-name">${block.name}</span>` +
-            (pinned === block.name
-              ? `<span class="pin">held across hops</span>`
-              : "") +
-            `<span class="block-summary">${block.summary}${
-              block.offWire
-                ? " <b>Not on the wire</b> — this is what the application handed to TLS. Outside it there is only the ciphertext above."
-                : ""
-            }</span>` +
-            `</div>`,
-          ...block.fields.map(
-            (field, i) =>
-              `<div class="row" data-field="${fieldNo + i}" data-block="${bi}">` +
-              `<dt>${field.name}</dt>` +
-              `<dd>${field.value}` +
-              (field.note ? `<em>${field.note}</em>` : "") +
-              `</dd>` +
-              `</div>`,
-          ),
-        ];
-        fields.innerHTML = rows.join("");
-      };
-
-      /**
-       * The encapsulation bar. Segment widths are byte counts, so a reader
-       * sees at a glance that on a DNS query the headers outweigh the
-       * question, and that on a page fetch they are a rounding error.
-       */
-      const paintEncap = (tick: Tick) => {
-        const encap = document.getElementById("encap")!;
-        const onWire = tick.blocks.filter(b => !b.offWire);
-        const total = onWire.reduce(
-          (n, b) => n + b.fields.reduce((m, f) => m + f.hex.length / 2, 0),
-          0,
+        return (
+          `<p class="side-lead">${flow.steps[tick.step].summary}</p>` +
+          `<p class="side-wire"><b>${nodes[tick.from].name}</b> &rarr; ` +
+          `<b>${nodes[tick.to].name}</b> <span>${linkById[tick.link].medium} · ` +
+          `${tick.ms} ms</span></p>` +
+          (tick.changed
+            ? `<p class="changed">${tick.changed}</p>`
+            : `<p class="changed quiet">Nothing was rewritten on this hop.</p>`) +
+          `<p class="label sub">On the wire <span class="size">${total} bytes</span></p>` +
+          `<div class="encap">` +
+          wire
+            .map(b => {
+              const i = tick.blocks.indexOf(b);
+              return (
+                `<span class="seg${i === bi ? " lit" : ""}" data-block="${i}" ` +
+                `style="flex: ${bytesIn(b)} 1 0">` +
+                `<span class="seg-name">${b.name}</span>` +
+                `<span class="seg-bytes">${bytesIn(b)}</span></span>`
+              );
+            })
+            .join("") +
+          `</div>` +
+          `<div class="hex">${hexOf(tick)}</div>` +
+          `<div class="fields">` +
+          `<div class="block-head${block.offWire ? " off-wire" : ""}">` +
+          `<span class="layer-no">L${block.osi}</span>` +
+          `<span class="block-name">${block.name}</span>` +
+          `<span class="block-summary">${block.summary}${
+            block.offWire
+              ? " <b>Not on the wire</b> — this is what the application handed to TLS."
+              : ""
+          }</span></div>` +
+          block.fields
+            .map(
+              (field, i) =>
+                `<div class="row" data-field="${fieldNo + i}" data-block="${bi}">` +
+                `<dt>${field.name}</dt><dd>${field.value}` +
+                (field.note ? `<em>${field.note}</em>` : "") +
+                `</dd></div>`,
+            )
+            .join("") +
+          `</div>`
         );
-        encap.innerHTML = tick.blocks
-          .filter(b => !b.offWire)
-          .map(b => {
-            const i = tick.blocks.indexOf(b);
-            const bytes = b.fields.reduce((m, f) => m + f.hex.length / 2, 0);
-            const share = Math.round((bytes / total) * 100);
-            return (
-              `<span class="seg" data-block="${i}" style="flex: ${bytes} 1 0" ` +
-              `title="${b.name} — ${bytes} bytes, ${share}% of the frame">` +
-              `<span class="seg-name">${b.name}</span>` +
-              `<span class="seg-bytes">${bytes}</span>` +
-              `</span>`
-            );
-          })
+      };
+
+      const table = (head: string[], rows: string[][], empty: string) =>
+        rows.length
+          ? `<table class="t"><thead><tr>${head
+              .map(h => `<th>${h}</th>`)
+              .join("")}</tr></thead><tbody>${rows
+              .map(r => `<tr>${r.map(c => `<td>${c}</td>`).join("")}</tr>`)
+              .join("")}</tbody></table>`
+          : `<p class="side-empty">${empty}</p>`;
+
+      const nodePanel = (id: string, world: World) => {
+        const n = nodes[id];
+        const ifaces = n.ifaces
+          .map(
+            i =>
+              `<div class="row"><dt>${i.name}</dt><dd>${[i.ip, i.mac]
+                .filter(Boolean)
+                .join(" · ")}${i.note ? `<em>${i.note}</em>` : ""}</dd></div>`,
+          )
           .join("");
-      };
 
-      /** The OSI column: which layers this frame has, and what fills them. */
-      const paintStack = (tick: Tick) => {
-        const byLayer = new Map<number, Block[]>();
-        tick.blocks.forEach(b => {
-          byLayer.set(b.osi, [...(byLayer.get(b.osi) ?? []), b]);
-        });
-
-        document.querySelectorAll<HTMLLIElement>(".osi li").forEach(li => {
-          const n = Number(li.getAttribute("data-osi"));
-          const here = byLayer.get(n);
-          li.classList.toggle("on", Boolean(here));
-          const slot = li.querySelector<HTMLElement>(".osi-header")!;
-          slot.textContent = here
-            ? here
-                .map(b => (b.offWire ? `${b.name} (sealed)` : b.name))
-                .join(" · ")
-            : "";
-          slot.setAttribute(
-            "data-block",
-            here ? String(tick.blocks.indexOf(here[0])) : "",
-          );
-        });
-
-        /* Layer 1 is never a header — it is the cable, and it is always on. */
-        document.querySelector('.osi li[data-osi="1"]')?.classList.add("on");
-      };
-
-      const paintText = (tick: Tick) => {
-        document.getElementById("now-label")!.textContent = tick.label;
-        document.getElementById("now-summary")!.textContent = tick.summary;
-        document.getElementById("now-from")!.textContent =
-          nodes[tick.from].name;
-        document.getElementById("now-to")!.textContent = nodes[tick.to].name;
-        const changed = document.getElementById("now-changed")!;
-        changed.textContent = tick.changed ?? "";
-        changed.classList.toggle("empty", !tick.changed);
-        document.getElementById("tick-no")!.textContent = String(index + 1);
-        packet.querySelector(".tag")!.textContent = tick.label;
-      };
-
-      const paint = () => {
-        const tick = ticks[index];
-        selected = resolveSelected(tick);
-        paintStage();
-        paintText(tick);
-        paintStack(tick);
-        paintEncap(tick);
-        paintBytes(tick);
-        paintFields(tick);
-        place();
-        scrub.value = String(index);
-      };
-
-      /* ── hover: one highlight, wherever the pointer is ─────────────── */
-
-      const highlight = (field: number | null, block: number | null) => {
-        hex.querySelectorAll<HTMLElement>(".b").forEach(b => {
-          const f = Number(b.dataset.field);
-          const bl = Number(b.dataset.block);
-          b.classList.toggle("lit", field !== null && f === field);
-          b.classList.toggle(
-            "dim-in",
-            block !== null && bl === block && field === null,
-          );
-        });
-        fields.querySelectorAll<HTMLElement>(".row").forEach(r => {
-          r.classList.toggle(
-            "lit",
-            field !== null && Number(r.dataset.field) === field,
-          );
-        });
-        fields.querySelectorAll<HTMLElement>(".block-head").forEach(h => {
-          h.classList.toggle(
-            "lit",
-            block !== null && Number(h.dataset.block) === block,
-          );
-        });
-        document.querySelectorAll<HTMLElement>(".seg").forEach(seg => {
-          seg.classList.toggle(
-            "lit",
-            block !== null && Number(seg.dataset.block) === block,
-          );
-        });
-        document.querySelectorAll<HTMLElement>(".osi li").forEach(li => {
-          const slot = li.querySelector<HTMLElement>(".osi-header");
-          const b = slot?.getAttribute("data-block");
-          li.classList.toggle("lit", block !== null && b === String(block));
-        });
-      };
-
-      const clear = () => highlight(null, null);
-
-      hex.addEventListener("pointerover", e => {
-        const cell = (e.target as HTMLElement).closest<HTMLElement>(".b");
-        if (!cell) return;
-        const block = Number(cell.dataset.block);
-        if (block !== selected) {
-          selected = block;
-          pinned = ticks[index].blocks[block]?.name ?? null;
-          paintFields(ticks[index]);
+        let extra = "";
+        if (id === "switch") {
+          extra =
+            `<p class="label sub">MAC table <span class="size">learned by listening</span></p>` +
+            table(
+              ["Address", "Port", "Device"],
+              world.macTable.map(m => [
+                `<code>${m.mac}</code>`,
+                `${m.port}`,
+                nodes[m.who].name,
+              ]),
+              "Empty. It has heard nobody yet, so a frame arriving now would go out of every port.",
+            ) +
+            `<p class="side-note">The printer is not in this table and will not be until it speaks. A switch is only ever as clever as what it has overheard.</p>`;
         }
-        highlight(Number(cell.dataset.field), block);
-      });
-      hex.addEventListener("pointerleave", clear);
+        if (id === "router") {
+          extra =
+            `<p class="label sub">NAT table</p>` +
+            table(
+              ["Inside", "Outside", "For"],
+              world.nat.map(r => [
+                `<code>${r.inside}</code>`,
+                `<code>${r.outside}</code>`,
+                r.why,
+              ]),
+              "No translations yet.",
+            ) +
+            `<p class="side-note">Two machines, one public address. The port in the right-hand column is the whole of what tells them apart on the way back.</p>` +
+            `<p class="label sub">ARP cache</p>` +
+            table(
+              ["Address", "Hardware"],
+              (world.arp.router ?? []).map(r => [
+                r.ip,
+                `<code>${r.mac}</code>`,
+              ]),
+              "Empty.",
+            );
+        }
+        if (id === "laptop") {
+          extra =
+            `<p class="label sub">ARP cache</p>` +
+            table(
+              ["Address", "Hardware", "Who"],
+              (world.arp.laptop ?? []).map(r => [
+                r.ip,
+                `<code>${r.mac}</code>`,
+                nodes[r.who].name,
+              ]),
+              "Empty — which is why the first thing that happens on this page is a question shouted at the whole segment.",
+            );
+        }
+        if (id === "printer") {
+          extra = `<p class="side-note">Silent since it was plugged in. Nothing here addresses it, and the switch has no row for it.</p>`;
+        }
 
-      fields.addEventListener("pointerover", e => {
-        const row = (e.target as HTMLElement).closest<HTMLElement>(".row");
-        if (row) {
-          highlight(Number(row.dataset.field), Number(row.dataset.block));
+        return (
+          `<p class="side-lead">${n.about}</p>` +
+          `<p class="label sub">Interfaces <span class="size">reads ${n.reads}</span></p>` +
+          `<div class="fields">${ifaces}</div>` +
+          extra
+        );
+      };
+
+      const linkPanel = (id: string, now: number) => {
+        const l = linkById[id];
+        const on = inFlight(now).filter(f => f.link === id);
+        return (
+          `<p class="side-lead">${l.medium}. One way, ${l.ms} ms — ${
+            l.ms < 1
+              ? "short enough that the cable is never the thing you wait for."
+              : "long enough that it is most of what you wait for."
+          }</p>` +
+          `<div class="fields">` +
+          `<div class="row"><dt>Between</dt><dd>${nodes[l.from].name} and ${nodes[l.to].name}</dd></div>` +
+          `<div class="row"><dt>MTU</dt><dd>${l.mtu} bytes<em>The largest payload one frame may carry here. Anything longer has to be split before it goes on.</em></dd></div>` +
+          `<div class="row"><dt>One-way delay</dt><dd>${l.ms} ms</dd></div>` +
+          `<div class="row"><dt>Carrying now</dt><dd>${
+            on.length ? on.map(f => f.label).join(", ") : "nothing"
+          }</dd></div>` +
+          `</div>`
+        );
+      };
+
+      const paintSidebar = (now: number, visible: Flight[]) => {
+        if (selection.kind === "node") {
+          kindOut.textContent = nodes[selection.id].name;
+          bodyOut.innerHTML = nodePanel(selection.id, worldAt(now));
           return;
         }
-        const head = (e.target as HTMLElement).closest<HTMLElement>(
-          ".block-head",
-        );
-        if (head) highlight(null, Number(head.dataset.block));
-      });
-      fields.addEventListener("pointerleave", clear);
-
-      const encapEl = document.getElementById("encap")!;
-      encapEl.addEventListener("pointerover", e => {
-        const seg = (e.target as HTMLElement).closest<HTMLElement>(".seg");
-        if (!seg) return;
-        const block = Number(seg.dataset.block);
-        if (block !== selected) {
-          selected = block;
-          pinned = ticks[index].blocks[block]?.name ?? null;
-          paintFields(ticks[index]);
+        if (selection.kind === "link") {
+          kindOut.textContent = linkById[selection.id].medium.split(" · ")[0];
+          bodyOut.innerHTML = linkPanel(selection.id, now);
+          return;
         }
-        highlight(null, block);
-      });
-      encapEl.addEventListener("pointerleave", clear);
 
-      document.querySelector(".osi")?.addEventListener("pointerover", e => {
-        const li = (e.target as HTMLElement).closest<HTMLElement>("li");
-        const b = li
-          ?.querySelector<HTMLElement>(".osi-header")
-          ?.getAttribute("data-block");
-        if (!b) return;
-        if (Number(b) !== selected) {
-          selected = Number(b);
-          pinned = ticks[index].blocks[Number(b)]?.name ?? null;
-          paintFields(ticks[index]);
-        }
-        highlight(null, Number(b));
-      });
-      document.querySelector(".osi")?.addEventListener("pointerleave", clear);
-
-      /* ── transport ─────────────────────────────────────────────────── */
-
-      const setPlaying = (on: boolean) => {
-        playing = on;
-        playBtn.classList.toggle("playing", on);
-        playBtn.querySelector(".play-word")!.textContent = on
-          ? "Pause"
-          : "Play";
-        playBtn.setAttribute("aria-label", on ? "Pause" : "Play");
-        if (on) {
-          last = performance.now();
-          raf = requestAnimationFrame(frame);
+        let pick: Flight | null;
+        if (selection.kind === "packet") {
+          /* bound before the callback: a `let` of a union type does not stay
+             narrowed inside a closure */
+          const sel = selection;
+          const mine = flights.filter(f =>
+            sel.bg ? f.bg : f.tick !== null && ticks[f.tick].step === sel.step,
+          );
+          pick =
+            mine.find(f => t >= f.t0 && t <= f.t1) ??
+            [...mine].reverse().find(f => f.t1 <= t) ??
+            mine[0] ??
+            null;
         } else {
-          cancelAnimationFrame(raf);
+          pick = visible.find(f => !f.bg) ?? null;
         }
+
+        if (!pick) {
+          kindOut.textContent = "Nothing in flight";
+          bodyOut.innerHTML = `<p class="side-empty">Press play, or click a device to look inside it.</p>`;
+          return;
+        }
+        kindOut.textContent = pick.label;
+        bodyOut.innerHTML = packetPanel(pick);
+      };
+
+      /* ── the loop ───────────────────────────────────────────────────── */
+
+      /* The step strip, built once from the schedule: each step's first
+         departure is a time the reader can jump to. */
+      const stepsEl = document.getElementById("steps")!;
+      const stepStart = new Map<number, number>();
+      flights.forEach(f => {
+        if (f.tick === null) return;
+        const s = ticks[f.tick].step;
+        if (!stepStart.has(s)) stepStart.set(s, f.t0);
+      });
+      stepsEl.innerHTML = [...stepStart.entries()]
+        .map(
+          ([i, at]) =>
+            `<li data-step="${i}" data-at="${at}">` +
+            `<b>${flow.steps[i].label}</b><span>${at.toFixed(1)} ms</span></li>`,
+        )
+        .join("");
+      stepsEl.addEventListener("click", e => {
+        const li = (e.target as HTMLElement).closest<HTMLElement>("[data-at]");
+        if (!li) return;
+        setPlaying(false);
+        t = Number(li.dataset.at) + 0.001;
+        selection = { kind: "auto" };
+        render();
+      });
+
+      const paintSteps = (now: number) => {
+        let current = -1;
+        stepStart.forEach((at, i) => {
+          if (now >= at) current = i;
+        });
+        stepsEl.querySelectorAll<HTMLElement>("li").forEach(li => {
+          li.classList.toggle("on", Number(li.dataset.step) === current);
+          li.classList.toggle("done", Number(li.dataset.step) < current);
+        });
+      };
+
+      const render = () => {
+        const visible = drawPackets(t);
+        paintMap(visible);
+        paintSteps(t);
+        paintSidebar(t, visible);
+        clockOut.textContent = t.toFixed(2);
+        scrub.value = String(Math.round((t / END) * 1000));
       };
 
       const frame = (now: number) => {
         if (!playing) return;
-        const dt = now - last;
-        last = now;
-        progress += dt / HOP_MS;
-        while (progress >= 1) {
-          progress -= 1;
-          if (index >= ticks.length - 1) {
-            progress = 1;
-            setPlaying(false);
-            place();
-            return;
-          }
-          index += 1;
-          paint();
+        const dt = Math.min(64, now - lastFrame);
+        lastFrame = now;
+        t += (dt / SLOWDOWN) * speed;
+        if (t >= END) {
+          t = END;
+          setPlaying(false);
+          render();
+          return;
         }
-        place();
+        render();
         raf = requestAnimationFrame(frame);
       };
 
-      const goto = (i: number) => {
-        index = Math.max(0, Math.min(ticks.length - 1, i));
-        progress = 0;
-        paint();
+      function setPlaying(on: boolean) {
+        playing = on && !reduced;
+        playBtn.textContent = playing ? "Pause" : "Play";
+        playBtn.setAttribute("aria-label", playing ? "Pause" : "Play");
+        if (playing) {
+          lastFrame = performance.now();
+          raf = requestAnimationFrame(frame);
+        } else {
+          cancelAnimationFrame(raf);
+        }
+      }
+
+      const select = (s: Selection) => {
+        selection = s;
+        pickedBlock = Infinity;
+        render();
       };
 
       playBtn.addEventListener("click", () => {
-        if (!playing && index === ticks.length - 1) goto(0);
+        if (!playing && t >= END) t = 0;
         setPlaying(!playing);
       });
-      document.getElementById("next")!.addEventListener("click", () => {
-        setPlaying(false);
-        goto(index + 1);
-      });
-      document.getElementById("back")!.addEventListener("click", () => {
-        setPlaying(false);
-        goto(index - 1);
-      });
+
       scrub.addEventListener("input", () => {
         setPlaying(false);
-        goto(Number(scrub.value));
+        t = (Number(scrub.value) / 1000) * END;
+        render();
       });
 
-      /* Arrow keys move a hop at a time; space plays. The page is a reader's,
-         so the keys that work on a video work here. */
+      document
+        .querySelectorAll<HTMLButtonElement>("[data-speed]")
+        .forEach(b => {
+          b.addEventListener("click", () => {
+            speed = Number(b.dataset.speed);
+            document
+              .querySelectorAll("[data-speed]")
+              .forEach(o => o.classList.toggle("on", o === b));
+          });
+        });
+
+      svg.addEventListener("click", e => {
+        const el = e.target as Element;
+        const packet = el.closest<SVGGElement>("[data-packet]");
+        if (packet) {
+          const f = flights.find(
+            g => g.id === packet.getAttribute("data-packet"),
+          );
+          if (f) {
+            select(
+              f.tick === null
+                ? { kind: "packet", step: -1, bg: true }
+                : { kind: "packet", step: ticks[f.tick].step, bg: false },
+            );
+          }
+          return;
+        }
+        const node = el.closest<SVGGElement>("[data-node]");
+        if (node) {
+          select({ kind: "node", id: node.getAttribute("data-node")! });
+          return;
+        }
+        const link = el.closest<SVGGElement>("[data-link]");
+        if (link) {
+          select({ kind: "link", id: link.getAttribute("data-link")! });
+          return;
+        }
+        select({ kind: "auto" });
+      });
+
+      svg.addEventListener("keydown", e => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        const node = (e.target as Element).closest<SVGGElement>("[data-node]");
+        if (!node) return;
+        e.preventDefault();
+        select({ kind: "node", id: node.getAttribute("data-node")! });
+      });
+
+      /* Pointing at a header in the sidebar opens it, and lights its bytes. */
+      bodyOut.addEventListener("pointerover", e => {
+        const el = e.target as HTMLElement;
+        const which =
+          el.closest<HTMLElement>(".seg") ?? el.closest<HTMLElement>(".b");
+        if (!which) return;
+        const block = Number(which.dataset.block);
+        if (block !== pickedBlock) {
+          pickedBlock = block;
+          render();
+        }
+        const cell = el.closest<HTMLElement>(".b");
+        if (cell) {
+          const f = Number(cell.dataset.field);
+          bodyOut
+            .querySelectorAll<HTMLElement>(".b")
+            .forEach(b =>
+              b.classList.toggle("lit", Number(b.dataset.field) === f),
+            );
+          bodyOut
+            .querySelectorAll<HTMLElement>(".row")
+            .forEach(r =>
+              r.classList.toggle("lit", Number(r.dataset.field) === f),
+            );
+        }
+      });
+
       const keys = (e: KeyboardEvent) => {
         const typing = (e.target as HTMLElement)?.closest("input, textarea");
-        if (typing && e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
-        if (e.key === "ArrowRight") {
-          setPlaying(false);
-          goto(index + 1);
-        } else if (e.key === "ArrowLeft") {
-          setPlaying(false);
-          goto(index - 1);
-        } else if (e.key === " " && !typing) {
+        if (e.key === " " && !typing) {
           e.preventDefault();
           setPlaying(!playing);
+        } else if (e.key === "ArrowRight") {
+          setPlaying(false);
+          t = Math.min(END, t + 0.4);
+          render();
+        } else if (e.key === "ArrowLeft") {
+          setPlaying(false);
+          t = Math.max(0, t - 0.4);
+          render();
         }
       };
       document.addEventListener("keydown", keys);
@@ -724,7 +1105,8 @@ const payload = {
         document.removeEventListener("keydown", keys);
       });
 
-      paint();
+      render();
+      if (!reduced) setPlaying(true);
     };
 
     start();
@@ -734,20 +1116,41 @@ const payload = {
 
 <style>
   .intro {
-    margin-bottom: clamp(28px, 4vh, 44px);
+    margin-bottom: clamp(26px, 4vh, 40px);
   }
 
-  /* ── the stage ─────────────────────────────────────────────────────── */
+  /* ── the bench ─────────────────────────────────────────────────────── */
 
-  .stage {
-    margin: 0 0 clamp(18px, 3vh, 28px);
+  .bench {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(300px, 0.95fr);
+    gap: clamp(20px, 2.5vw, 40px);
+    width: 100%;
+    max-width: 96rem;
+    margin-inline: auto;
+    padding-inline: clamp(22px, 6vw, 40px);
+    padding-bottom: clamp(30px, 6vh, 60px);
   }
 
-  .stage svg {
+  .map {
     display: block;
     width: 100%;
     height: auto;
     overflow: visible;
+  }
+
+  /* The one boundary on the map that changes what an address means. */
+  .house rect {
+    fill: none;
+    stroke: var(--border);
+    stroke-dasharray: 3 7;
+  }
+
+  .house-label {
+    font-family: var(--font-display);
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    fill: var(--text-4);
   }
 
   .wire {
@@ -755,11 +1158,25 @@ const payload = {
     stroke-width: 1;
   }
 
-  /* The cable currently carrying the packet. It is the only wire with any
-     presence, which is what makes the path through the page legible. */
-  .wire.live {
+  .wire.idle {
+    stroke-dasharray: 2 6;
+  }
+
+  /* A hairline is impossible to click, so every cable carries a fat
+     transparent twin. */
+  .hit {
+    stroke: transparent;
+    stroke-width: 18;
+    cursor: pointer;
+  }
+
+  .link.live .wire {
     stroke: var(--text-4);
     stroke-width: 1.4;
+  }
+
+  .link.picked .wire {
+    stroke: var(--arcane);
   }
 
   .glyph {
@@ -772,11 +1189,11 @@ const payload = {
 
   .halo {
     fill: var(--ground);
-    stroke: none;
   }
 
-  .node.active .glyph {
-    stroke: var(--text);
+  .hit-dot {
+    fill: transparent;
+    cursor: pointer;
   }
 
   .node .name {
@@ -786,69 +1203,77 @@ const payload = {
     text-anchor: middle;
   }
 
-  .node .role {
-    font-family: var(--font-display);
-    font-size: 11px;
-    letter-spacing: 0.06em;
-    fill: var(--text-4);
-    text-anchor: middle;
+  .node.active .glyph,
+  .node:hover .glyph {
+    stroke: var(--text);
   }
 
-  .node.active .name {
-    fill: var(--text);
+  .node.picked .glyph {
+    stroke: var(--arcane);
   }
 
-  /* The one gold on the page: §4 allows three per viewport, the header has
-     already spent two, and this is the thing the page is about. */
-  .packet .body {
+  .node.picked .name {
+    fill: var(--arcane);
+  }
+
+  .node:focus-visible {
+    outline: none;
+  }
+
+  .node:focus-visible .glyph {
+    stroke: var(--torch);
+  }
+
+  /* The packet is the page's one gold. Background traffic is not gold,
+     because it is not the thing being followed. */
+  .packets :global(.packet .body) {
     fill: var(--torch);
+    cursor: pointer;
   }
 
-  /* Not a glow so much as the light it throws on the cable either side. */
-  .packet .glow {
+  .packets :global(.packet .glow) {
     fill: var(--torch-tint);
+    cursor: pointer;
   }
 
-  .packet .tag {
+  .packets :global(.packet .tag) {
     font-family: var(--font-display);
-    font-size: 13px;
-    letter-spacing: 0.04em;
+    font-size: 12.5px;
     fill: var(--text-3);
     text-anchor: middle;
   }
 
-  .legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px 22px;
-    margin-top: 14px;
-    font-size: 15px;
-    color: var(--text-4);
+  .packets :global(.packet.bg .body) {
+    fill: var(--text-4);
   }
 
-  .legend .label {
-    display: none;
+  .packets :global(.packet.bg .glow) {
+    fill: none;
   }
 
-  .legend-item b {
-    font-weight: 400;
-    color: var(--text-3);
+  /* Landed, and being thought about rather than travelling. */
+  .packets :global(.packet.held .body) {
+    fill: var(--torch-dim);
   }
 
-  /* ── controls ──────────────────────────────────────────────────────── */
+  .packets :global(.packet.picked .glow) {
+    fill: var(--arcane-tint);
+  }
 
-  .controls {
+  /* ── transport ─────────────────────────────────────────────────────── */
+
+  .transport {
     display: flex;
     align-items: center;
     gap: 14px;
-    padding-block: 10px 6px;
+    margin-top: 10px;
+    padding-top: 12px;
     border-top: 1px solid var(--border);
   }
 
-  .controls button {
+  .transport button {
     font-family: var(--font-display);
     font-size: 15px;
-    letter-spacing: 0.04em;
     color: var(--text-3);
     background: none;
     border: 0;
@@ -857,9 +1282,15 @@ const payload = {
     cursor: pointer;
   }
 
-  .controls button:hover {
+  .transport button:hover,
+  .transport button.on {
     color: var(--text);
     border-bottom-color: var(--text-4);
+  }
+
+  .speeds {
+    display: flex;
+    gap: 8px;
   }
 
   #scrub {
@@ -868,386 +1299,343 @@ const payload = {
     cursor: pointer;
   }
 
-  .count {
-    font-family: var(--font-display);
-    font-size: 14px;
+  .clock {
+    font-family: var(--font-mono);
+    font-size: 13px;
     color: var(--text-4);
     font-variant-numeric: tabular-nums;
+    min-width: 8ch;
+    text-align: end;
   }
 
-  .phases {
+  .map-hint {
+    margin: 10px 0 0;
+    font-size: 14px;
+    color: var(--text-4);
+  }
+
+  .steps {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0 18px;
+    grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+    gap: 0 14px;
     list-style: none;
-    padding: 12px 0 0;
-    margin: 0 0 clamp(26px, 4vh, 40px);
+    margin: 18px 0 0;
+    padding: 0;
   }
 
-  .phases li {
+  /* Built at runtime, so :global — a scoped selector never matches DOM that
+     did not exist at build time. */
+  .steps :global(li) {
     display: flex;
     flex-direction: column;
     gap: 2px;
-    padding-top: 10px;
+    padding: 9px 0 0;
     border-top: 1px solid var(--border);
-    font-size: 15px;
+    cursor: pointer;
     color: var(--text-4);
+    min-width: 0;
   }
 
-  .phases li b {
+  .steps :global(li b) {
     font-family: var(--font-display);
     font-weight: 400;
-    letter-spacing: 0.06em;
+    font-size: 13px;
+    line-height: 1.25;
     color: var(--text-4);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  .phases li.on {
-    border-top-color: var(--text-4);
+  .steps :global(li span) {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
   }
 
-  .phases li.on b {
-    color: var(--text-2);
-  }
-
-  /* ── what is happening ─────────────────────────────────────────────── */
-
-  .now {
-    margin-bottom: clamp(22px, 3vh, 34px);
-  }
-
-  .now-summary {
-    max-width: 62ch;
-    margin: 10px 0 0;
-    color: var(--text-2);
-  }
-
-  .now-wire {
-    margin: 12px 0 0;
-    font-family: var(--font-display);
-    font-size: 15px;
+  .steps :global(li.done b) {
     color: var(--text-3);
   }
 
-  .now-wire .arrow {
-    margin-inline: 8px;
-    color: var(--text-4);
+  .steps :global(li.on) {
+    border-top-color: var(--text-3);
   }
 
-  .now-wire .medium {
-    margin-inline-start: 12px;
-    color: var(--text-4);
+  .steps :global(li.on b) {
+    color: var(--text);
   }
 
-  /* The sentence the page is really for: what this device changed. */
-  .changed {
-    max-width: 62ch;
-    margin: 12px 0 0;
-    padding-inline-start: 14px;
+  .steps :global(li:hover b) {
+    color: var(--text-2);
+  }
+
+  /* ── the sidebar ───────────────────────────────────────────────────── */
+
+  .sidebar {
     border-inline-start: 1px solid var(--border);
-    color: var(--text-3);
-    font-style: italic;
+    padding-inline-start: clamp(16px, 2vw, 28px);
+    min-width: 0;
   }
 
-  .changed.empty {
-    display: none;
-  }
-
-  /* ── the two panels ────────────────────────────────────────────────── */
-
-  .panels {
-    display: grid;
-    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-    gap: clamp(20px, 3vw, 38px);
-  }
-
-  .osi {
-    list-style: none;
-    padding: 0;
+  .sidebar :global(.side-lead) {
     margin: 12px 0 0;
-    display: flex;
-    flex-direction: column;
+    color: var(--text-2);
+    font-size: 16px;
+    line-height: 1.6;
   }
 
-  .osi li {
-    display: grid;
-    grid-template-columns: 22px 1fr;
-    grid-template-areas: "n name" ". blurb" ". header";
-    gap: 1px 10px;
-    padding: 9px 8px;
-    border-top: 1px solid var(--border);
-    opacity: 0.45;
+  .sidebar :global(.side-empty),
+  .sidebar :global(.side-note) {
+    margin: 12px 0 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-4);
   }
 
-  .osi li:last-child {
-    border-bottom: 1px solid var(--border);
-  }
-
-  .osi li.on {
-    opacity: 1;
-  }
-
-  .osi li.lit {
-    background: var(--panel);
-  }
-
-  .osi .n {
-    grid-area: n;
+  .sidebar :global(.side-wire) {
+    margin: 12px 0 0;
     font-family: var(--font-display);
+    font-size: 14px;
+    color: var(--text-3);
+  }
+
+  .sidebar :global(.side-wire b) {
+    font-weight: 400;
+    color: var(--text-2);
+  }
+
+  .sidebar :global(.side-wire span) {
+    color: var(--text-4);
+  }
+
+  .sidebar :global(.changed) {
+    margin: 12px 0 0;
+    padding-inline-start: 12px;
+    border-inline-start: 1px solid var(--border);
+    font-size: 14px;
+    line-height: 1.6;
+    font-style: italic;
+    color: var(--text-3);
+  }
+
+  .sidebar :global(.changed.quiet) {
+    color: var(--text-4);
+  }
+
+  .sidebar :global(.label.sub) {
+    margin-top: 22px;
+  }
+
+  .sidebar :global(.size) {
+    margin-inline-start: 8px;
     font-size: 13px;
     color: var(--text-4);
   }
 
-  .osi-name {
-    grid-area: name;
-    font-family: var(--font-display);
-    color: var(--text-2);
-  }
-
-  .osi-blurb {
-    grid-area: blurb;
-    font-size: 14px;
-    color: var(--text-4);
-  }
-
-  /* The header this layer contributes to the frame in front of us. It is
-     also the handle: pointing at it moves the fields pane. */
-  .osi-header {
-    grid-area: header;
-    font-size: 14px;
-    color: var(--arcane);
-    cursor: default;
-  }
-
-  .osi li.lit .osi-header {
-    text-decoration: underline;
-    text-underline-offset: 3px;
-    text-decoration-thickness: 1px;
-  }
-
-  .osi-header:empty {
-    display: none;
-  }
-
-  /* ── encapsulation ─────────────────────────────────────────────────── */
-
-  .encap {
+  .sidebar :global(.encap) {
     display: flex;
     gap: 2px;
-    margin-top: 14px;
+    margin-top: 10px;
   }
 
-  .encap :global(.seg) {
+  .sidebar :global(.seg) {
     display: flex;
     flex-direction: column;
-    gap: 1px;
     min-width: 0;
-    padding: 8px 6px;
+    padding: 6px;
     background: var(--panel);
     border-top: 1px solid var(--border);
     overflow: hidden;
     cursor: default;
   }
 
-  .encap :global(.seg.lit) {
+  .sidebar :global(.seg.lit) {
     border-top-color: var(--arcane);
   }
 
-  .encap :global(.seg-name) {
+  .sidebar :global(.seg-name) {
     font-family: var(--font-display);
-    font-size: 13px;
+    font-size: 12.5px;
     white-space: nowrap;
     color: var(--text-3);
   }
 
-  .encap :global(.seg.lit .seg-name) {
+  .sidebar :global(.seg.lit .seg-name) {
     color: var(--arcane);
   }
 
-  .encap :global(.seg-bytes) {
+  .sidebar :global(.seg-bytes) {
     font-family: var(--font-mono);
     font-size: 11px;
     color: var(--text-4);
   }
 
-  .hint,
-  .size {
-    font-size: 14px;
-    color: var(--text-4);
-  }
-
-  .hint {
-    margin-top: 10px;
-  }
-
-  .size {
-    margin-inline-start: 10px;
-    font-variant-numeric: tabular-nums;
-  }
-
-  /* ── bytes ─────────────────────────────────────────────────────────── */
-
-  /* Sixteen bytes to the line, the way every hex dump since 1970 has been
-     read, with a wider gap at the halfway mark so the eye can count. */
-  .hex {
+  .sidebar :global(.hex) {
     display: grid;
-    grid-template-columns: repeat(16, minmax(0, 1fr));
-    gap: 3px 0;
-    margin: 12px 0 0;
-    padding: 14px 16px;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    justify-items: center;
+    gap: 2px 0;
+    margin-top: 10px;
+    padding: 10px 12px;
     background: var(--panel);
     border-inline-start: 1px solid var(--border-recess);
     font-family: var(--font-mono);
-    font-size: 13px;
-    line-height: 1.6;
+    font-size: 12px;
     color: var(--text-4);
   }
 
-  /* Everything below is built at runtime, so it carries no scope attribute
-     and a scoped selector would never match it. This is the one place on the
-     site where :global is correct rather than lazy. */
-  .hex :global(.b) {
+  .sidebar :global(.hex .b) {
     text-align: center;
     cursor: default;
-    transition: color 80ms linear;
   }
 
-  .hex :global(.b:nth-child(8n + 1)) {
-    margin-inline-start: 7px;
-  }
-
-  /* The hovered field, in the arcane register — the theme's second voice.
-     Gold stays the packet and nothing else. */
-  .hex :global(.b.lit) {
+  .sidebar :global(.hex .b.lit) {
     color: var(--arcane);
   }
 
-  /* The rest of the header the hovered field belongs to. */
-  .hex :global(.b.dim-in) {
-    color: var(--text-2);
+  .sidebar :global(.fields) {
+    margin-top: 12px;
   }
 
-  .fields {
-    margin: 14px 0 0;
-  }
-
-  .fields :global(.block-head) {
+  .sidebar :global(.block-head) {
     display: grid;
-    grid-template-columns: 32px 1fr;
+    grid-template-columns: 30px 1fr;
     grid-template-areas: "no name" ". summary";
     gap: 1px 8px;
-    padding: 0 8px 10px;
+    padding-bottom: 8px;
     border-bottom: 1px solid var(--border);
-    margin-bottom: 4px;
   }
 
-  .fields :global(.layer-no) {
+  .sidebar :global(.block-head.off-wire) {
+    border-bottom-color: var(--arcane-dim);
+  }
+
+  .sidebar :global(.block-summary b) {
+    font-weight: 400;
+    color: var(--arcane);
+  }
+
+  .sidebar :global(.layer-no) {
     grid-area: no;
     font-family: var(--font-display);
     font-size: 13px;
     color: var(--text-4);
   }
 
-  .fields :global(.block-name) {
+  .sidebar :global(.block-name) {
     grid-area: name;
     font-family: var(--font-display);
     color: var(--text-2);
   }
 
-  .fields :global(.block-summary) {
+  .sidebar :global(.block-summary) {
     grid-area: summary;
-    font-size: 14px;
+    font-size: 13.5px;
+    line-height: 1.5;
     color: var(--text-4);
   }
 
-  .fields :global(.row) {
+  .sidebar :global(.row) {
     display: grid;
-    grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr);
-    gap: 3px 14px;
-    padding: 6px 8px;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: 2px 12px;
+    padding: 5px 0;
   }
 
-  .fields :global(.pin) {
-    grid-area: name;
-    justify-self: end;
-    font-family: var(--font-display);
-    font-size: 12px;
-    letter-spacing: 0.06em;
-    color: var(--text-4);
-  }
-
-  .fields :global(.block-head.off-wire) {
-    border-bottom-color: var(--arcane-dim);
-  }
-
-  .fields :global(.block-summary b) {
-    font-weight: 400;
-    color: var(--arcane);
-  }
-
-  .fields :global(.row.lit) {
+  .sidebar :global(.row.lit) {
     background: var(--panel);
   }
 
-  .fields :global(.row dt) {
-    font-size: 15px;
+  .sidebar :global(.row dt) {
+    font-size: 14px;
     color: var(--text-4);
   }
 
-  .fields :global(.row dd) {
+  .sidebar :global(.row dd) {
     margin: 0;
-    font-size: 15px;
+    font-size: 14px;
     color: var(--text-2);
   }
 
-  /* The sentence that makes a field worth looking at twice. */
-  .fields :global(.row dd em) {
+  .sidebar :global(.row dd em) {
     display: block;
-    margin-top: 4px;
-    font-size: 14px;
-    line-height: 1.55;
+    margin-top: 3px;
+    font-size: 13px;
+    line-height: 1.5;
     color: var(--text-4);
   }
 
-  /* ── narrow ────────────────────────────────────────────────────────── */
+  /* the live tables */
+  .sidebar :global(.t) {
+    width: 100%;
+    margin-top: 10px;
+    border-collapse: collapse;
+    font-size: 13.5px;
+  }
 
-  @media (max-width: 54rem) {
-    .panels {
+  .sidebar :global(.t th) {
+    text-align: start;
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 12.5px;
+    letter-spacing: 0.06em;
+    color: var(--text-4);
+    border-bottom: 1px solid var(--border);
+    padding: 0 10px 6px 0;
+  }
+
+  .sidebar :global(.t td) {
+    padding: 6px 10px 6px 0;
+    color: var(--text-2);
+    border-bottom: 1px solid var(--border-recess);
+    vertical-align: top;
+  }
+
+  .sidebar :global(.t code) {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-3);
+  }
+
+  /* With a wide panel the dump goes back to sixteen bytes a line, which is
+     how anyone who has read one before expects to count it. */
+  @media (min-width: 80rem) {
+    .sidebar :global(.hex) {
+      grid-template-columns: repeat(16, minmax(0, 1fr));
+      font-size: 11.5px;
+    }
+  }
+
+  @media (max-width: 62rem) {
+    .bench {
       grid-template-columns: minmax(0, 1fr);
     }
 
-    /* The stage stops shrinking and starts scrolling: five devices and their
-       labels do not fit in a phone's width, and shrinking them to fit is how
-       a diagram becomes decoration. */
-    .stage {
+    /* The map stops shrinking and starts scrolling. Eight labelled devices
+       do not fit in a phone, and shrinking them to fit is how a diagram
+       becomes decoration. */
+    .map-wrap {
       overflow-x: auto;
       overscroll-behavior-x: contain;
     }
 
-    .stage svg {
-      min-width: 620px;
+    .map {
+      min-width: 660px;
     }
 
-    /* Eight bytes to the line rather than sixteen — the same dump, folded. */
-    .hex {
-      grid-template-columns: repeat(8, minmax(0, 1fr));
-      font-size: 12px;
+    .transport,
+    .steps,
+    .map-hint {
+      position: sticky;
+      inset-inline-start: 0;
+      max-width: 100%;
     }
 
-    .hex :global(.b:nth-child(8n + 1)) {
-      margin-inline-start: 0;
-    }
-
-    .phases {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 0 14px;
-    }
-
-    .node .role {
-      display: none;
-    }
-
-    .row {
-      grid-template-columns: minmax(0, 1fr);
+    .sidebar {
+      border-inline-start: 0;
+      border-top: 1px solid var(--border);
+      padding-inline-start: 0;
+      padding-top: 16px;
     }
   }
 </style>
