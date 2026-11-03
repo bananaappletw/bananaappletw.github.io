@@ -1,0 +1,1253 @@
+---
+/**
+ * /network — one HTTPS request, watched from outside the machine.
+ *
+ * The page exists to answer a question a diagram of seven stacked boxes never
+ * does: what is actually on the wire, and why is it different on the next
+ * wire along. So the stage is a line of devices, the packet moves between
+ * them, and the two panels below it are the same packet twice — once as the
+ * layers that wrap it, once as the bytes that leave the port.
+ *
+ * Three decisions worth keeping:
+ *
+ * - **A hop is the unit, not a step.** The timeline advances one CABLE at a
+ *   time, because the thing being taught is that the frame is rewritten
+ *   between them. Stepping request-by-request would hide exactly the part
+ *   worth seeing.
+ * - **Nothing moves until the reader asks.** `design.md` §11 allows the page
+ *   one ambient animation and the grain already has it; this one is driven,
+ *   and it starts paused.
+ * - **The packet is the gold.** The header spends two (the sigil, the world
+ *   control) and §4 allows three, so the one lit thing in the room is the
+ *   packet in flight. Every other mark on this page is a neutral.
+ *
+ * The frames come from `src/data/network-flow.ts`, which builds them the way
+ * a stack does — real lengths, real checksums. This file only draws them.
+ */
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Breadcrumb from "@/components/Breadcrumb.astro";
+import Main from "@/components/Main.astro";
+import Footer from "@/components/Footer.astro";
+import config from "@/config";
+import { NODES, LINKS, TICKS, OSI, PHASES } from "@/data/network-flow";
+
+const title = "The network";
+const description =
+  "One HTTPS request, hop by hop: the packet on the wire, the layers around it, and the bytes themselves — rewritten at every device it crosses.";
+
+/* The stage is drawn in a 1000×320 box and scaled by CSS, so every number
+   below is in those units and none of them is a pixel. */
+const W = 1000;
+const H = 360;
+const px = (n: { x: number; y: number }) => ({ x: n.x * W, y: n.y * H });
+
+const nodePos = Object.fromEntries(NODES.map(n => [n.id, px(n)]));
+const linkPath = LINKS.map(l => ({
+  id: l.id,
+  from: nodePos[l.from],
+  to: nodePos[l.to],
+  medium: l.medium,
+}));
+
+/**
+ * The timeline, flattened for the client: one entry per cable crossed, with
+ * the frame already reduced to what the panels draw. Bytes travel as hex
+ * strings rather than arrays — the same information in a third of the
+ * characters, on a page whose own budget is in `docs/site-quality.md`.
+ */
+const payload = {
+  ticks: TICKS.map(({ step, hop, stepIndex }) => ({
+    step: stepIndex,
+    id: step.id,
+    label: step.label,
+    phase: step.phase,
+    summary: step.summary,
+    link: hop.link,
+    from: hop.from,
+    to: hop.to,
+    changed: hop.frame.changed ?? null,
+    blocks: hop.frame.blocks.map(b => ({
+      osi: b.osi,
+      name: b.name,
+      summary: b.summary,
+      offWire: b.offWire ?? false,
+      fields: b.fields.map(f => ({
+        name: f.name,
+        value: f.value,
+        note: f.note ?? null,
+        hex: f.bytes.map(x => x.toString(16).padStart(2, "0")).join(""),
+      })),
+    })),
+  })),
+  nodes: Object.fromEntries(
+    NODES.map(n => [n.id, { name: n.name, ...nodePos[n.id] }]),
+  ),
+};
+---
+
+<Layout title={`${title} | ${config.site.title}`} description={description}>
+  <Header />
+
+  <Breadcrumb />
+
+  <Main pageTitle={title}>
+    <div class="app-prose intro">
+      <p>
+        Everything below is one request for <code>https://example.com/</code>,
+        taken apart. The laptop never speaks to the server: it speaks to the
+        cable in front of it, and five devices pass the message along, each
+        rewriting the parts that were only ever true of the hop behind them.
+      </p>
+      <p>
+        Press play, or drag the line. The packet is the only lit thing on the
+        page, and the panels under the stage are that same packet twice — the
+        layers wrapped around it, and the bytes that actually leave the port.
+      </p>
+    </div>
+
+    <figure class="stage" aria-label="A packet crossing five devices">
+      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-hidden="true">
+        <g class="wires">
+          {
+            linkPath.map(l => (
+              <line
+                class="wire"
+                data-link={l.id}
+                x1={l.from.x}
+                y1={l.from.y}
+                x2={l.to.x}
+                y2={l.to.y}
+              />
+            ))
+          }
+        </g>
+
+        <g class="nodes">
+          {
+            NODES.map(n => {
+              const p = nodePos[n.id];
+              return (
+                <g
+                  class="node"
+                  data-node={n.id}
+                  transform={`translate(${p.x} ${p.y}) scale(1.35)`}
+                >
+                  <circle class="halo" r="24" />
+                  {n.id === "laptop" && (
+                    <path
+                      class="glyph"
+                      d="M-16 -10h32v18h-32zM-22 10h44l-3 5h-38z"
+                    />
+                  )}
+                  {n.id === "switch" && (
+                    <path
+                      class="glyph"
+                      d="M-18 -6h36v14h-36zM-12 8v5M-4 8v5M4 8v5M12 8v5"
+                    />
+                  )}
+                  {n.id === "router" && (
+                    <path
+                      class="glyph"
+                      d="M-18 -2h36v12h-36zM-10 -2l-6 -14M10 -2l6 -14"
+                    />
+                  )}
+                  {n.id === "isp" && (
+                    <path
+                      class="glyph"
+                      d="M0 12v-22M-12 12l12 -22l12 22M-7 -14a9 9 0 0 1 14 0"
+                    />
+                  )}
+                  {(n.id === "resolver" || n.id === "server") && (
+                    <path
+                      class="glyph"
+                      d="M-14 -12h28v10h-28zM-14 2h28v10h-28zM-9 -7h4M-9 7h4"
+                    />
+                  )}
+                  <text class="name" y="40">
+                    {n.name}
+                  </text>
+                  <text class="role" y="54">
+                    {n.reads}
+                  </text>
+                </g>
+              );
+            })
+          }
+        </g>
+
+        <g class="packet" aria-hidden="true">
+          <rect class="glow" x="-26" y="-13" width="52" height="26" rx="6"
+          ></rect>
+          <rect class="body" x="-17" y="-8" width="34" height="16" rx="3"
+          ></rect>
+          <text class="tag" y="-20"></text>
+        </g>
+      </svg>
+
+      <figcaption class="legend">
+        <span class="label">Reads</span>
+        {
+          NODES.filter(n => n.id !== "resolver").map(n => (
+            <span class="legend-item">
+              <b>{n.name}</b> {n.role}
+            </span>
+          ))
+        }
+      </figcaption>
+    </figure>
+
+    <div class="controls">
+      <button id="play" type="button" aria-label="Play">
+        <span class="glyph-play" aria-hidden="true"></span>
+        <span class="play-word">Play</span>
+      </button>
+      <button id="back" type="button" aria-label="Previous hop">Back</button>
+      <button id="next" type="button" aria-label="Next hop">Next</button>
+      <input
+        id="scrub"
+        type="range"
+        min="0"
+        max={TICKS.length - 1}
+        value="0"
+        step="1"
+        aria-label="Timeline"
+      />
+      <span class="count"><span id="tick-no">1</span> / {TICKS.length}</span>
+    </div>
+
+    <ol class="phases" aria-hidden="true">
+      {
+        PHASES.map(p => (
+          <li data-phase={p.id}>
+            <b>{p.name}</b>
+            <span>{p.blurb}</span>
+          </li>
+        ))
+      }
+    </ol>
+
+    <section class="now">
+      <p class="label" id="now-label">DNS query</p>
+      <p class="now-summary" id="now-summary"></p>
+      <p class="now-wire">
+        <span id="now-from"></span>
+        <span class="arrow" aria-hidden="true">→</span>
+        <span id="now-to"></span>
+        <span class="medium" id="now-medium"></span>
+      </p>
+      <p class="changed" id="now-changed"></p>
+    </section>
+
+    <div class="panels">
+      <section class="stack" aria-label="The layers around this packet">
+        <p class="label">The stack</p>
+        <ul class="osi">
+          {
+            OSI.map(l => (
+              <li data-osi={l.n}>
+                <span class="n">{l.n}</span>
+                <span class="osi-name">{l.name}</span>
+                <span class="osi-blurb">{l.blurb}</span>
+                <span class="osi-header" data-slot={l.n} />
+              </li>
+            ))
+          }
+        </ul>
+        <p class="hint">
+          Lit layers are the ones present in this frame. Hover a header to find
+          it in the bytes.
+        </p>
+      </section>
+
+      <section class="inspector" aria-label="The bytes on the wire">
+        <p class="label">
+          On the wire <span class="size" id="frame-size"></span>
+        </p>
+
+        <!-- Encapsulation, to scale: every header is a segment as wide as it
+             is long in bytes, wrapped around the one inside it. This is the
+             picture the seven stacked boxes of a textbook never draw. -->
+        <div class="encap" id="encap" aria-hidden="true"></div>
+
+        <div class="hex" id="hex"></div>
+        <dl class="fields" id="fields"></dl>
+      </section>
+    </div>
+  </Main>
+
+  <Footer />
+
+  <script
+    type="application/json"
+    id="flow"
+    set:html={JSON.stringify(payload)}
+  />
+
+  <script>
+    type Field = {
+      name: string;
+      value: string;
+      note: string | null;
+      hex: string;
+    };
+    type Block = {
+      osi: number;
+      name: string;
+      summary: string;
+      offWire: boolean;
+      fields: Field[];
+    };
+    type Tick = {
+      step: number;
+      id: string;
+      label: string;
+      phase: string;
+      summary: string;
+      link: string;
+      from: string;
+      to: string;
+      changed: string | null;
+      blocks: Block[];
+    };
+    type Flow = {
+      ticks: Tick[];
+      nodes: Record<string, { name: string; x: number; y: number }>;
+    };
+
+    /**
+     * Every listener is bound inside this function and the function runs on
+     * load AND after a client-side navigation — but the page is torn down in
+     * between, so nothing stacks. The trap is the other way round: binding at
+     * module scope would bind once and then lose the elements.
+     */
+    const start = () => {
+      const data = document.getElementById("flow");
+      const stage = document.querySelector<SVGSVGElement>(".stage svg");
+      if (!data || !stage) return;
+
+      const flow: Flow = JSON.parse(data.textContent ?? "{}");
+      const { ticks, nodes } = flow;
+
+      const packet = stage.querySelector<SVGGElement>(".packet")!;
+      const scrub = document.getElementById("scrub") as HTMLInputElement;
+      const playBtn = document.getElementById("play") as HTMLButtonElement;
+      const hex = document.getElementById("hex")!;
+      const fields = document.getElementById("fields")!;
+
+      const reduced = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+
+      let index = 0;
+      let progress = 0;
+      /**
+       * Which header the fields pane shows, remembered BY NAME rather than by
+       * position. Pinning an index would drift the moment a frame has a
+       * different shape — and the whole point of stepping hop by hop is to
+       * hold one header still and watch it be rewritten.
+       *
+       * Null means "whatever is innermost", which is what a step is about
+       * before the reader has pointed at anything.
+       */
+      let pinned: string | null = null;
+      let selected = 0;
+
+      const resolveSelected = (tick: Tick) => {
+        if (pinned) {
+          const byName = tick.blocks.findIndex(b => b.name === pinned);
+          if (byName >= 0) return byName;
+        }
+        return tick.blocks.length - 1;
+      };
+      let playing = false;
+      let raf = 0;
+      let last = 0;
+
+      /** A hop takes this long at play speed; a long frame is not slower. */
+      const HOP_MS = 1500;
+
+      const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+
+      const place = () => {
+        const tick = ticks[index];
+        const from = nodes[tick.from];
+        const to = nodes[tick.to];
+        /* Paused, the packet sits mid-cable rather than on a device: a mark
+           parked on top of the router reads as part of the router. */
+        const t = playing && !reduced ? progress : 0.5;
+        packet.setAttribute(
+          "transform",
+          `translate(${lerp(from.x, to.x, t)} ${lerp(from.y, to.y, t)})`,
+        );
+      };
+
+      const paintStage = () => {
+        const tick = ticks[index];
+        stage.querySelectorAll(".wire").forEach(w => {
+          w.classList.toggle("live", w.getAttribute("data-link") === tick.link);
+        });
+        stage.querySelectorAll(".node").forEach(n => {
+          const id = n.getAttribute("data-node");
+          n.classList.toggle("active", id === tick.from || id === tick.to);
+        });
+        document.querySelectorAll(".phases li").forEach(li => {
+          li.classList.toggle(
+            "on",
+            li.getAttribute("data-phase") === tick.phase,
+          );
+        });
+      };
+
+      /** The hex pane, with one span per byte carrying the field it belongs to. */
+      const paintBytes = (tick: Tick) => {
+        const cells: string[] = [];
+        let offset = 0;
+        let fieldNo = 0;
+
+        tick.blocks.forEach((block, bi) => {
+          block.fields.forEach(field => {
+            if (block.offWire) {
+              fieldNo += 1;
+              return;
+            }
+            const bytes = field.hex.match(/../g) ?? [];
+            bytes.forEach(b => {
+              cells.push(
+                `<span class="b" data-field="${fieldNo}" data-block="${bi}" data-osi="${block.osi}">${b}</span>`,
+              );
+              offset += 1;
+            });
+            fieldNo += 1;
+          });
+        });
+
+        hex.innerHTML = cells.join("");
+        document.getElementById("frame-size")!.textContent = `${offset} bytes`;
+      };
+
+      /**
+       * One block at a time. A whole frame is sixty fields and five pages of
+       * scrolling; a reader wants the header they are pointing at, and the
+       * hex pane above is what says where it sits in the whole.
+       */
+      const paintFields = (tick: Tick) => {
+        const block = tick.blocks[selected] ?? tick.blocks[0];
+        if (!block) return;
+        const bi = tick.blocks.indexOf(block);
+        let fieldNo = 0;
+        tick.blocks.forEach((b, i) => {
+          if (i < bi) fieldNo += b.fields.length;
+        });
+
+        const rows = [
+          `<div class="block-head${block.offWire ? " off-wire" : ""}" data-block="${bi}">` +
+            `<span class="layer-no">L${block.osi}</span>` +
+            `<span class="block-name">${block.name}</span>` +
+            (pinned === block.name
+              ? `<span class="pin">held across hops</span>`
+              : "") +
+            `<span class="block-summary">${block.summary}${
+              block.offWire
+                ? " <b>Not on the wire</b> — this is what the application handed to TLS. Outside it there is only the ciphertext above."
+                : ""
+            }</span>` +
+            `</div>`,
+          ...block.fields.map(
+            (field, i) =>
+              `<div class="row" data-field="${fieldNo + i}" data-block="${bi}">` +
+              `<dt>${field.name}</dt>` +
+              `<dd>${field.value}` +
+              (field.note ? `<em>${field.note}</em>` : "") +
+              `</dd>` +
+              `</div>`,
+          ),
+        ];
+        fields.innerHTML = rows.join("");
+      };
+
+      /**
+       * The encapsulation bar. Segment widths are byte counts, so a reader
+       * sees at a glance that on a DNS query the headers outweigh the
+       * question, and that on a page fetch they are a rounding error.
+       */
+      const paintEncap = (tick: Tick) => {
+        const encap = document.getElementById("encap")!;
+        const onWire = tick.blocks.filter(b => !b.offWire);
+        const total = onWire.reduce(
+          (n, b) => n + b.fields.reduce((m, f) => m + f.hex.length / 2, 0),
+          0,
+        );
+        encap.innerHTML = tick.blocks
+          .filter(b => !b.offWire)
+          .map(b => {
+            const i = tick.blocks.indexOf(b);
+            const bytes = b.fields.reduce((m, f) => m + f.hex.length / 2, 0);
+            const share = Math.round((bytes / total) * 100);
+            return (
+              `<span class="seg" data-block="${i}" style="flex: ${bytes} 1 0" ` +
+              `title="${b.name} — ${bytes} bytes, ${share}% of the frame">` +
+              `<span class="seg-name">${b.name}</span>` +
+              `<span class="seg-bytes">${bytes}</span>` +
+              `</span>`
+            );
+          })
+          .join("");
+      };
+
+      /** The OSI column: which layers this frame has, and what fills them. */
+      const paintStack = (tick: Tick) => {
+        const byLayer = new Map<number, Block[]>();
+        tick.blocks.forEach(b => {
+          byLayer.set(b.osi, [...(byLayer.get(b.osi) ?? []), b]);
+        });
+
+        document.querySelectorAll<HTMLLIElement>(".osi li").forEach(li => {
+          const n = Number(li.getAttribute("data-osi"));
+          const here = byLayer.get(n);
+          li.classList.toggle("on", Boolean(here));
+          const slot = li.querySelector<HTMLElement>(".osi-header")!;
+          slot.textContent = here
+            ? here
+                .map(b => (b.offWire ? `${b.name} (sealed)` : b.name))
+                .join(" · ")
+            : "";
+          slot.setAttribute(
+            "data-block",
+            here ? String(tick.blocks.indexOf(here[0])) : "",
+          );
+        });
+
+        /* Layer 1 is never a header — it is the cable, and it is always on. */
+        document.querySelector('.osi li[data-osi="1"]')?.classList.add("on");
+      };
+
+      const paintText = (tick: Tick) => {
+        document.getElementById("now-label")!.textContent = tick.label;
+        document.getElementById("now-summary")!.textContent = tick.summary;
+        document.getElementById("now-from")!.textContent =
+          nodes[tick.from].name;
+        document.getElementById("now-to")!.textContent = nodes[tick.to].name;
+        const changed = document.getElementById("now-changed")!;
+        changed.textContent = tick.changed ?? "";
+        changed.classList.toggle("empty", !tick.changed);
+        document.getElementById("tick-no")!.textContent = String(index + 1);
+        packet.querySelector(".tag")!.textContent = tick.label;
+      };
+
+      const paint = () => {
+        const tick = ticks[index];
+        selected = resolveSelected(tick);
+        paintStage();
+        paintText(tick);
+        paintStack(tick);
+        paintEncap(tick);
+        paintBytes(tick);
+        paintFields(tick);
+        place();
+        scrub.value = String(index);
+      };
+
+      /* ── hover: one highlight, wherever the pointer is ─────────────── */
+
+      const highlight = (field: number | null, block: number | null) => {
+        hex.querySelectorAll<HTMLElement>(".b").forEach(b => {
+          const f = Number(b.dataset.field);
+          const bl = Number(b.dataset.block);
+          b.classList.toggle("lit", field !== null && f === field);
+          b.classList.toggle(
+            "dim-in",
+            block !== null && bl === block && field === null,
+          );
+        });
+        fields.querySelectorAll<HTMLElement>(".row").forEach(r => {
+          r.classList.toggle(
+            "lit",
+            field !== null && Number(r.dataset.field) === field,
+          );
+        });
+        fields.querySelectorAll<HTMLElement>(".block-head").forEach(h => {
+          h.classList.toggle(
+            "lit",
+            block !== null && Number(h.dataset.block) === block,
+          );
+        });
+        document.querySelectorAll<HTMLElement>(".seg").forEach(seg => {
+          seg.classList.toggle(
+            "lit",
+            block !== null && Number(seg.dataset.block) === block,
+          );
+        });
+        document.querySelectorAll<HTMLElement>(".osi li").forEach(li => {
+          const slot = li.querySelector<HTMLElement>(".osi-header");
+          const b = slot?.getAttribute("data-block");
+          li.classList.toggle("lit", block !== null && b === String(block));
+        });
+      };
+
+      const clear = () => highlight(null, null);
+
+      hex.addEventListener("pointerover", e => {
+        const cell = (e.target as HTMLElement).closest<HTMLElement>(".b");
+        if (!cell) return;
+        const block = Number(cell.dataset.block);
+        if (block !== selected) {
+          selected = block;
+          pinned = ticks[index].blocks[block]?.name ?? null;
+          paintFields(ticks[index]);
+        }
+        highlight(Number(cell.dataset.field), block);
+      });
+      hex.addEventListener("pointerleave", clear);
+
+      fields.addEventListener("pointerover", e => {
+        const row = (e.target as HTMLElement).closest<HTMLElement>(".row");
+        if (row) {
+          highlight(Number(row.dataset.field), Number(row.dataset.block));
+          return;
+        }
+        const head = (e.target as HTMLElement).closest<HTMLElement>(
+          ".block-head",
+        );
+        if (head) highlight(null, Number(head.dataset.block));
+      });
+      fields.addEventListener("pointerleave", clear);
+
+      const encapEl = document.getElementById("encap")!;
+      encapEl.addEventListener("pointerover", e => {
+        const seg = (e.target as HTMLElement).closest<HTMLElement>(".seg");
+        if (!seg) return;
+        const block = Number(seg.dataset.block);
+        if (block !== selected) {
+          selected = block;
+          pinned = ticks[index].blocks[block]?.name ?? null;
+          paintFields(ticks[index]);
+        }
+        highlight(null, block);
+      });
+      encapEl.addEventListener("pointerleave", clear);
+
+      document.querySelector(".osi")?.addEventListener("pointerover", e => {
+        const li = (e.target as HTMLElement).closest<HTMLElement>("li");
+        const b = li
+          ?.querySelector<HTMLElement>(".osi-header")
+          ?.getAttribute("data-block");
+        if (!b) return;
+        if (Number(b) !== selected) {
+          selected = Number(b);
+          pinned = ticks[index].blocks[Number(b)]?.name ?? null;
+          paintFields(ticks[index]);
+        }
+        highlight(null, Number(b));
+      });
+      document.querySelector(".osi")?.addEventListener("pointerleave", clear);
+
+      /* ── transport ─────────────────────────────────────────────────── */
+
+      const setPlaying = (on: boolean) => {
+        playing = on;
+        playBtn.classList.toggle("playing", on);
+        playBtn.querySelector(".play-word")!.textContent = on
+          ? "Pause"
+          : "Play";
+        playBtn.setAttribute("aria-label", on ? "Pause" : "Play");
+        if (on) {
+          last = performance.now();
+          raf = requestAnimationFrame(frame);
+        } else {
+          cancelAnimationFrame(raf);
+        }
+      };
+
+      const frame = (now: number) => {
+        if (!playing) return;
+        const dt = now - last;
+        last = now;
+        progress += dt / HOP_MS;
+        while (progress >= 1) {
+          progress -= 1;
+          if (index >= ticks.length - 1) {
+            progress = 1;
+            setPlaying(false);
+            place();
+            return;
+          }
+          index += 1;
+          paint();
+        }
+        place();
+        raf = requestAnimationFrame(frame);
+      };
+
+      const goto = (i: number) => {
+        index = Math.max(0, Math.min(ticks.length - 1, i));
+        progress = 0;
+        paint();
+      };
+
+      playBtn.addEventListener("click", () => {
+        if (!playing && index === ticks.length - 1) goto(0);
+        setPlaying(!playing);
+      });
+      document.getElementById("next")!.addEventListener("click", () => {
+        setPlaying(false);
+        goto(index + 1);
+      });
+      document.getElementById("back")!.addEventListener("click", () => {
+        setPlaying(false);
+        goto(index - 1);
+      });
+      scrub.addEventListener("input", () => {
+        setPlaying(false);
+        goto(Number(scrub.value));
+      });
+
+      /* Arrow keys move a hop at a time; space plays. The page is a reader's,
+         so the keys that work on a video work here. */
+      const keys = (e: KeyboardEvent) => {
+        const typing = (e.target as HTMLElement)?.closest("input, textarea");
+        if (typing && e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+        if (e.key === "ArrowRight") {
+          setPlaying(false);
+          goto(index + 1);
+        } else if (e.key === "ArrowLeft") {
+          setPlaying(false);
+          goto(index - 1);
+        } else if (e.key === " " && !typing) {
+          e.preventDefault();
+          setPlaying(!playing);
+        }
+      };
+      document.addEventListener("keydown", keys);
+      document.addEventListener("astro:before-swap", () => {
+        cancelAnimationFrame(raf);
+        document.removeEventListener("keydown", keys);
+      });
+
+      paint();
+    };
+
+    start();
+    document.addEventListener("astro:after-swap", start);
+  </script>
+</Layout>
+
+<style>
+  .intro {
+    margin-bottom: clamp(28px, 4vh, 44px);
+  }
+
+  /* ── the stage ─────────────────────────────────────────────────────── */
+
+  .stage {
+    margin: 0 0 clamp(18px, 3vh, 28px);
+  }
+
+  .stage svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  .wire {
+    stroke: var(--border);
+    stroke-width: 1;
+  }
+
+  /* The cable currently carrying the packet. It is the only wire with any
+     presence, which is what makes the path through the page legible. */
+  .wire.live {
+    stroke: var(--text-4);
+    stroke-width: 1.4;
+  }
+
+  .glyph {
+    fill: none;
+    stroke: var(--text-3);
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .halo {
+    fill: var(--ground);
+    stroke: none;
+  }
+
+  .node.active .glyph {
+    stroke: var(--text);
+  }
+
+  .node .name {
+    font-family: var(--font-display);
+    font-size: 14px;
+    fill: var(--text-3);
+    text-anchor: middle;
+  }
+
+  .node .role {
+    font-family: var(--font-display);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    fill: var(--text-4);
+    text-anchor: middle;
+  }
+
+  .node.active .name {
+    fill: var(--text);
+  }
+
+  /* The one gold on the page: §4 allows three per viewport, the header has
+     already spent two, and this is the thing the page is about. */
+  .packet .body {
+    fill: var(--torch);
+  }
+
+  /* Not a glow so much as the light it throws on the cable either side. */
+  .packet .glow {
+    fill: var(--torch-tint);
+  }
+
+  .packet .tag {
+    font-family: var(--font-display);
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    fill: var(--text-3);
+    text-anchor: middle;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 22px;
+    margin-top: 14px;
+    font-size: 15px;
+    color: var(--text-4);
+  }
+
+  .legend .label {
+    display: none;
+  }
+
+  .legend-item b {
+    font-weight: 400;
+    color: var(--text-3);
+  }
+
+  /* ── controls ──────────────────────────────────────────────────────── */
+
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-block: 10px 6px;
+    border-top: 1px solid var(--border);
+  }
+
+  .controls button {
+    font-family: var(--font-display);
+    font-size: 15px;
+    letter-spacing: 0.04em;
+    color: var(--text-3);
+    background: none;
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    padding: 2px 2px 4px;
+    cursor: pointer;
+  }
+
+  .controls button:hover {
+    color: var(--text);
+    border-bottom-color: var(--text-4);
+  }
+
+  #scrub {
+    flex: 1;
+    accent-color: var(--text-3);
+    cursor: pointer;
+  }
+
+  .count {
+    font-family: var(--font-display);
+    font-size: 14px;
+    color: var(--text-4);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .phases {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0 18px;
+    list-style: none;
+    padding: 12px 0 0;
+    margin: 0 0 clamp(26px, 4vh, 40px);
+  }
+
+  .phases li {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+    font-size: 15px;
+    color: var(--text-4);
+  }
+
+  .phases li b {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    color: var(--text-4);
+  }
+
+  .phases li.on {
+    border-top-color: var(--text-4);
+  }
+
+  .phases li.on b {
+    color: var(--text-2);
+  }
+
+  /* ── what is happening ─────────────────────────────────────────────── */
+
+  .now {
+    margin-bottom: clamp(22px, 3vh, 34px);
+  }
+
+  .now-summary {
+    max-width: 62ch;
+    margin: 10px 0 0;
+    color: var(--text-2);
+  }
+
+  .now-wire {
+    margin: 12px 0 0;
+    font-family: var(--font-display);
+    font-size: 15px;
+    color: var(--text-3);
+  }
+
+  .now-wire .arrow {
+    margin-inline: 8px;
+    color: var(--text-4);
+  }
+
+  .now-wire .medium {
+    margin-inline-start: 12px;
+    color: var(--text-4);
+  }
+
+  /* The sentence the page is really for: what this device changed. */
+  .changed {
+    max-width: 62ch;
+    margin: 12px 0 0;
+    padding-inline-start: 14px;
+    border-inline-start: 1px solid var(--border);
+    color: var(--text-3);
+    font-style: italic;
+  }
+
+  .changed.empty {
+    display: none;
+  }
+
+  /* ── the two panels ────────────────────────────────────────────────── */
+
+  .panels {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: clamp(20px, 3vw, 38px);
+  }
+
+  .osi {
+    list-style: none;
+    padding: 0;
+    margin: 12px 0 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .osi li {
+    display: grid;
+    grid-template-columns: 22px 1fr;
+    grid-template-areas: "n name" ". blurb" ". header";
+    gap: 1px 10px;
+    padding: 9px 8px;
+    border-top: 1px solid var(--border);
+    opacity: 0.45;
+  }
+
+  .osi li:last-child {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .osi li.on {
+    opacity: 1;
+  }
+
+  .osi li.lit {
+    background: var(--panel);
+  }
+
+  .osi .n {
+    grid-area: n;
+    font-family: var(--font-display);
+    font-size: 13px;
+    color: var(--text-4);
+  }
+
+  .osi-name {
+    grid-area: name;
+    font-family: var(--font-display);
+    color: var(--text-2);
+  }
+
+  .osi-blurb {
+    grid-area: blurb;
+    font-size: 14px;
+    color: var(--text-4);
+  }
+
+  /* The header this layer contributes to the frame in front of us. It is
+     also the handle: pointing at it moves the fields pane. */
+  .osi-header {
+    grid-area: header;
+    font-size: 14px;
+    color: var(--arcane);
+    cursor: default;
+  }
+
+  .osi li.lit .osi-header {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+
+  .osi-header:empty {
+    display: none;
+  }
+
+  /* ── encapsulation ─────────────────────────────────────────────────── */
+
+  .encap {
+    display: flex;
+    gap: 2px;
+    margin-top: 14px;
+  }
+
+  .encap :global(.seg) {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+    padding: 8px 6px;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    overflow: hidden;
+    cursor: default;
+  }
+
+  .encap :global(.seg.lit) {
+    border-top-color: var(--arcane);
+  }
+
+  .encap :global(.seg-name) {
+    font-family: var(--font-display);
+    font-size: 13px;
+    white-space: nowrap;
+    color: var(--text-3);
+  }
+
+  .encap :global(.seg.lit .seg-name) {
+    color: var(--arcane);
+  }
+
+  .encap :global(.seg-bytes) {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-4);
+  }
+
+  .hint,
+  .size {
+    font-size: 14px;
+    color: var(--text-4);
+  }
+
+  .hint {
+    margin-top: 10px;
+  }
+
+  .size {
+    margin-inline-start: 10px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── bytes ─────────────────────────────────────────────────────────── */
+
+  /* Sixteen bytes to the line, the way every hex dump since 1970 has been
+     read, with a wider gap at the halfway mark so the eye can count. */
+  .hex {
+    display: grid;
+    grid-template-columns: repeat(16, minmax(0, 1fr));
+    gap: 3px 0;
+    margin: 12px 0 0;
+    padding: 14px 16px;
+    background: var(--panel);
+    border-inline-start: 1px solid var(--border-recess);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-4);
+  }
+
+  /* Everything below is built at runtime, so it carries no scope attribute
+     and a scoped selector would never match it. This is the one place on the
+     site where :global is correct rather than lazy. */
+  .hex :global(.b) {
+    text-align: center;
+    cursor: default;
+    transition: color 80ms linear;
+  }
+
+  .hex :global(.b:nth-child(8n + 1)) {
+    margin-inline-start: 7px;
+  }
+
+  /* The hovered field, in the arcane register — the theme's second voice.
+     Gold stays the packet and nothing else. */
+  .hex :global(.b.lit) {
+    color: var(--arcane);
+  }
+
+  /* The rest of the header the hovered field belongs to. */
+  .hex :global(.b.dim-in) {
+    color: var(--text-2);
+  }
+
+  .fields {
+    margin: 14px 0 0;
+  }
+
+  .fields :global(.block-head) {
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    grid-template-areas: "no name" ". summary";
+    gap: 1px 8px;
+    padding: 0 8px 10px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+  }
+
+  .fields :global(.layer-no) {
+    grid-area: no;
+    font-family: var(--font-display);
+    font-size: 13px;
+    color: var(--text-4);
+  }
+
+  .fields :global(.block-name) {
+    grid-area: name;
+    font-family: var(--font-display);
+    color: var(--text-2);
+  }
+
+  .fields :global(.block-summary) {
+    grid-area: summary;
+    font-size: 14px;
+    color: var(--text-4);
+  }
+
+  .fields :global(.row) {
+    display: grid;
+    grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr);
+    gap: 3px 14px;
+    padding: 6px 8px;
+  }
+
+  .fields :global(.pin) {
+    grid-area: name;
+    justify-self: end;
+    font-family: var(--font-display);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--text-4);
+  }
+
+  .fields :global(.block-head.off-wire) {
+    border-bottom-color: var(--arcane-dim);
+  }
+
+  .fields :global(.block-summary b) {
+    font-weight: 400;
+    color: var(--arcane);
+  }
+
+  .fields :global(.row.lit) {
+    background: var(--panel);
+  }
+
+  .fields :global(.row dt) {
+    font-size: 15px;
+    color: var(--text-4);
+  }
+
+  .fields :global(.row dd) {
+    margin: 0;
+    font-size: 15px;
+    color: var(--text-2);
+  }
+
+  /* The sentence that makes a field worth looking at twice. */
+  .fields :global(.row dd em) {
+    display: block;
+    margin-top: 4px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--text-4);
+  }
+
+  /* ── narrow ────────────────────────────────────────────────────────── */
+
+  @media (max-width: 54rem) {
+    .panels {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    /* The stage stops shrinking and starts scrolling: five devices and their
+       labels do not fit in a phone's width, and shrinking them to fit is how
+       a diagram becomes decoration. */
+    .stage {
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+    }
+
+    .stage svg {
+      min-width: 620px;
+    }
+
+    /* Eight bytes to the line rather than sixteen — the same dump, folded. */
+    .hex {
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      font-size: 12px;
+    }
+
+    .hex :global(.b:nth-child(8n + 1)) {
+      margin-inline-start: 0;
+    }
+
+    .phases {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0 14px;
+    }
+
+    .node .role {
+      display: none;
+    }
+
+    .row {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

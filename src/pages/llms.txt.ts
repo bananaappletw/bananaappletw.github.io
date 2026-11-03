@@ -56,6 +56,7 @@ export const GET: APIRoute = async ({ site }) => {
       const url = abs(`/${id}/`, site);
       return `- [${data.title}](${url})${note(data.title, data.description ?? "")}`;
     }),
+    `- [The network](${abs("/network/", site)}): one HTTPS request taken apart hop by hop — the frames, their headers and their bytes, rewritten at every device`,
     `- [Archives](${abs("/archives/", site)}): every post by year and month`,
     `- [Tags](${abs("/tags/", site)}): every tag in use`,
     "",
