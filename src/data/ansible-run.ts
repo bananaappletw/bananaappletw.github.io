@@ -274,11 +274,20 @@ export type Seg = {
   k?: "key" | "str" | "num" | "jinja" | "name" | "comment";
 };
 
+/**
+ * Which part of a play's scaffolding a line belongs to. The guide builds
+ * `site.yml` up a piece at a time, and it needs to know that `vars:` and
+ * `handlers:` arrive at different moments from `hosts:` — which a line
+ * tagged only with its play cannot say.
+ */
+export type Part = "play" | "vars" | "handlers" | "task" | "blank";
+
 export type PlaybookLine = {
   segs: Seg[];
   /** the global task index this line belongs to, or null for play scaffolding */
   task: number | null;
   play: number;
+  part: Part;
   /** a handler's lines are marked, because a handler is not in the task list */
   handler?: boolean;
 };
@@ -353,8 +362,8 @@ export type Play = {
   /** the group the play names */
   target: string;
   hosts: HostId[];
-  /** the lines before the first task */
-  head: string[];
+  /** the lines before the first task, each tagged with what it is */
+  head: { text: string; part: Part }[];
   summary: string;
 };
 
@@ -367,17 +376,17 @@ export const PLAYS: Play[] = [
     summary:
       "Three hosts, two forks and the default linear strategy — so the play is a column of barriers, and each one is as slow as the slowest host at that row.",
     head: [
-      "- name: Web tier",
-      "  hosts: webservers",
-      "  become: true",
-      "  vars:",
-      "    nginx_port: 8080",
-      "  handlers:",
-      "    - name: Reload nginx",
-      "      ansible.builtin.service:",
-      "        name: nginx",
-      "        state: reloaded",
-      "  tasks:",
+      { text: "- name: Web tier", part: "play" },
+      { text: "  hosts: webservers", part: "play" },
+      { text: "  become: true", part: "play" },
+      { text: "  vars:", part: "vars" },
+      { text: "    nginx_port: 8080", part: "vars" },
+      { text: "  handlers:", part: "handlers" },
+      { text: "    - name: Reload nginx", part: "handlers" },
+      { text: "      ansible.builtin.service:", part: "handlers" },
+      { text: "        name: nginx", part: "handlers" },
+      { text: "        state: reloaded", part: "handlers" },
+      { text: "  tasks:", part: "play" },
     ],
   },
   {
@@ -388,10 +397,10 @@ export const PLAYS: Play[] = [
     summary:
       "A second play, which is to say: nothing in it begins until the first play's last handler has finished. Plays never overlap, whatever the forks are set to.",
     head: [
-      "- name: Database",
-      "  hosts: dbservers",
-      "  become: true",
-      "  tasks:",
+      { text: "- name: Database", part: "play" },
+      { text: "  hosts: dbservers", part: "play" },
+      { text: "  become: true", part: "play" },
+      { text: "  tasks:", part: "play" },
     ],
   },
 ];
@@ -519,16 +528,26 @@ export const TASKS: Task[] = [
 /** The listing, assembled so that every line knows which task owns it. */
 export const PLAYBOOK: PlaybookLine[] = PLAYS.flatMap(play => {
   const lines: PlaybookLine[] = [];
-  if (play.n > 0) lines.push({ segs: [], task: null, play: play.n });
-  for (const text of play.head) {
-    lines.push({ segs: tokenise(text), task: null, play: play.n });
+  if (play.n > 0) {
+    lines.push({ segs: [], task: null, play: play.n, part: "blank" });
+  }
+  for (const { text, part } of play.head) {
+    lines.push({ segs: tokenise(text), task: null, play: play.n, part });
   }
   for (const task of TASKS.filter(t => t.play === play.n && !t.handler)) {
     if (task.n > 0 && lines[lines.length - 1].segs.length) {
-      lines.push({ segs: [], task: null, play: play.n });
+      /* The separator belongs to the task it precedes, not to the play —
+         otherwise the guide, which adds tasks one at a time, shows the gaps
+         before the things that make them. */
+      lines.push({ segs: [], task: task.n, play: play.n, part: "blank" });
     }
     for (const text of task.yaml) {
-      lines.push({ segs: tokenise(text), task: task.n, play: play.n });
+      lines.push({
+        segs: tokenise(text),
+        task: task.n,
+        play: play.n,
+        part: "task",
+      });
     }
   }
   return lines;

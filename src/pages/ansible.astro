@@ -65,6 +65,14 @@ import {
   buildSchedule,
   type RunOptions,
 } from "@/data/ansible-run";
+import {
+  HOSTS_AT,
+  LAST_STEP,
+  STEPS as GUIDE,
+  outputAt,
+  stepOfLine,
+  tasksAt,
+} from "@/data/ansible-guide";
 
 const title = "Ansible";
 const description =
@@ -444,6 +452,84 @@ const esc = (t: string) =>
 /** Notes are authored with backticks; every one of them is a <code>. */
 const ticks = (t: string) => esc(t).replace(/`([^`]+)`/g, "<code>$1</code>");
 
+/**
+ * The guide's pane: the whole file, with every line carrying the step it
+ * arrives at. Showing and hiding by attribute costs one class toggle per
+ * step and keeps the growing-file mechanic out of the script entirely.
+ */
+const guideHtml = PLAYBOOK.map(line => {
+  const step = stepOfLine(line);
+  return (
+    `<span class="ln" data-step="${step}" data-task="${line.task ?? ""}">` +
+    (line.segs.length
+      ? line.segs
+          .map(seg =>
+            seg.k
+              ? `<span class="s-${seg.k}">${esc(seg.t)}</span>`
+              : esc(seg.t),
+          )
+          .join("")
+      : " ") +
+    `</span>`
+  );
+}).join("");
+
+/**
+ * Terminal output, built as a string.
+ *
+ * JSX inside a `<pre>` does not survive Astro's parser — a template literal
+ * or a ternary returning elements in there reports a syntax error hundreds
+ * of lines further down the file, which is a long way to walk back. Every
+ * `<pre>` on this page is therefore filled with `set:html`, the same way
+ * the playbook listing is.
+ */
+const termHtml = (lines: { text: string; kind: string }[]) =>
+  lines
+    .map(l => `<span class="o-${l.kind}">${esc(l.text || " ")}\n</span>`)
+    .join("");
+
+const shellHtml = (lines: { text: string; note?: string; out?: boolean }[]) =>
+  lines
+    .map(
+      l =>
+        `<span class="${l.out ? "sh-out" : "sh-in"}">` +
+        `${l.out ? "" : "$ "}${esc(l.text)}\n</span>` +
+        (l.note ? `<span class="sh-note">  ${esc(l.note)}\n</span>` : ""),
+    )
+    .join("");
+
+const insetOutHtml = (lines: string[]) =>
+  lines
+    .map(l => {
+      const kind = l.startsWith("changed")
+        ? "changed"
+        : l.startsWith("ok")
+          ? "ok"
+          : l.startsWith("fatal")
+            ? "failed"
+            : l.startsWith("TASK")
+              ? "task"
+              : "blank";
+      return `<span class="o-${kind}">${esc(l || " ")}\n</span>`;
+    })
+    .join("");
+
+/* ── the per-step grid ─────────────────────────────────────────────────── */
+
+const SCELL = 26;
+const sgridOf = (step: number) => {
+  const hosts = HOSTS_AT[step] ?? [];
+  const rows = tasksAt(step);
+  return {
+    hosts,
+    rows,
+    w: 150 + hosts.length * 92,
+    h: 30 + rows.length * SCELL + 6,
+    x: (host: (typeof hosts)[number]) => 150 + hosts.indexOf(host) * 92 + 32,
+    y: (n: number) => 30 + rows.findIndex(t => t.n === n) * SCELL,
+  };
+};
+
 const yamlHtml = PLAYBOOK.map(
   line =>
     `<span class="ln" data-task="${line.task ?? ""}">` +
@@ -532,6 +618,184 @@ const payload = {
       </p>
     </div>
   </Main>
+
+  <!-- ── PART I · the guide ──────────────────────────────────────────────
+       The page used to open on its own conclusion. It opens on the start
+       now: one file, written a piece at a time, with the thing Ansible
+       actually prints beside it. The pane on the left holds the same file
+       the rest of the page then runs, which `tests/ansible-guide.test.ts`
+       asserts rather than hopes. -->
+  <section class="part" id="part-1">
+    <p class="part-n">Part I</p>
+    <h2>Ten steps</h2>
+    <p class="part-lead">
+      One file, built in front of you. Scroll and it grows; the pane keeps up.
+    </p>
+  </section>
+
+  <section class="guide" id="guide">
+    <div class="guide-rail">
+      <p class="label">
+        site.yml <span class="rail-step" id="rail-step"
+          >step 1 / {LAST_STEP}</span
+        >
+      </p>
+      <pre
+        class="code guide-file"
+        id="guide-file"><code set:html={guideHtml} /></pre>
+
+      <p class="label sub">what it prints</p>
+      <div class="term" id="guide-term">
+        {
+          GUIDE.map(step => (
+            <pre
+              class="term-run"
+              data-step={step.n}
+              hidden={step.n !== 1}
+              set:html={
+                outputAt(step.n).length
+                  ? termHtml(outputAt(step.n))
+                  : '<span class="o-blank">nothing to run yet\n</span>'
+              }
+            />
+          ))
+        }
+      </div>
+    </div>
+
+    <ol class="steps-list">
+      {
+        GUIDE.map(step => {
+          const g = sgridOf(step.n);
+          return (
+            <li class="gstep" data-step={step.n}>
+              <p class="gstep-n">{String(step.n).padStart(2, "0")}</p>
+              <h3>{step.title}</h3>
+              <p class="gstep-lead" set:html={ticks(step.lead)} />
+
+              {step.shell ? (
+                <pre class="shell" set:html={shellHtml(step.shell)} />
+              ) : null}
+
+              {step.keywords && step.keywords.length ? (
+                <dl class="kw">
+                  {step.keywords.map(k => (
+                    <Fragment>
+                      <dt>
+                        <code>{k.word}</code>
+                      </dt>
+                      <dd>
+                        <span set:html={ticks(k.what)} />
+                        {k.without ? <em set:html={ticks(k.without)} /> : null}
+                      </dd>
+                    </Fragment>
+                  ))}
+                </dl>
+              ) : null}
+
+              {step.output === "twice" ? (
+                <div class="twice">
+                  <div>
+                    <p class="twice-head">first run</p>
+                    <pre
+                      class="term-run"
+                      set:html={termHtml(outputAt(step.n))}
+                    />
+                  </div>
+                  <div>
+                    <p class="twice-head">run it again</p>
+                    <pre
+                      class="term-run"
+                      set:html={termHtml(outputAt(step.n, true))}
+                    />
+                  </div>
+                </div>
+              ) : null}
+
+              {step.grid && g.hosts.length ? (
+                <svg
+                  class="sgrid"
+                  viewBox={`0 0 ${g.w} ${g.h}`}
+                  role="img"
+                  aria-label={`${g.rows.length} tasks against ${g.hosts.length} hosts`}
+                >
+                  {g.hosts.map(h => (
+                    <text class="sgrid-host" x={g.x(h)} y="16">
+                      {h}
+                    </text>
+                  ))}
+                  {g.rows.map(task => (
+                    <Fragment>
+                      <text class="sgrid-task" x="138" y={g.y(task.n) + 14}>
+                        {task.handler ? `${task.name} (handler)` : task.name}
+                      </text>
+                      {g.hosts.map(h => {
+                        const e = EVENTS.find(
+                          x => x.task === task.n && x.host === h,
+                        );
+                        return !task.hosts.includes(h) || !e ? (
+                          <text
+                            class="sgrid-gap"
+                            x={g.x(h)}
+                            y={g.y(task.n) + 14}
+                          >
+                            ·
+                          </text>
+                        ) : (
+                          <g class={`sgcell v-${e.verdict}`}>
+                            <rect
+                              x={g.x(h) - 24}
+                              y={g.y(task.n) + 2}
+                              width="48"
+                              height="15"
+                              rx="2"
+                            />
+                            <text x={g.x(h)} y={g.y(task.n) + 14}>
+                              {e.verdict}
+                            </text>
+                          </g>
+                        );
+                      })}
+                    </Fragment>
+                  ))}
+                </svg>
+              ) : null}
+
+              {step.insets
+                ? step.insets.map(inset => (
+                    <div class="inset">
+                      <p class="inset-head">{inset.title}</p>
+                      <div class="inset-body">
+                        <pre
+                          class="code yaml-plain"
+                          set:html={esc(inset.yaml.join("\n"))}
+                        />
+                        <pre
+                          class="term-run inset-out"
+                          set:html={insetOutHtml(inset.out)}
+                        />
+                      </div>
+                      <p class="inset-note" set:html={ticks(inset.note)} />
+                    </div>
+                  ))
+                : null}
+
+              <p class="gstep-take" set:html={ticks(step.takeaway)} />
+            </li>
+          );
+        })
+      }
+    </ol>
+  </section>
+
+  <section class="part" id="part-2">
+    <p class="part-n">Part II</p>
+    <h2>What actually happens</h2>
+    <p class="part-lead">
+      That file, run. Nineteen modules built on your machine, thrown at four
+      others, and every byte of the exchange open to inspection.
+    </p>
+  </section>
 
   <!-- The overview first, because a reader cannot be shown a barrier before
        they know what is being held back. This is the Gantt below with the
@@ -984,10 +1248,15 @@ const payload = {
     </aside>
   </section>
 
-  <!-- ── the reference panels ────────────────────────────────────────────
-       The simulation teaches the shape of a run. These four teach the
-       things a run never shows you, because they are decisions made before
-       it starts. -->
+  <section class="part" id="part-3">
+    <p class="part-n">Part III</p>
+    <h2>Reference</h2>
+    <p class="part-lead">
+      The four things a run never shows you, because they are decisions taken
+      before it starts.
+    </p>
+  </section>
+
   <!-- ── the reference panels ────────────────────────────────────────────
        The simulation teaches the shape of a run. These four teach what a
        run never shows, because they are decisions taken before it starts —
@@ -2512,12 +2781,474 @@ const payload = {
 
     start();
     document.addEventListener("astro:after-swap", start);
+
+    /* ── Part I: the file that grows ──────────────────────────────────── */
+
+    /**
+     * One observer over the ten steps, and three things follow from which
+     * step is in view: which lines of `site.yml` are visible, which of them
+     * just arrived, and which run of the output is shown.
+     *
+     * The lines are held open rather than removed — `visibility`, not
+     * `display` — so the pane does not jump under a reader who is looking
+     * at it. The whole file is in the DOM from the first frame; the step
+     * only decides what can be seen.
+     */
+    const guide = () => {
+      const file = document.getElementById("guide-file");
+      const term = document.getElementById("guide-term");
+      const label = document.getElementById("rail-step");
+      const steps = [...document.querySelectorAll<HTMLElement>(".gstep")];
+      if (!file || !term || !label || !steps.length) return;
+
+      const lines = [...file.querySelectorAll<HTMLElement>(".ln")];
+      const runs = [...term.querySelectorAll<HTMLElement>(".term-run")];
+      const last = Number(steps[steps.length - 1].dataset.step);
+      let at = -1;
+
+      const show = (step: number) => {
+        if (step === at) return;
+        at = step;
+        for (const ln of lines) {
+          const n = Number(ln.dataset.step);
+          ln.classList.toggle("shown", n <= step);
+          ln.classList.toggle("fresh", n === step);
+        }
+        for (const run of runs) {
+          run.hidden = Number(run.dataset.step) !== step;
+        }
+        label.textContent = `step ${step} / ${last}`;
+      };
+
+      show(1);
+
+      /* The band is the upper third: a step counts as current once its
+         heading has reached the place a reader is actually looking, not
+         when its last paragraph finally leaves the screen. */
+      const seen = new Map<number, number>();
+      const io = new IntersectionObserver(
+        entries => {
+          for (const e of entries) {
+            const n = Number((e.target as HTMLElement).dataset.step);
+            seen.set(n, e.intersectionRatio);
+          }
+          /* Among the steps in the band, the furthest one reached wins:
+             scrolling down should never show the file shrinking. */
+          const live = [...seen.entries()]
+            .filter(([, ratio]) => ratio > 0)
+            .map(([n]) => n);
+          if (live.length) show(Math.max(...live));
+        },
+        { rootMargin: "-20% 0px -55% 0px", threshold: [0, 0.01, 0.5, 1] },
+      );
+      for (const step of steps) io.observe(step);
+
+      document.addEventListener("astro:before-swap", () => io.disconnect(), {
+        once: true,
+      });
+    };
+
+    guide();
+    document.addEventListener("astro:after-swap", guide);
   </script>
 </Layout>
 
 <style>
   .intro {
     margin-bottom: clamp(26px, 4vh, 40px);
+  }
+
+  /* ── the part headings ─────────────────────────────────────────────── */
+
+  .part {
+    width: 100%;
+    max-width: 64rem;
+    margin-inline: auto;
+    padding-inline: clamp(22px, 6vw, 40px);
+    padding-block: clamp(44px, 9vh, 92px) clamp(20px, 3vh, 34px);
+  }
+
+  .part-n {
+    margin: 0 0 10px;
+    font-family: var(--font-display);
+    font-size: 11px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--text-4);
+  }
+
+  .part h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(25px, 3.4vw, 33px);
+    letter-spacing: 0.02em;
+    color: var(--text);
+  }
+
+  .part-lead {
+    margin: 12px 0 0;
+    max-width: 58ch;
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--text-2);
+  }
+
+  /* ── the guide ─────────────────────────────────────────────────────── */
+
+  /* The file on the left, the narration on the right. The file is the one
+     object that persists the whole way down, so it is the one that stays
+     in view. */
+  .guide {
+    display: grid;
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.3fr);
+    gap: clamp(22px, 3vw, 52px);
+    width: 100%;
+    max-width: 92rem;
+    margin-inline: auto;
+    padding-inline: clamp(22px, 5vw, 40px);
+    padding-bottom: clamp(40px, 8vh, 80px);
+    align-items: start;
+  }
+
+  .guide-rail {
+    position: sticky;
+    top: 16px;
+    min-width: 0;
+  }
+
+  .rail-step {
+    margin-inline-start: 10px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--arcane);
+  }
+
+  .guide-file {
+    max-height: 56vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+
+  /* A line that has not arrived is removed, not merely made invisible —
+     held open it reads as a blank line in the file, which is worse than
+     the pane growing. Growing is the point. */
+  .guide-file :global(.ln) {
+    display: none;
+  }
+
+  .guide-file :global(.ln.shown) {
+    display: block;
+  }
+
+  .guide-file :global(.ln.fresh) {
+    background: var(--arcane-tint);
+    box-shadow: inset 2px 0 0 var(--arcane);
+    margin-inline: -14px;
+    padding-inline: 14px;
+  }
+
+  .guide-file :global(.s-key) {
+    color: var(--syn-keyword);
+  }
+
+  .guide-file :global(.s-name),
+  .guide-file :global(.s-str) {
+    color: var(--syn-string);
+  }
+
+  .guide-file :global(.s-num) {
+    color: var(--syn-constant);
+  }
+
+  .guide-file :global(.s-jinja) {
+    color: var(--arcane);
+  }
+
+  .guide-file :global(.s-comment) {
+    color: var(--syn-comment);
+  }
+
+  /* ── what it prints ────────────────────────────────────────────────── */
+
+  .term {
+    margin-top: 10px;
+  }
+
+  .term-run {
+    margin: 0;
+    padding: 12px 14px;
+    background: var(--panel);
+    border-inline-start: 1px solid var(--border-recess);
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    line-height: 1.6;
+    white-space: pre;
+    overflow-x: auto;
+    color: var(--text-4);
+  }
+
+  /* Ansible colours its own output, and a reader learns to scan for those
+     colours before they learn to read the words. The three hues here are
+     the theme's, not Ansible's — but the distinction is the same one. */
+  .term-run :global(.o-ok) {
+    color: var(--text-3);
+  }
+
+  .term-run :global(.o-changed) {
+    color: var(--text);
+  }
+
+  .term-run :global(.o-skipped) {
+    color: var(--text-4);
+    font-style: italic;
+  }
+
+  .term-run :global(.o-failed) {
+    color: var(--blood);
+  }
+
+  .term-run :global(.o-task),
+  .term-run :global(.o-play) {
+    color: var(--text-4);
+  }
+
+  .term-run :global(.o-recap) {
+    color: var(--text-2);
+  }
+
+  /* ── one step ──────────────────────────────────────────────────────── */
+
+  .steps-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+  }
+
+  .gstep {
+    padding-block: clamp(30px, 7vh, 72px);
+    border-top: 1px solid var(--border);
+  }
+
+  .gstep:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  .gstep-n {
+    margin: 0 0 6px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-4);
+  }
+
+  .gstep h3 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(21px, 2.4vw, 26px);
+    color: var(--text);
+  }
+
+  .gstep-lead {
+    margin: 12px 0 0;
+    max-width: 62ch;
+    font-size: 16px;
+    line-height: 1.75;
+    color: var(--text-2);
+  }
+
+  .gstep-take {
+    margin: 22px 0 0;
+    max-width: 60ch;
+    padding-inline-start: 14px;
+    border-inline-start: 1px solid var(--text-4);
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--text-3);
+  }
+
+  .gstep code,
+  .kw code {
+    font-family: var(--font-mono);
+    font-size: 0.86em;
+    color: var(--text-3);
+  }
+
+  /* the command, and what it printed */
+  .shell {
+    margin: 18px 0 0;
+    padding: 12px 14px;
+    background: var(--panel);
+    border-inline-start: 1px solid var(--border-recess);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    color: var(--text-3);
+  }
+
+  .shell :global(.sh-in) {
+    color: var(--text-2);
+  }
+
+  .shell :global(.sh-out) {
+    color: var(--text-4);
+  }
+
+  .shell :global(.sh-note) {
+    color: var(--text-4);
+    font-style: italic;
+  }
+
+  /* the keywords this step introduces */
+  .kw {
+    display: grid;
+    grid-template-columns: minmax(0, 0.44fr) minmax(0, 1fr);
+    gap: 0 clamp(12px, 1.6vw, 22px);
+    margin: 20px 0 0;
+  }
+
+  .kw dt {
+    padding: 9px 0;
+    border-top: 1px solid var(--border-recess);
+    overflow-wrap: anywhere;
+  }
+
+  .kw dd {
+    margin: 0;
+    padding: 9px 0;
+    border-top: 1px solid var(--border-recess);
+    font-size: 14.5px;
+    line-height: 1.6;
+    color: var(--text-2);
+  }
+
+  .kw dd em {
+    display: block;
+    margin-top: 5px;
+    font-size: 13.5px;
+    color: var(--text-4);
+  }
+
+  /* the same file, twice */
+  /* Side by side only when a pane can hold a whole recap line; otherwise
+     stacked, because a comparison you have to scroll sideways to make is
+     not a comparison. */
+  .twice {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+  }
+
+  .twice-head {
+    margin: 0 0 8px;
+    font-family: var(--font-display);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-4);
+  }
+
+  /* the grid, small, growing with the file */
+  .sgrid {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin-top: 22px;
+    overflow: visible;
+  }
+
+  .sgrid-host {
+    font-family: var(--font-display);
+    font-size: 12px;
+    fill: var(--text-3);
+    text-anchor: middle;
+  }
+
+  .sgrid-task {
+    font-family: var(--font-display);
+    font-size: 11.5px;
+    fill: var(--text-4);
+    text-anchor: end;
+  }
+
+  .sgcell rect {
+    fill: none;
+    stroke: var(--border-recess);
+  }
+
+  .sgcell text {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    fill: var(--text-4);
+    text-anchor: middle;
+  }
+
+  .sgcell.v-changed rect {
+    fill: var(--panel);
+    stroke: var(--text-4);
+  }
+
+  .sgcell.v-changed text {
+    fill: var(--text-2);
+  }
+
+  .sgcell.v-skipped rect {
+    stroke-dasharray: 2 2;
+  }
+
+  .sgrid-gap {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    fill: var(--border-recess);
+    text-anchor: middle;
+  }
+
+  /* a technique, shown beside its output */
+  .inset {
+    margin-top: 24px;
+  }
+
+  .inset-head {
+    margin: 0 0 10px;
+    font-family: var(--font-display);
+    font-size: 13.5px;
+    color: var(--text-3);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .inset-body {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 12px;
+  }
+
+  .yaml-plain {
+    margin: 0;
+    padding: 12px 14px;
+    background: var(--panel);
+    border-inline-start: 1px solid var(--border-recess);
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    line-height: 1.6;
+    white-space: pre;
+    overflow-x: auto;
+    color: var(--syn-plain);
+  }
+
+  .inset-note {
+    margin: 10px 0 0;
+    max-width: 62ch;
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: var(--text-4);
   }
 
   /* ── the hook ──────────────────────────────────────────────────────── */
