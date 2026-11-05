@@ -1,12 +1,20 @@
 import { describe, it, expect } from "vitest";
 import {
+  BEST_MS,
+  CHOICES,
+  DEFAULTS,
   EVENTS,
   FORKS,
+  LINKS,
+  PLAYS,
+  TARGET_MS,
+  WORST_MS,
+  buildSchedule,
+  type RunOptions,
   HOSTS,
   LINK_MS,
   MANAGED,
   PLAYBOOK,
-  PLAYS,
   PRECEDENCE,
   RECAP,
   RUN_END,
@@ -197,6 +205,7 @@ describe("the clock", () => {
     for (const slot of skipped) {
       expect(slot.out).toBe(slot.t0);
       expect(slot.back).toBe(slot.t0);
+      expect(slot.t1).toBe(slot.t0);
       expect(eventOf(slot).runMs).toBe(0);
     }
   });
@@ -308,5 +317,230 @@ describe("the precedence ladder", () => {
     const play = PRECEDENCE.find(r => r.what === "play vars")!;
     const role = PRECEDENCE.find(r => r.what === "role vars")!;
     expect(role.n).toBeGreaterThan(play.n);
+  });
+});
+
+/* ── the four knobs ───────────────────────────────────────────────────── */
+
+/** every configuration the page offers a reader */
+const ALL: RunOptions[] = CHOICES.forks.flatMap(forks =>
+  CHOICES.strategy.flatMap(strategy =>
+    CHOICES.gathering.flatMap(gathering =>
+      CHOICES.pipelining.map(pipelining => ({
+        forks,
+        strategy,
+        gathering,
+        pipelining,
+      })),
+    ),
+  ),
+);
+
+const name = (o: RunOptions) =>
+  `forks=${o.forks} ${o.strategy} ${o.gathering} pipelining=${o.pipelining}`;
+
+const at = (o: Partial<RunOptions>) => buildSchedule({ ...DEFAULTS, ...o });
+
+describe("the schedule is a function of the four knobs", () => {
+  it("agrees with the default schedule at the default settings", () => {
+    expect(buildSchedule(DEFAULTS).slots).toEqual(SCHEDULE);
+  });
+
+  it("schedules every event exactly once, however it is configured", () => {
+    for (const o of ALL) {
+      const { slots } = buildSchedule(o);
+      expect(slots.length, name(o)).toBe(EVENTS.length);
+      expect(new Set(slots.map(s => s.event)).size, name(o)).toBe(
+        EVENTS.length,
+      );
+    }
+  });
+
+  it("never exceeds the fork ceiling it was given", () => {
+    for (const o of ALL) {
+      const real = buildSchedule(o).slots.filter(s => s.fork >= 0);
+      for (const mark of real.flatMap(s => [s.t0, s.t1])) {
+        const live = real.filter(s => s.t0 <= mark && mark < s.t1).length;
+        expect(live, name(o)).toBeLessThanOrEqual(o.forks);
+      }
+      for (const s of real) expect(s.fork, name(o)).toBeLessThan(o.forks);
+    }
+  });
+
+  it("orders each slot's four moments, however it is configured", () => {
+    for (const o of ALL) {
+      for (const s of buildSchedule(o).slots) {
+        expect(s.out).toBeGreaterThanOrEqual(s.t0);
+        expect(s.back).toBeGreaterThanOrEqual(s.out);
+        expect(s.t1).toBeGreaterThanOrEqual(s.back);
+      }
+    }
+  });
+});
+
+describe("strategy", () => {
+  it("keeps the barrier under linear, at every fork count", () => {
+    for (const forks of CHOICES.forks) {
+      const { slots } = at({ forks, strategy: "linear" });
+      for (const play of PLAYS) {
+        const tasks = TASKS.filter(t => t.play === play.n && !t.handler);
+        for (let i = 1; i < tasks.length; i++) {
+          const prev = slots.filter(s => s.task === tasks[i - 1].n);
+          const here = slots.filter(s => s.task === tasks[i].n);
+          const lastEnd = Math.max(...prev.map(s => s.t1));
+          for (const s of here) {
+            expect(s.t0).toBeGreaterThanOrEqual(lastEnd - 1e-9);
+          }
+        }
+      }
+    }
+  });
+
+  it("drops the barrier under free: some host runs ahead", () => {
+    const { slots } = at({ forks: 3, strategy: "free" });
+    const install = Math.min(...slots.filter(s => s.task === 1).map(s => s.t1));
+    const template = Math.min(
+      ...slots.filter(s => s.task === 2).map(s => s.t0),
+    );
+    /* a host whose install finished early starts its template before the
+       slowest host has finished installing at all */
+    const slowestInstall = Math.max(
+      ...slots.filter(s => s.task === 1).map(s => s.t1),
+    );
+    expect(template).toBeGreaterThanOrEqual(install - 1e-9);
+    expect(template).toBeLessThan(slowestInstall);
+  });
+
+  /* The tolerance is a thousandth of a millisecond rather than an epsilon:
+     the two code paths add the same durations in a different order, so they
+     agree to float noise where they agree at all, and the differences that
+     matter here are tens of milliseconds. */
+  it("is never slower free than linear, all else equal", () => {
+    for (const forks of CHOICES.forks) {
+      for (const gathering of CHOICES.gathering) {
+        const linear = at({ forks, gathering, strategy: "linear" }).end;
+        const free = at({ forks, gathering, strategy: "free" }).end;
+        expect(free).toBeLessThanOrEqual(linear + 1e-3);
+      }
+    }
+  });
+
+  it("buys nothing at one fork, because nothing can run ahead", () => {
+    for (const gathering of CHOICES.gathering) {
+      expect(at({ forks: 1, gathering, strategy: "free" }).end).toBeCloseTo(
+        at({ forks: 1, gathering, strategy: "linear" }).end,
+        3,
+      );
+    }
+  });
+
+  it("flushes handlers at the end of the play under both", () => {
+    const handler = TASKS.find(t => t.handler)!;
+    for (const strategy of CHOICES.strategy) {
+      const { slots } = at({ strategy, forks: 3 });
+      const others = TASKS.filter(
+        t => t.play === handler.play && !t.handler,
+      ).map(t => t.n);
+      const lastTask = Math.max(
+        ...slots.filter(s => others.includes(s.task)).map(s => s.t1),
+      );
+      for (const s of slots.filter(s => s.task === handler.n)) {
+        expect(s.t0).toBeGreaterThanOrEqual(lastTask - 1e-9);
+      }
+    }
+  });
+});
+
+describe("forks", () => {
+  it("never makes the run slower by adding one", () => {
+    for (const strategy of CHOICES.strategy) {
+      const ends = CHOICES.forks.map(forks => at({ forks, strategy }).end);
+      for (let i = 1; i < ends.length; i++) {
+        expect(ends[i]).toBeLessThanOrEqual(ends[i - 1] + 1e-9);
+      }
+    }
+  });
+
+  it("buys nothing past the host count of the widest play", () => {
+    const widest = Math.max(...PLAYS.map(p => p.hosts.length));
+    expect(CHOICES.forks.at(-1)!).toBeGreaterThan(widest);
+    for (const strategy of CHOICES.strategy) {
+      expect(at({ forks: widest, strategy }).end).toBeCloseTo(
+        at({ forks: CHOICES.forks.at(-1)!, strategy }).end,
+        6,
+      );
+    }
+  });
+});
+
+describe("gathering", () => {
+  it("contacts no host for facts when they are cached", () => {
+    const { slots } = at({ gathering: "cached" });
+    const setup = slots.filter(s => EVENTS[s.event].module.endsWith("setup"));
+    expect(setup.length).toBeGreaterThan(0);
+    for (const s of setup) {
+      expect(s.fork).toBe(-1);
+      expect(s.out).toBe(s.t0);
+      expect(s.back).toBe(s.t0);
+    }
+  });
+
+  it("is the single biggest lever on this run", () => {
+    const base = at({}).end;
+    const cached = at({ gathering: "cached" }).end;
+    const freed = at({ strategy: "free" }).end;
+    const unpiped = at({ pipelining: false }).end;
+    expect(base - cached).toBeGreaterThan(base - freed);
+    expect(base - cached).toBeGreaterThan(unpiped - base);
+  });
+});
+
+describe("pipelining", () => {
+  it("costs four round trips a task instead of one", () => {
+    const one = at({ pipelining: true }).slots.filter(s => s.fork >= 0);
+    const four = at({ pipelining: false }).slots.filter(s => s.fork >= 0);
+    for (const s of one) {
+      const other = four.find(o => o.event === s.event)!;
+      const wire = s.out - s.t0 + (s.t1 - s.back);
+      const wider = other.out - other.t0 + (other.t1 - other.back);
+      expect(wider).toBeCloseTo(4 * wire, 6);
+    }
+  });
+
+  it("charges every host its own link, both ways", () => {
+    for (const s of at({}).slots.filter(s => s.fork >= 0)) {
+      expect(s.out - s.t0).toBeCloseTo(LINK_MS[s.host], 6);
+    }
+    expect(LINKS.some(l => l.ms > 10)).toBe(true);
+  });
+});
+
+describe("the target the page sets", () => {
+  it("is slower than the fastest configuration, so it can be reached", () => {
+    expect(TARGET_MS).toBeGreaterThan(BEST_MS);
+  });
+
+  it("is beaten by at least one configuration and missed by most", () => {
+    const ends = ALL.map(o => buildSchedule(o).end);
+    const under = ends.filter(e => e < TARGET_MS).length;
+    expect(under).toBeGreaterThan(0);
+    expect(under).toBeLessThan(ends.length / 2);
+  });
+
+  it("is missed by the configuration the page starts on", () => {
+    expect(buildSchedule(DEFAULTS).end).toBeGreaterThan(TARGET_MS);
+  });
+
+  it("brackets every configuration between best and worst", () => {
+    for (const o of ALL) {
+      const { end } = buildSchedule(o);
+      expect(end).toBeGreaterThanOrEqual(BEST_MS - 1e-9);
+      expect(end).toBeLessThanOrEqual(WORST_MS + 1e-9);
+    }
+  });
+
+  it("keeps FORKS and the default in step", () => {
+    expect(DEFAULTS.forks).toBe(FORKS);
+    expect(CHOICES.forks).toContain(FORKS);
   });
 });

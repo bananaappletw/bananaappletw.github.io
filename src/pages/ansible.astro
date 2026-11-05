@@ -41,9 +41,11 @@ import Main from "@/components/Main.astro";
 import Footer from "@/components/Footer.astro";
 import config from "@/config";
 import {
+  BEST_MS,
   CHECK_MODE,
+  CHOICES,
+  DEFAULTS,
   EVENTS,
-  FORKS,
   GROUPS,
   HOSTS,
   INVENTORY,
@@ -53,13 +55,15 @@ import {
   PLAYBOOK,
   PLAYS,
   PRECEDENCE,
-  RECAP,
   ROLE_TREE,
   RUN_END,
   SCHEDULE,
+  TARGET_MS,
   TASKS,
-  TRANSPORT,
   VERDICTS,
+  WORST_MS,
+  buildSchedule,
+  type RunOptions,
 } from "@/data/ansible-run";
 
 const title = "Ansible";
@@ -85,18 +89,57 @@ const G_LEFT = 96;
 const G_RIGHT = 988;
 const G_H = G_TOP + MANAGED.length * LANE_H + 14;
 
-/** virtual milliseconds → x */
-const scale = (ms: number) => G_LEFT + (ms / RUN_END) * (G_RIGHT - G_LEFT);
+/**
+ * The axis is fixed to the SLOWEST configuration the page offers, not to the
+ * run currently drawn. That is the whole feedback loop: change a knob and
+ * the run visibly gets shorter against a ruler that does not move. A chart
+ * that rescales to fit would hide the only thing worth seeing.
+ */
+const AXIS_MS = WORST_MS;
+const scale = (ms: number) => G_LEFT + (ms / AXIS_MS) * (G_RIGHT - G_LEFT);
 const laneY = (host: (typeof MANAGED)[number]) =>
   G_TOP + MANAGED.indexOf(host) * LANE_H;
 
-/** Where the linear strategy puts a wall: the end of every task but the last. */
-const barriers = TASKS.slice(0, -1).map(task => ({
-  n: task.n,
-  ms: Math.max(...SCHEDULE.filter(s => s.task === task.n).map(s => s.t1)),
-}));
+/**
+ * Every configuration, scheduled here rather than in the browser. Shipping
+ * the answers costs about thirty kilobytes and keeps one scheduler in the
+ * repository instead of two that can disagree — and `tests/ansible-run.test.ts`
+ * holds the one.
+ */
+const key = (o: RunOptions) =>
+  `${o.forks}|${o.strategy}|${o.gathering}|${o.pipelining ? 1 : 0}`;
 
-/** Each task's window, for the rail under the drawing. */
+const round = (x: number) => Math.round(x * 100) / 100;
+
+const SCHEDULES = (() => {
+  const out: Record<string, { rows: number[][]; end: number }> = {};
+  for (const forks of CHOICES.forks) {
+    for (const strategy of CHOICES.strategy) {
+      for (const gathering of CHOICES.gathering) {
+        for (const pipelining of CHOICES.pipelining) {
+          const opt = { forks, strategy, gathering, pipelining };
+          const { slots, end } = buildSchedule(opt);
+          out[key(opt)] = {
+            /* event index, then the four moments and the worker; task and
+               host come off the event, so they are not sent twice */
+            rows: slots.map(x => [
+              x.event,
+              round(x.t0),
+              round(x.out),
+              round(x.back),
+              round(x.t1),
+              x.fork,
+            ]),
+            end: round(end),
+          };
+        }
+      }
+    }
+  }
+  return out;
+})();
+
+/** Each task's window at the default settings, for the rail under the drawing. */
 const windows = TASKS.map(task => {
   const mine = SCHEDULE.filter(s => s.task === task.n);
   return {
@@ -109,19 +152,286 @@ const windows = TASKS.map(task => {
   };
 });
 
-/** Where the seven seconds went, for the panel the run ends on. */
-const spent = (() => {
-  const real = SCHEDULE.filter(s => s.fork >= 0);
-  const module = real.reduce((n, s) => n + EVENTS[s.event].runMs, 0);
-  const wire = real.reduce((n, s) => n + 2 * LINK_MS[s.host], 0);
-  const facts = real
-    .filter(s => EVENTS[s.event].module.endsWith("setup"))
-    .reduce((n, s) => n + EVENTS[s.event].runMs, 0);
-  const installs = real
-    .filter(s => s.task === 1)
-    .reduce((n, s) => n + EVENTS[s.event].runMs, 0);
-  return { module, wire, facts, installs, wall: RUN_END - 120 };
-})();
+/* ── the hook ──────────────────────────────────────────────────────────── */
+
+/**
+ * The overview the page used to open without: a run is a GRID. Tasks down,
+ * hosts across, and every cell one module built here and run there. The
+ * Gantt below is this same grid with a duration in each cell, which is the
+ * one sentence that makes the rest of the page legible.
+ */
+const GRID_W = 1000;
+const CELL = 34;
+const GRID_LEFT = 232;
+const GRID_TOP = 58;
+const gridTasks = TASKS;
+const GRID_H = GRID_TOP + gridTasks.length * CELL + 16;
+const cellX = (host: (typeof MANAGED)[number]) =>
+  GRID_LEFT + MANAGED.indexOf(host) * 108;
+const cellY = (n: number) =>
+  GRID_TOP + gridTasks.findIndex(t => t.n === n) * CELL;
+
+const cells = gridTasks.flatMap(task =>
+  MANAGED.map(host => {
+    const e = EVENTS.find(x => x.task === task.n && x.host === host);
+    return {
+      task: task.n,
+      host,
+      verdict: e?.verdict ?? null,
+      /* a host the play does not target has no cell at all */
+      absent: !task.hosts.includes(host),
+    };
+  }),
+);
+
+/* ── the ladder ────────────────────────────────────────────────────────── */
+
+/**
+ * Eight places one variable could be set, for the ladder to resolve live.
+ * Reading twenty-two rungs teaches nobody the rule; losing an argument with
+ * the rule teaches everybody.
+ */
+const SOURCES = [
+  {
+    rung: 2,
+    file: "roles/webserver/defaults/main.yml",
+    value: 80,
+    scope: "all",
+  },
+  {
+    rung: 6,
+    file: "inventory/group_vars/webservers.yml",
+    value: 8000,
+    scope: "web",
+  },
+  { rung: 7, file: "group_vars/webservers.yml", value: 8080, scope: "web" },
+  { rung: 10, file: "host_vars/web3.yml", value: 8081, scope: "web3" },
+  { rung: 12, file: "play vars", value: 8080, scope: "all" },
+  {
+    rung: 15,
+    file: "roles/webserver/vars/main.yml",
+    value: 9090,
+    scope: "all",
+  },
+  { rung: 19, file: "set_fact", value: 9999, scope: "all" },
+  { rung: 22, file: "-e nginx_port=1234", value: 1234, scope: "all" },
+] as const;
+
+/** what the page's own playbook actually does */
+const SOURCES_ON = [2, 12];
+
+/* ── one task, to scale ────────────────────────────────────────────────── */
+
+/**
+ * The transport drawn rather than counted. Both rows share one scale — the
+ * far link, where the difference is worth something — so the shorter row is
+ * literally a quarter of the longer one and no caption has to say so.
+ */
+const T_W = 1000;
+const T_H = 300;
+const T_LEFT = 152;
+const T_RIGHT = 958;
+const T_GAP = 74;
+const LAT = LINK_MS.db1;
+/** eight crossings is the unpipelined task, and it sets the ruler */
+const T_SPAN = 8 * LAT;
+const tx = (ms: number) => T_LEFT + (ms / T_SPAN) * (T_RIGHT - T_LEFT);
+
+const legsFor = (ops: string[]) =>
+  ops.flatMap((op, i) => [
+    { op, dir: "down" as const, a: tx(2 * i * LAT), b: tx((2 * i + 1) * LAT) },
+    {
+      op: "",
+      dir: "up" as const,
+      a: tx((2 * i + 1) * LAT),
+      b: tx((2 * i + 2) * LAT),
+    },
+  ]);
+
+const TRIPS = [
+  {
+    mode: "pipelining = False",
+    lean: false,
+    y: 56,
+    ms: 8 * LAT,
+    /* Short, because each label has one crossing's width to live in and a
+       truncated command reads better than four that overlap. */
+    legs: legsFor([
+      "mkdir …/tmp/",
+      "put AnsiballZ_dnf.py",
+      "python3 AnsiballZ_dnf.py",
+      "rm -rf …/tmp/",
+    ]),
+  },
+  {
+    mode: "pipelining = True",
+    lean: true,
+    y: 206,
+    ms: 2 * LAT,
+    legs: legsFor(["python3  ← AnsiballZ_dnf.py on stdin"]),
+  },
+];
+
+/* ── the five words ────────────────────────────────────────────────────── */
+
+/**
+ * The verdicts as the decision that produces them. Two are settled on the
+ * control node before anything is sent; the other three are what the module
+ * found when it arrived — which is the sentence "a verdict is about the
+ * host" drawn instead of asserted.
+ */
+const F_W = 1000;
+const F_H = 300;
+
+const FLOW_NODES = [
+  { id: "task", kind: "start", x: 76, y: 112, w: 108, text: "a task", sub: "" },
+  {
+    id: "when",
+    kind: "ask",
+    x: 248,
+    y: 112,
+    w: 128,
+    text: "when:",
+    sub: "on the control node",
+  },
+  {
+    id: "ssh",
+    kind: "ask",
+    x: 436,
+    y: 112,
+    w: 128,
+    text: "reachable?",
+    sub: "SSH, not the module",
+  },
+  {
+    id: "run",
+    kind: "ask",
+    x: 648,
+    y: 112,
+    w: 150,
+    text: "module runs",
+    sub: "on the managed host",
+  },
+  { id: "v-ok", kind: "end v-ok", x: 900, y: 44, w: 124, text: "ok", sub: "" },
+  {
+    id: "v-changed",
+    kind: "end v-changed",
+    x: 900,
+    y: 112,
+    w: 124,
+    text: "changed",
+    sub: "",
+  },
+  {
+    id: "v-failed",
+    kind: "end v-failed",
+    x: 900,
+    y: 180,
+    w: 124,
+    text: "failed",
+    sub: "",
+  },
+  {
+    id: "v-skipped",
+    kind: "end v-skipped",
+    x: 248,
+    y: 256,
+    w: 128,
+    text: "skipped",
+    sub: "",
+  },
+  {
+    id: "v-unreachable",
+    kind: "end v-unreachable",
+    x: 436,
+    y: 256,
+    w: 140,
+    text: "unreachable",
+    sub: "",
+  },
+];
+
+/**
+ * An elbow from one box's right edge to another's left edge. `mid` is
+ * explicit because three branches leave the same point: sharing a default
+ * midpoint would draw them on top of each other.
+ */
+const across = (
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+  mid?: number,
+) => (ay === by ? `M${ax} ${ay}H${bx}` : `M${ax} ${ay}H${mid}V${by}H${bx}`);
+
+const down = (x: number, ay: number, by: number) => `M${x} ${ay}V${by}`;
+
+const FLOW_EDGES = [
+  {
+    to: "when",
+    d: across(130, 112, 184, 112),
+    label: "",
+    lx: 0,
+    ly: 0,
+    a: "middle",
+  },
+  {
+    to: "ssh",
+    d: across(312, 112, 372, 112),
+    label: "true",
+    lx: 342,
+    ly: 103,
+    a: "middle",
+  },
+  {
+    to: "v-skipped",
+    d: down(248, 127, 241),
+    label: "false",
+    lx: 256,
+    ly: 188,
+    a: "start",
+  },
+  {
+    to: "run",
+    d: across(500, 112, 573, 112),
+    label: "yes",
+    lx: 536,
+    ly: 103,
+    a: "middle",
+  },
+  {
+    to: "v-unreachable",
+    d: down(436, 127, 241),
+    label: "no",
+    lx: 444,
+    ly: 188,
+    a: "start",
+  },
+  {
+    to: "v-ok",
+    d: across(723, 112, 838, 44, 790),
+    label: "already so",
+    lx: 784,
+    ly: 70,
+    a: "end",
+  },
+  {
+    to: "v-changed",
+    d: across(723, 112, 838, 112),
+    label: "acted",
+    lx: 780,
+    ly: 126,
+    a: "middle",
+  },
+  {
+    to: "v-failed",
+    d: across(723, 112, 838, 180, 814),
+    label: "could not",
+    lx: 808,
+    ly: 160,
+    a: "end",
+  },
+];
 
 /**
  * The listing, as one string. Astro's own indentation between elements would
@@ -194,11 +504,18 @@ const payload = {
     notified: e.notified ?? null,
     runMs: e.runMs,
   })),
-  schedule: SCHEDULE,
-  recap: RECAP,
-  end: RUN_END,
-  forks: FORKS,
-  spent,
+  schedules: SCHEDULES,
+  choices: CHOICES,
+  defaults: DEFAULTS,
+  axis: AXIS_MS,
+  stock: RUN_END - 120,
+  target: TARGET_MS,
+  best: BEST_MS,
+  worst: WORST_MS,
+  linkMs: LINK_MS,
+  sources: SOURCES,
+  sourcesOn: SOURCES_ON,
+  managed: MANAGED,
 };
 ---
 
@@ -210,16 +527,89 @@ const payload = {
   <Main pageTitle={title}>
     <div class="app-prose intro">
       <p>
-        One <code>ansible-playbook site.yml</code>, running at life size. Four
-        hosts, two plays, two forks — and seven seconds, of which two and a half
-        are a single package manager.
-      </p>
-      <p>
-        The source is on the left, the run in the middle, the wire on the right.
-        Click a line of YAML, a bar, or a host, and the other two panes follow.
+        A run is a grid: tasks down, hosts across, and every cell one module
+        built on your machine and run on theirs.
       </p>
     </div>
   </Main>
+
+  <!-- The overview first, because a reader cannot be shown a barrier before
+       they know what is being held back. This is the Gantt below with the
+       time taken out of it. -->
+  <section class="hook">
+    <svg
+      class="grid"
+      viewBox={`0 0 ${GRID_W} ${GRID_H}`}
+      role="img"
+      aria-label="A grid of eight tasks against four hosts, one cell per module run"
+    >
+      <g class="grid-heads" aria-hidden="true">
+        {
+          MANAGED.map(id => {
+            const h = HOSTS.find(x => x.id === id)!;
+            return (
+              <g>
+                <text class="grid-host" x={cellX(id)} y={GRID_TOP - 22}>
+                  {h.name}
+                </text>
+                <text class="grid-os" x={cellX(id)} y={GRID_TOP - 9}>
+                  {h.facts[1]?.value}
+                </text>
+              </g>
+            );
+          })
+        }
+      </g>
+
+      <g class="grid-rows">
+        {
+          gridTasks.map(task => (
+            <g class="grid-row" data-task={task.n}>
+              <text class="grid-task" x={GRID_LEFT - 44} y={cellY(task.n) + 4}>
+                {task.handler ? `${task.name} (handler)` : task.name}
+              </text>
+              <text class="grid-mod" x={GRID_LEFT - 44} y={cellY(task.n) + 17}>
+                {task.module}
+              </text>
+            </g>
+          ))
+        }
+      </g>
+
+      <g class="grid-cells">
+        {
+          cells.map(c =>
+            c.absent ? (
+              <text class="grid-gap" x={cellX(c.host)} y={cellY(c.task) + 4}>
+                ·
+              </text>
+            ) : (
+              <g class={`gcell v-${c.verdict}`} data-task={c.task}>
+                <rect
+                  x={cellX(c.host) - 26}
+                  y={cellY(c.task) - 8}
+                  width="52"
+                  height="16"
+                  rx="2"
+                />
+                <text x={cellX(c.host)} y={cellY(c.task) + 4}>
+                  {c.verdict}
+                </text>
+              </g>
+            ),
+          )
+        }
+      </g>
+    </svg>
+
+    <p class="hook-note">
+      Thirty-two cells, nineteen of them a module. A host the play does not
+      target has no cell; <code>web3</code> has one that was decided without opening
+      a connection. Give every cell a duration and a worker and the grid becomes a
+      schedule — which is the drawing below, and the only thing on this page that
+      decides how long a run takes.
+    </p>
+  </section>
 
   <!-- Three panes need more than the 64rem reading measure, and §9's rule
        governs copy, which this is not. -->
@@ -231,16 +621,13 @@ const payload = {
       <p class="label sub">inventory/hosts.ini</p>
       <pre class="code ini"><code>{INVENTORY}</code></pre>
 
+      <!-- Written at runtime: the four knobs below the schedule ARE these
+           four lines, and seeing them change is half the point of having
+           them. -->
       <p class="label sub">ansible.cfg</p>
       <pre
-        class="code ini"><code>{`[defaults]
-forks = ${FORKS}
-strategy = linear
-gathering = implicit
-
-[ssh_connection]
-pipelining = True
-ssh_args = -o ControlMaster=auto -o ControlPersist=60s`}</code></pre>
+        class="code ini"
+        id="cfg"><code><span>[defaults]</span><span>forks = <b id="cfg-forks">{DEFAULTS.forks}</b></span><span>strategy = <b id="cfg-strategy">{DEFAULTS.strategy}</b></span><span>gathering = <b id="cfg-gathering">{DEFAULTS.gathering}</b></span><span> </span><span>[ssh_connection]</span><span>pipelining = <b id="cfg-pipelining">True</b></span><span>ssh_args = -o ControlMaster=auto -o ControlPersist=60s</span></code></pre>
     </div>
 
     <div class="stage">
@@ -343,7 +730,7 @@ ssh_args = -o ControlMaster=auto -o ControlPersist=60s`}</code></pre>
         <g class="axis" aria-hidden="true">
           {
             Array.from(
-              { length: Math.floor(RUN_END / 1000) + 1 },
+              { length: Math.floor(AXIS_MS / 1000) + 1 },
               (_, i) => i * 1000,
             ).map(ms => {
               return (
@@ -364,19 +751,33 @@ ssh_args = -o ControlMaster=auto -o ControlPersist=60s`}</code></pre>
           }
         </g>
 
-        <!-- Where every host must arrive before any host may leave. -->
-        <g class="barriers" aria-hidden="true">
-          {
-            barriers.map(b => (
-              <line
-                class="barrier"
-                x1={scale(b.ms)}
-                y1={G_TOP - 6}
-                x2={scale(b.ms)}
-                y2={G_H - 16}
-              />
-            ))
-          }
+        <!-- Where every host must arrive before any host may leave. Drawn
+             at runtime, because dropping them is what `strategy: free`
+             means and the reader can do that from here. -->
+        <g class="barriers" aria-hidden="true"></g>
+
+        <!-- The two marks the run is measured against: where it finishes on
+             the settings the page opens with, and where it would have to
+             finish to count as fast. Neither moves. -->
+        <g class="marks" aria-hidden="true">
+          <line
+            class="mark stock"
+            x1={scale(RUN_END - 120)}
+            y1={G_TOP - 6}
+            x2={scale(RUN_END - 120)}
+            y2={G_H - 16}></line>
+          <text class="mark-tag" x={scale(RUN_END - 120) - 6} y={G_H - 2}>
+            stock
+          </text>
+          <line
+            class="mark target"
+            x1={scale(TARGET_MS)}
+            y1={G_TOP - 6}
+            x2={scale(TARGET_MS)}
+            y2={G_H - 16}></line>
+          <text class="mark-tag target" x={scale(TARGET_MS) - 6} y={G_H - 2}>
+            {(TARGET_MS / 1000).toFixed(1)}s
+          </text>
         </g>
 
         <g class="lanes">
@@ -404,50 +805,9 @@ ssh_args = -o ControlMaster=auto -o ControlPersist=60s`}</code></pre>
           }
         </g>
 
-        <g class="bars">
-          {
-            SCHEDULE.map((s, i) => {
-              const e = EVENTS[s.event];
-              const y = laneY(s.host) + LANE_H / 2;
-              const x0 = scale(s.t0);
-              const x1 = scale(s.t1);
-              const w = Math.max(2, x1 - x0);
-              return (
-                <g
-                  class={`bar v-${e.verdict}`}
-                  data-slot={i}
-                  data-task={s.task}
-                  data-host={s.host}
-                  tabindex="0"
-                  role="button"
-                  aria-label={`${TASKS[s.task].name} on ${s.host} — ${e.verdict}`}
-                >
-                  <rect
-                    class="bar-hit"
-                    x={x0 - 3}
-                    y={y - 15}
-                    width={w + 6}
-                    height="30"
-                  />
-                  {/* the two crossings of the channel, drawn as the thin ends */}
-                  <line class="leg" x1={x0} y1={y} x2={scale(s.out)} y2={y} />
-                  <line class="leg" x1={scale(s.back)} y1={y} x2={x1} y2={y} />
-                  <rect
-                    class="body"
-                    x={scale(s.out)}
-                    y={y - 7}
-                    width={Math.max(1.5, scale(s.back) - scale(s.out))}
-                    height="14"
-                    rx="2"
-                  />
-                  <text class="bar-tag" x={x0 + 3} y={y - 12}>
-                    {s.task}
-                  </text>
-                </g>
-              );
-            })
-          }
-        </g>
+        <!-- Built at runtime: there are thirty-two schedules and the
+             reader picks which one is drawn. -->
+        <g class="bars"></g>
 
         <g class="head" aria-hidden="true">
           <line
@@ -477,10 +837,101 @@ ssh_args = -o ControlMaster=auto -o ControlPersist=60s`}</code></pre>
         </span>
       </div>
 
+      <!-- The four knobs. They are here rather than in a sentence because
+           the page's claim is that these decide a run's length and the YAML
+           does not, and a claim a reader can test is worth more than one
+           they have to take. -->
+      <div class="knobs">
+        <div class="knob">
+          <span class="label">forks</span>
+          <span class="seg" role="group" aria-label="forks">
+            {
+              CHOICES.forks.map(v => (
+                <button
+                  type="button"
+                  data-knob="forks"
+                  data-value={v}
+                  class={v === DEFAULTS.forks ? "on" : undefined}
+                  aria-pressed={v === DEFAULTS.forks ? "true" : "false"}
+                >
+                  {v}
+                </button>
+              ))
+            }
+          </span>
+        </div>
+
+        <div class="knob">
+          <span class="label">strategy</span>
+          <span class="seg" role="group" aria-label="strategy">
+            {
+              CHOICES.strategy.map(v => (
+                <button
+                  type="button"
+                  data-knob="strategy"
+                  data-value={v}
+                  class={v === DEFAULTS.strategy ? "on" : undefined}
+                  aria-pressed={v === DEFAULTS.strategy ? "true" : "false"}
+                >
+                  {v}
+                </button>
+              ))
+            }
+          </span>
+        </div>
+
+        <div class="knob">
+          <span class="label">gathering</span>
+          <span class="seg" role="group" aria-label="fact gathering">
+            {
+              CHOICES.gathering.map(v => (
+                <button
+                  type="button"
+                  data-knob="gathering"
+                  data-value={v}
+                  class={v === DEFAULTS.gathering ? "on" : undefined}
+                  aria-pressed={v === DEFAULTS.gathering ? "true" : "false"}
+                >
+                  {v}
+                </button>
+              ))
+            }
+          </span>
+        </div>
+
+        <div class="knob">
+          <span class="label">pipelining</span>
+          <span class="seg" role="group" aria-label="pipelining">
+            {
+              CHOICES.pipelining.map(v => (
+                <button
+                  type="button"
+                  data-knob="pipelining"
+                  data-value={v ? "1" : "0"}
+                  class={v === DEFAULTS.pipelining ? "on" : undefined}
+                  aria-pressed={v === DEFAULTS.pipelining ? "true" : "false"}
+                >
+                  {v ? "on" : "off"}
+                </button>
+              ))
+            }
+          </span>
+        </div>
+
+        <p class="score" aria-live="polite">
+          <b id="score-ms">{((RUN_END - 120) / 1000).toFixed(2)}s</b>
+          <span id="score-note"
+            >{((RUN_END - 120 - TARGET_MS) / 1000).toFixed(2)}s over</span
+          >
+        </p>
+      </div>
+
       <p class="map-hint">
-        Real time at 1&times;, {FORKS} forks, <code>strategy: linear</code>. The
-        upright hairlines are barriers: no host starts a task until every host
-        has finished the one before. Space plays, arrows nudge.
+        Real time at 1&times;. The upright hairlines are barriers: under
+        <code>linear</code> no host starts a task until every host has finished the
+        one before. <b>Get it under {(TARGET_MS / 1000).toFixed(1)}s.</b>
+        Two of the thirty-two settings manage it, and editing the playbook is not
+        one of them. Space plays, arrows nudge.
       </p>
 
       <ol class="rail" id="rail">
@@ -537,43 +988,86 @@ ssh_args = -o ControlMaster=auto -o ControlPersist=60s`}</code></pre>
        The simulation teaches the shape of a run. These four teach the
        things a run never shows you, because they are decisions made before
        it starts. -->
+  <!-- ── the reference panels ────────────────────────────────────────────
+       The simulation teaches the shape of a run. These four teach what a
+       run never shows, because they are decisions taken before it starts —
+       and each is drawn rather than tabulated, because each is a
+       relationship and a table is the wrong instrument for one. -->
   <section class="panels">
     <figure class="panel">
       <figcaption>
         <p class="label">One task, end to end</p>
         <p>
-          A module is a Python program built on the control node and thrown at
-          an interpreter. The only question is how many SSH operations that
-          takes, and one line of <code>ansible.cfg</code> answers it.
+          A module is a Python program built on your machine and thrown at an
+          interpreter on theirs. The only question is how many times it has to
+          cross, and one line of <code>ansible.cfg</code> answers it. Drawn to scale
+          on <code>db1</code>'s link — fourteen milliseconds each way.
         </p>
       </figcaption>
-      <div class="trips">
+
+      <svg
+        class="trips"
+        viewBox={`0 0 ${T_W} ${T_H}`}
+        role="img"
+        aria-label="Four round trips without pipelining, one with it"
+      >
         {
-          TRANSPORT.map(mode => (
-            <div class={`trip ${mode.trips === 1 ? "lean" : ""}`}>
-              <p class="trip-head">
-                <code>{mode.mode}</code>
-                <b>
-                  {mode.trips} round trip{mode.trips === 1 ? "" : "s"}
-                </b>
-              </p>
-              <ol>
-                {mode.steps.map(s => (
-                  <li>
-                    <code>{s.text}</code>
-                    {s.note ? <em set:html={ticks(s.note)} /> : null}
-                  </li>
-                ))}
-              </ol>
-            </div>
+          TRIPS.map(row => (
+            <g class={`trip ${row.lean ? "lean" : ""}`}>
+              <line
+                class="party"
+                x1={T_LEFT}
+                y1={row.y}
+                x2={T_RIGHT}
+                y2={row.y}
+              />
+              <line
+                class="party"
+                x1={T_LEFT}
+                y1={row.y + T_GAP}
+                x2={T_RIGHT}
+                y2={row.y + T_GAP}
+              />
+              <text class="party-name" x={T_LEFT - 14} y={row.y + 4}>
+                control node
+              </text>
+              <text class="party-name" x={T_LEFT - 14} y={row.y + T_GAP + 4}>
+                db1
+              </text>
+              <text class="trip-mode" x={T_LEFT - 14} y={row.y - 26}>
+                {row.mode}
+              </text>
+              <text class="trip-count" x={T_RIGHT} y={row.y - 26}>
+                {`${row.legs.length / 2} round trip${
+                  row.legs.length === 2 ? "" : "s"
+                } · ${row.ms} ms`}
+              </text>
+              {row.legs.map(leg => (
+                <g class={`leg ${leg.dir}`}>
+                  <line
+                    x1={leg.a}
+                    y1={leg.dir === "down" ? row.y : row.y + T_GAP}
+                    x2={leg.b}
+                    y2={leg.dir === "down" ? row.y + T_GAP : row.y}
+                  />
+                  {leg.op ? (
+                    <text class="leg-op" x={leg.a + 6} y={row.y - 8}>
+                      {leg.op}
+                    </text>
+                  ) : null}
+                </g>
+              ))}
+            </g>
           ))
         }
-      </div>
+      </svg>
+
       <p class="aside">
-        Multiply by every task and every host. On <code>db1</code>, fourteen
-        milliseconds each way, that is the difference between 28&nbsp;ms and
-        112&nbsp;ms of pure waiting per task — before the module has done
-        anything at all.
+        The module does the same work either way; only the waiting changes. That
+        is why the knob above barely moves a run across a datacentre and
+        quadruples the overhead of one across an ocean — and why it is still off
+        by default, because it needs no <code>requiretty</code> in
+        <code>sudoers</code>.
       </p>
     </figure>
 
@@ -582,22 +1076,43 @@ ssh_args = -o ControlMaster=auto -o ControlPersist=60s`}</code></pre>
         <p class="label">Where a variable comes from</p>
         <p>
           Twenty-two rungs, lowest first, and a total order: when two of them
-          define the same name, the higher one simply wins. This is the ladder
-          everyone meets the day a value is wrong and no file looks wrong.
+          define the same name, the higher one wins. Reading the list teaches
+          nobody the rule — so set <code>nginx_port</code> in more than one place
+          and watch which survives.
         </p>
       </figcaption>
-      <ol class="ladder">
+
+      <div class="resolver">
+        <p class="label sub">Define nginx_port in…</p>
+        <ul class="sources" id="sources">
+          {
+            SOURCES.map(src => (
+              <li>
+                <button
+                  type="button"
+                  data-rung={src.rung}
+                  data-value={src.value}
+                  data-scope={src.scope}
+                  class={SOURCES_ON.includes(src.rung) ? "on" : undefined}
+                  aria-pressed={
+                    SOURCES_ON.includes(src.rung) ? "true" : "false"
+                  }
+                >
+                  <span class="src-rung">{src.rung}</span>
+                  <span class="src-file">{src.file}</span>
+                  <span class="src-value">{src.value}</span>
+                </button>
+              </li>
+            ))
+          }
+        </ul>
+        <p class="verdict-line" id="resolved" aria-live="polite"></p>
+      </div>
+
+      <ol class="ladder" id="ladder">
         {
           PRECEDENCE.map(r => (
-            <li
-              class={
-                r.n === 22
-                  ? "top"
-                  : r.n === 2 || r.n === 12 || r.n === 15
-                    ? "seen"
-                    : undefined
-              }
-            >
+            <li data-rung={r.n} class={r.n === 22 ? "top" : undefined}>
               <span class="rung">{r.n}</span>
               <span class="what" set:html={ticks(r.what)} />
               {r.note ? <em set:html={ticks(r.note)} /> : null}
@@ -605,12 +1120,6 @@ ssh_args = -o ControlMaster=auto -o ControlPersist=60s`}</code></pre>
           ))
         }
       </ol>
-      <p class="aside">
-        The three marked rungs are the ones on this page: role defaults are the
-        floor a role offers you, <code>nginx_port</code> is a play var at 12, and
-        role vars at 15 sit <em>above</em> it — which is why a role can quietly beat
-        the playbook that calls it.
-      </p>
     </figure>
 
     <figure class="panel">
@@ -645,8 +1154,12 @@ ssh_args = -o ControlMaster=auto -o ControlPersist=60s`}</code></pre>
           <p class="tree-head">a role is its layout</p>
           <ul class="role-tree">
             {
-              ROLE_TREE.map(r => (
-                <li class={r.depth ? "in" : "root"}>
+              ROLE_TREE.map((r, i) => (
+                <li
+                  class={`${r.depth ? "in" : "root"}${
+                    i === ROLE_TREE.length - 1 ? " last" : ""
+                  }`}
+                >
                   <code>{r.path}</code>
                   {r.note ? <em set:html={ticks(r.note)} /> : null}
                 </li>
@@ -665,11 +1178,57 @@ ssh_args = -o ControlMaster=auto -o ControlPersist=60s`}</code></pre>
       <figcaption>
         <p class="label">The five words a run can say</p>
         <p>
-          A verdict is a statement about the host, not about the task — which is
-          the whole of idempotency, and the reason the same four tasks came back
-          three different ways on this page.
+          A verdict is a statement about the host, not about the task. Two of
+          the five are decided before the module runs, and the other three are
+          decided by what it found when it got there.
         </p>
       </figcaption>
+
+      <svg
+        class="flow"
+        viewBox={`0 0 ${F_W} ${F_H}`}
+        role="img"
+        aria-label="How a task arrives at one of five verdicts"
+      >
+        <g class="edges">
+          {
+            FLOW_EDGES.map(e => (
+              <g class={`edge${e.to.startsWith("v") ? " to-end" : ""}`}>
+                <path d={e.d} />
+                {e.label ? (
+                  <text class="edge-label" x={e.lx} y={e.ly} text-anchor={e.a}>
+                    {e.label}
+                  </text>
+                ) : null}
+              </g>
+            ))
+          }
+        </g>
+        <g class="boxes">
+          {
+            FLOW_NODES.map(nd => (
+              <g class={`fnode ${nd.kind}`}>
+                <rect
+                  x={nd.x - nd.w / 2}
+                  y={nd.y - 15}
+                  width={nd.w}
+                  height="30"
+                  rx="3"
+                />
+                <text x={nd.x} y={nd.y + 4}>
+                  {nd.text}
+                </text>
+                {nd.sub ? (
+                  <text class="fnode-sub" x={nd.x} y={nd.y + 29}>
+                    {nd.sub}
+                  </text>
+                ) : null}
+              </g>
+            ))
+          }
+        </g>
+      </svg>
+
       <ul class="verdicts">
         {
           VERDICTS.map(v => (
@@ -681,6 +1240,7 @@ ssh_args = -o ControlMaster=auto -o ControlPersist=60s`}</code></pre>
           ))
         }
       </ul>
+
       <div class="check">
         <p class="tree-head">and the reason a verdict must be a prediction</p>
         <ul>
@@ -766,31 +1326,42 @@ ssh_args = -o ControlMaster=auto -o ControlPersist=60s`}</code></pre>
       t1: number;
       fork: number;
     };
-    type RecapRow = {
-      host: string;
-      ok: number;
-      changed: number;
-      unreachable: number;
-      failed: number;
-      skipped: number;
-      done: number;
+    type Options = {
+      forks: number;
+      strategy: string;
+      gathering: string;
+      pipelining: boolean;
+    };
+    /** [event, t0, out, back, t1, fork] — task and host come off the event */
+    type Row = [number, number, number, number, number, number];
+    type Source = {
+      rung: number;
+      file: string;
+      value: number;
+      scope: string;
     };
     type Run = {
       hosts: Record<string, HostInfo>;
       plays: PlayInfo[];
       tasks: TaskInfo[];
       events: EventInfo[];
-      schedule: Slot[];
-      recap: RecapRow[];
-      end: number;
-      forks: number;
-      spent: {
-        module: number;
-        wire: number;
-        facts: number;
-        installs: number;
-        wall: number;
+      schedules: Record<string, { rows: Row[]; end: number }>;
+      choices: {
+        forks: number[];
+        strategy: string[];
+        gathering: string[];
+        pipelining: boolean[];
       };
+      defaults: Options;
+      axis: number;
+      stock: number;
+      target: number;
+      best: number;
+      worst: number;
+      linkMs: Record<string, number>;
+      sources: Source[];
+      sourcesOn: number[];
+      managed: string[];
     };
 
     /**
@@ -811,10 +1382,38 @@ ssh_args = -o ControlMaster=auto -o ControlPersist=60s`}</code></pre>
       if (!data || !fan || !gantt) return;
 
       const run: Run = JSON.parse(data.textContent ?? "{}");
-      const { hosts, tasks, events, schedule, end } = run;
+      const { hosts, tasks, events } = run;
 
       const taskOf = (n: number) => tasks.find(t => t.n === n)!;
       const eventOf = (slot: Slot) => events[slot.event];
+
+      /* ── the configuration, and the schedule it picks ───────────────── */
+
+      /**
+       * Every schedule was built on the server and shipped. Switching one
+       * is a lookup, so a knob answers instantly — and there is still only
+       * one scheduler in the repository, which is the one the tests hold.
+       */
+      const options: Options = { ...run.defaults };
+
+      const keyOf = (o: Options) =>
+        `${o.forks}|${o.strategy}|${o.gathering}|${o.pipelining ? 1 : 0}`;
+
+      const expand = (rows: Row[]): Slot[] =>
+        rows.map(([event, t0, out, back, t1, fork]) => ({
+          event,
+          task: events[event].task,
+          host: events[event].host,
+          t0,
+          out,
+          back,
+          t1,
+          fork,
+        }));
+
+      let schedule: Slot[] = expand(run.schedules[keyOf(options)].rows);
+      /** where the run itself ends, with a beat after it for the recap */
+      let end = run.schedules[keyOf(options)].end + 120;
 
       /* ── state ──────────────────────────────────────────────────────── */
 
@@ -851,8 +1450,18 @@ ssh_args = -o ControlMaster=auto -o ControlPersist=60s`}</code></pre>
       const laneRail = gantt.querySelector<SVGLineElement>(".lane-rail")!;
       const G_LEFT = Number(laneRail.getAttribute("x1"));
       const G_RIGHT = Number(laneRail.getAttribute("x2"));
-      const scale = (ms: number) => G_LEFT + (ms / end) * (G_RIGHT - G_LEFT);
-      const unscale = (x: number) => ((x - G_LEFT) / (G_RIGHT - G_LEFT)) * end;
+      const LANE_H = 44;
+      const G_TOP = 34;
+      const G_H = G_TOP + run.managed.length * LANE_H + 14;
+
+      /* The ruler is the SLOWEST configuration, not the one on screen, so a
+         faster run is visibly shorter rather than merely relabelled. */
+      const scale = (ms: number) =>
+        G_LEFT + (ms / run.axis) * (G_RIGHT - G_LEFT);
+      const unscale = (x: number) =>
+        ((x - G_LEFT) / (G_RIGHT - G_LEFT)) * run.axis;
+      const laneY = (host: string) =>
+        G_TOP + run.managed.indexOf(host) * LANE_H + LANE_H / 2;
 
       /* ── what is happening at time t ────────────────────────────────── */
 
@@ -944,6 +1553,119 @@ ssh_args = -o ControlMaster=auto -o ControlPersist=60s`}</code></pre>
 
       /* ── the Gantt ──────────────────────────────────────────────────── */
 
+      const SVGNS = "http://www.w3.org/2000/svg";
+      const barsEl = gantt.querySelector<SVGGElement>(".bars")!;
+      const barriersEl = gantt.querySelector<SVGGElement>(".barriers")!;
+
+      const svgEl = <K extends keyof SVGElementTagNameMap>(
+        tag: K,
+        attrs: Record<string, string | number>,
+        cls?: string,
+      ) => {
+        const el = document.createElementNS(SVGNS, tag);
+        if (cls) el.setAttribute("class", cls);
+        for (const [k, v] of Object.entries(attrs)) {
+          el.setAttribute(k, String(v));
+        }
+        return el;
+      };
+
+      /**
+       * The Gantt is redrawn from scratch whenever the configuration moves,
+       * because every bar's place in it changed. It is nineteen bars, so
+       * rebuilding costs nothing and a diffing pass would only be a second
+       * thing to get wrong.
+       */
+      const buildGantt = () => {
+        barsEl.textContent = "";
+        barriersEl.textContent = "";
+
+        /* A barrier is a wall every host must reach before any may leave,
+           so it exists only under the linear strategy. */
+        if (options.strategy === "linear") {
+          const walls = [
+            ...new Set(
+              tasks
+                .slice(0, -1)
+                .map(task =>
+                  Math.max(
+                    ...schedule.filter(s => s.task === task.n).map(s => s.t1),
+                  ),
+                )
+                .filter(ms => ms > 0 && ms < end - 120),
+            ),
+          ];
+          for (const ms of walls) {
+            barriersEl.appendChild(
+              svgEl(
+                "line",
+                {
+                  x1: scale(ms),
+                  y1: G_TOP - 6,
+                  x2: scale(ms),
+                  y2: G_H - 16,
+                },
+                "barrier",
+              ),
+            );
+          }
+        }
+
+        schedule.forEach((s, i) => {
+          const e = eventOf(s);
+          const y = laneY(s.host);
+          const x0 = scale(s.t0);
+          const x1 = scale(s.t1);
+          const g = svgEl("g", {}, `bar v-${e.verdict}`);
+          g.dataset.slot = String(i);
+          g.dataset.task = String(s.task);
+          g.dataset.host = s.host;
+          g.setAttribute("tabindex", "0");
+          g.setAttribute("role", "button");
+          g.setAttribute(
+            "aria-label",
+            `${taskOf(s.task).name} on ${s.host} — ${e.verdict}`,
+          );
+
+          g.appendChild(
+            svgEl(
+              "rect",
+              {
+                x: x0 - 4,
+                y: y - 15,
+                width: Math.max(8, x1 - x0 + 8),
+                height: 30,
+              },
+              "bar-hit",
+            ),
+          );
+          /* the two crossings of the channel, drawn as the thin ends */
+          g.appendChild(
+            svgEl("line", { x1: x0, y1: y, x2: scale(s.out), y2: y }, "leg"),
+          );
+          g.appendChild(
+            svgEl("line", { x1: scale(s.back), y1: y, x2: x1, y2: y }, "leg"),
+          );
+          g.appendChild(
+            svgEl(
+              "rect",
+              {
+                x: scale(s.out),
+                y: y - 7,
+                width: Math.max(2, scale(s.back) - scale(s.out)),
+                height: 14,
+                rx: 2,
+              },
+              "body",
+            ),
+          );
+          const tag = svgEl("text", { x: x0 + 3, y: y - 12 }, "bar-tag");
+          tag.textContent = String(s.task);
+          g.appendChild(tag);
+          barsEl.appendChild(g);
+        });
+      };
+
       const paintGantt = (now: number) => {
         playhead.setAttribute("x1", String(scale(now)));
         playhead.setAttribute("x2", String(scale(now)));
@@ -965,6 +1687,23 @@ ssh_args = -o ControlMaster=auto -o ControlPersist=60s`}</code></pre>
       };
 
       /* ── the rail, the listing and the recap ────────────────────────── */
+
+      /** the rail carries each task's start, which moves with the knobs */
+      const buildRail = () => {
+        for (const li of railEl.querySelectorAll<HTMLLIElement>("li")) {
+          const n = Number(li.dataset.task);
+          const mine = schedule.filter(s => s.task === n);
+          if (!mine.length) continue;
+          const t0 = Math.min(...mine.map(s => s.t0));
+          li.dataset.t0 = String(t0);
+          const span = li.querySelector("span");
+          if (span) {
+            span.textContent =
+              `${(t0 / 1000).toFixed(2)}s` +
+              (taskOf(n).handler ? " · handler" : "");
+          }
+        }
+      };
 
       const paintRail = (now: number) => {
         const at = taskAt(now);
@@ -1097,11 +1836,56 @@ ssh_args = -o ControlMaster=auto -o ControlPersist=60s`}</code></pre>
           .join("") +
         `</div>`;
 
+      /**
+       * A fact gathering served from the cache did not happen. Showing its
+       * stages would be drawing a conversation that never took place, so it
+       * gets a panel of its own — and that panel is where the knob's real
+       * effect belongs anyway.
+       */
+      const cachedPanel = (i: number) => {
+        const s = schedule[i];
+        const host = hosts[s.host];
+        kindOut.textContent = `CACHED FACTS · ${host.name}`;
+        return (
+          `<p class="side-task"><b>Gathering Facts</b>` +
+          `<span>ansible.builtin.setup — not run</span></p>` +
+          `<p class="side-lead">Nothing happened on this host. With ` +
+          `<code>gathering = cached</code> the control node reads the facts a ` +
+          `previous run wrote to disk, so the largest module in Ansible is ` +
+          `never built, never sent and never executed.</p>` +
+          `<p class="swap">It still costs nothing in correctness: task 3's ` +
+          `<code>when</code> reads <code>os_family</code>, and the cache has ` +
+          `it. Turning gathering <em>off</em> would not — that is the ` +
+          `difference between the two fixes.</p>` +
+          `<p class="label sub">What the cache held</p>` +
+          `<div class="fields">` +
+          host.facts
+            .map(f =>
+              row(
+                f.key.replace("ansible_facts.", ""),
+                `<code>${esc(f.value)}</code>`,
+                f.note,
+              ),
+            )
+            .join("") +
+          `</div>` +
+          `<div class="fields split">` +
+          row("cost", "0 ms", "no worker, no connection, no module") +
+          row(
+            "what it saved",
+            `${eventOf(s).runMs} ms`,
+            "on this host alone; multiply by every host and every play",
+          ) +
+          `</div>`
+        );
+      };
+
       const slotPanel = (i: number) => {
         const s = schedule[i];
         const e = eventOf(s);
         const task = taskOf(s.task);
         const host = hosts[s.host];
+        if (s.fork < 0 && e.verdict !== "skipped") return cachedPanel(i);
         const stage = e.stages[Math.min(pickedStage, e.stages.length - 1)];
 
         kindOut.textContent = task.handler
@@ -1232,40 +2016,86 @@ ssh_args = -o ControlMaster=auto -o ControlPersist=60s`}</code></pre>
         );
       };
 
+      /** where this configuration's time actually went */
+      const spentNow = () => {
+        const real = schedule.filter(s => s.fork >= 0);
+        const sum = (list: Slot[], f: (s: Slot) => number) =>
+          list.reduce((acc, s) => acc + f(s), 0);
+        return {
+          module: sum(real, s => eventOf(s).runMs),
+          wire: sum(real, s => s.out - s.t0 + (s.t1 - s.back)),
+          facts: sum(
+            real.filter(s => eventOf(s).module.endsWith("setup")),
+            s => eventOf(s).runMs,
+          ),
+          installs: sum(
+            real.filter(s => s.task === 1),
+            s => eventOf(s).runMs,
+          ),
+          wall: end - 120,
+        };
+      };
+
       const endPanel = () => {
         kindOut.textContent = "PLAY RECAP";
-        const { spent } = run;
-        const pct = (n: number) => `${((n / spent.wall) * 100).toFixed(0)}%`;
+        const spent = spentNow();
+        const pct = (x: number) => `${((x / spent.wall) * 100).toFixed(0)}%`;
+        const beat = spent.wall < run.target;
+        const stock = run.stock;
+        const delta = stock - spent.wall;
+
         return (
           `<p class="side-lead">The run finished in ` +
-          `<b>${(spent.wall / 1000).toFixed(2)} s</b>. Almost none of it was ` +
-          `Ansible, and almost none of it was the network.</p>` +
+          `<b>${(spent.wall / 1000).toFixed(2)} s</b>` +
+          (Math.abs(delta) < 1
+            ? ", on the settings the page opens with."
+            : delta > 0
+              ? ` — ${(delta / 1000).toFixed(2)} s faster than the ` +
+                `settings the page opens with.`
+              : ` — ${(-delta / 1000).toFixed(2)} s slower than the ` +
+                `settings the page opens with.`) +
+          `</p>` +
+          (beat
+            ? `<p class="swap">Under ${(run.target / 1000).toFixed(1)} s. ` +
+              `Nothing in the playbook changed: the whole difference is four ` +
+              `lines of <code>ansible.cfg</code>.</p>`
+            : `<p class="swap">Still over ` +
+              `${(run.target / 1000).toFixed(1)} s. The fastest this run can ` +
+              `be made to go is ${(run.best / 1000).toFixed(2)} s, and the ` +
+              `knobs above are the only things that get it there.</p>`) +
           `<div class="fields">` +
           row(
             "inside modules",
             `${(spent.module / 1000).toFixed(2)} s`,
-            "and this exceeds the wall clock, because two forks overlap",
+            spent.module > spent.wall
+              ? "more than the wall clock, because the forks overlap"
+              : "and nothing overlapped, because there was one fork",
           ) +
           row(
             "the two installs",
             `${(spent.installs / 1000).toFixed(2)} s`,
-            `${pct(spent.installs)} of the run, in one task`,
+            `${pct(spent.installs)} of the run, in one task — and the one ` +
+              `number on this page no setting can move`,
           ) +
           row(
             "gathering facts",
             `${(spent.facts / 1000).toFixed(2)} s`,
-            "four hosts, ~1,200 facts each, and this play reads six of them",
+            spent.facts > 0
+              ? "four hosts, ~1,200 facts each, and this play reads six"
+              : "served from the cache: no host was contacted for them",
           ) +
           row(
             "on the wire",
             `${spent.wire.toFixed(0)} ms`,
-            "every crossing of every link, added up",
+            `every crossing of every link, added up — ` +
+              `${options.pipelining ? "one" : "four"} round trip` +
+              `${options.pipelining ? "" : "s"} a task`,
           ) +
           `</div>` +
-          `<p class="side-note">So the three things that would actually make ` +
-          `this run faster are: raise <code>forks</code> above the host count, ` +
-          `cache or skip fact gathering, and keep <code>pipelining</code> on. ` +
-          `Rewriting the YAML would change nothing.</p>`
+          `<p class="side-note">The playbook was never edited. A run's ` +
+          `length is decided by how many hosts are worked at once, whether ` +
+          `they wait for each other, and how often facts are fetched — none ` +
+          `of which is in the YAML.</p>`
         );
       };
 
@@ -1355,6 +2185,77 @@ ssh_args = -o ControlMaster=auto -o ControlPersist=60s`}</code></pre>
       };
 
       /* ── what a reader can do ───────────────────────────────────────── */
+
+      /* ── the four knobs ─────────────────────────────────────────────── */
+
+      const cfgOut = {
+        forks: document.getElementById("cfg-forks")!,
+        strategy: document.getElementById("cfg-strategy")!,
+        gathering: document.getElementById("cfg-gathering")!,
+        pipelining: document.getElementById("cfg-pipelining")!,
+      };
+      const scoreMs = document.getElementById("score-ms")!;
+      const scoreNote = document.getElementById("score-note")!;
+
+      /**
+       * A knob changes four things at once: the schedule drawn, the config
+       * file beside it, the score, and where the clock is allowed to go.
+       * The clock is kept where it was rather than reset, so a reader
+       * watching one moment can change a setting and watch the same moment.
+       */
+      const reconfigure = () => {
+        const picked = run.schedules[keyOf(options)];
+        schedule = expand(picked.rows);
+        end = picked.end + 120;
+        t = Math.min(t, end);
+
+        cfgOut.forks.textContent = String(options.forks);
+        cfgOut.strategy.textContent = options.strategy;
+        cfgOut.gathering.textContent = options.gathering;
+        cfgOut.pipelining.textContent = options.pipelining ? "True" : "False";
+
+        const wall = picked.end;
+        scoreMs.textContent = `${(wall / 1000).toFixed(2)}s`;
+        const over = wall - run.target;
+        scoreNote.textContent =
+          over <= 0
+            ? `under ${(run.target / 1000).toFixed(1)}s`
+            : `${(over / 1000).toFixed(2)}s over`;
+        scoreMs.classList.toggle("won", over <= 0);
+        scoreNote.classList.toggle("won", over <= 0);
+
+        /* a pinned slot may not exist in the same place in the new schedule */
+        if (selection.kind === "slot" && selection.slot >= schedule.length) {
+          selection = { kind: "auto" };
+        }
+
+        buildGantt();
+        buildRail();
+        lastKey = "";
+        render();
+      };
+
+      for (const b of document.querySelectorAll<HTMLButtonElement>(
+        "[data-knob]",
+      )) {
+        b.addEventListener("click", () => {
+          const knob = b.dataset.knob!;
+          const raw = b.dataset.value!;
+          if (knob === "forks") options.forks = Number(raw);
+          else if (knob === "pipelining") options.pipelining = raw === "1";
+          else if (knob === "strategy") options.strategy = raw;
+          else if (knob === "gathering") options.gathering = raw;
+
+          for (const o of document.querySelectorAll<HTMLButtonElement>(
+            `[data-knob="${knob}"]`,
+          )) {
+            const on = o === b;
+            o.classList.toggle("on", on);
+            o.setAttribute("aria-pressed", on ? "true" : "false");
+          }
+          reconfigure();
+        });
+      }
 
       playBtn.addEventListener("click", () => {
         if (!playing && t >= end) t = 0;
@@ -1521,6 +2422,90 @@ ssh_args = -o ControlMaster=auto -o ControlPersist=60s`}</code></pre>
         document.removeEventListener("keydown", keys);
       });
 
+      /* ── the ladder, which is also a model ──────────────────────────── */
+
+      /**
+       * Twenty-two rungs is reference; losing an argument with them is the
+       * lesson. Toggling a source lights its rung and says which value
+       * survives — including the case the list cannot show, where a host
+       * disagrees with its own group.
+       */
+      const sourcesEl = document.getElementById("sources");
+      const resolvedEl = document.getElementById("resolved");
+      const ladderEl = document.getElementById("ladder");
+
+      if (sourcesEl && resolvedEl && ladderEl) {
+        const resolve = () => {
+          const on = [
+            ...sourcesEl.querySelectorAll<HTMLButtonElement>("button.on"),
+          ].map(b => ({
+            rung: Number(b.dataset.rung),
+            value: Number(b.dataset.value),
+            scope: b.dataset.scope!,
+          }));
+
+          for (const li of ladderEl.querySelectorAll<HTMLLIElement>("li")) {
+            const rung = Number(li.dataset.rung);
+            li.classList.toggle(
+              "set",
+              on.some(o => o.rung === rung),
+            );
+            li.classList.remove("wins");
+          }
+
+          if (!on.length) {
+            resolvedEl.innerHTML =
+              `<span class="undef">nginx_port is undefined</span> — and a ` +
+              `template that reads it fails the task, on every host.`;
+            return;
+          }
+
+          /** the winner for a host is the highest rung that reaches it */
+          const winner = (scopes: string[]) =>
+            on
+              .filter(o => scopes.includes(o.scope))
+              .reduce((a, b) => (b.rung > a.rung ? b : a));
+
+          const web = winner(["all", "web"]);
+          const web3 = winner(["all", "web", "web3"]);
+          const split = web3.rung !== web.rung;
+
+          for (const li of ladderEl.querySelectorAll<HTMLLIElement>("li")) {
+            const rung = Number(li.dataset.rung);
+            if (rung === web.rung || (split && rung === web3.rung)) {
+              li.classList.add("wins");
+            }
+          }
+
+          const fileOf = (rung: number) =>
+            run.sources.find(x => x.rung === rung)!.file;
+
+          resolvedEl.innerHTML =
+            `<span class="won-line"><b>nginx_port = ${web.value}</b> ` +
+            `<span>rung ${web.rung} · <code>${esc(fileOf(web.rung))}</code>` +
+            `</span></span>` +
+            (split
+              ? `<span class="won-line split"><b>on web3: ` +
+                `${web3.value}</b> <span>rung ${web3.rung} · ` +
+                `<code>${esc(fileOf(web3.rung))}</code> — host beats group` +
+                `</span></span>`
+              : "");
+        };
+
+        sourcesEl.addEventListener("click", e => {
+          const b = (e.target as Element).closest<HTMLButtonElement>("button");
+          if (!b) return;
+          const on = !b.classList.contains("on");
+          b.classList.toggle("on", on);
+          b.setAttribute("aria-pressed", on ? "true" : "false");
+          resolve();
+        });
+
+        resolve();
+      }
+
+      buildGantt();
+      buildRail();
       render();
       if (!reduced) setPlaying(true);
     };
@@ -1533,6 +2518,95 @@ ssh_args = -o ControlMaster=auto -o ControlPersist=60s`}</code></pre>
 <style>
   .intro {
     margin-bottom: clamp(26px, 4vh, 40px);
+  }
+
+  /* ── the hook ──────────────────────────────────────────────────────── */
+
+  .hook {
+    width: 100%;
+    max-width: 78rem;
+    margin-inline: auto;
+    padding-inline: clamp(22px, 6vw, 40px);
+    padding-bottom: clamp(26px, 4vh, 44px);
+  }
+
+  .grid {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  .grid-host {
+    font-family: var(--font-display);
+    font-size: 13.5px;
+    fill: var(--text-3);
+    text-anchor: middle;
+  }
+
+  .grid-os {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    fill: var(--text-4);
+    text-anchor: middle;
+  }
+
+  .grid-task {
+    font-family: var(--font-display);
+    font-size: 13px;
+    fill: var(--text-3);
+    text-anchor: end;
+  }
+
+  .grid-mod {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    fill: var(--text-4);
+    text-anchor: end;
+  }
+
+  /* A cell says what it did, and nothing says it louder than it should:
+     `changed` is the only one carrying full ink, because it is the only one
+     that altered a host. */
+  .gcell rect {
+    fill: none;
+    stroke: var(--border-recess);
+    stroke-width: 1;
+  }
+
+  .gcell text {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    fill: var(--text-4);
+    text-anchor: middle;
+  }
+
+  .gcell.v-changed rect {
+    fill: var(--panel);
+    stroke: var(--text-4);
+  }
+
+  .gcell.v-changed text {
+    fill: var(--text-2);
+  }
+
+  .gcell.v-skipped rect {
+    stroke-dasharray: 2 2;
+  }
+
+  .grid-gap {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    fill: var(--border-recess);
+    text-anchor: middle;
+  }
+
+  .hook-note {
+    margin: 18px 0 0;
+    max-width: 68ch;
+    font-size: 14.5px;
+    line-height: 1.7;
+    color: var(--text-4);
   }
 
   /* ── the bench ─────────────────────────────────────────────────────── */
@@ -1726,10 +2800,12 @@ ssh_args = -o ControlMaster=auto -o ControlPersist=60s`}</code></pre>
     fill: var(--text-4);
   }
 
-  /* The page's gold: the thing being followed, and nothing else. At most
-     two are ever in the air, because there are two forks. */
+  /* NOT gold. The dots were gilded until the fork knob existed, and then
+     five of them could be in the air at once — §4 allows three marks in a
+     viewport, so the page spends its gold on the score instead, where it
+     means the one thing that is actually rare. */
   .payloads :global(.dot) {
-    fill: var(--torch);
+    fill: var(--text-2);
   }
 
   .payloads :global(.back .dot) {
@@ -1758,8 +2834,10 @@ ssh_args = -o ControlMaster=auto -o ControlPersist=60s`}</code></pre>
     text-anchor: middle;
   }
 
-  /* The wall the linear strategy puts after every task. */
-  .barrier {
+  /* The bars and the barriers are built at runtime — a scoped selector
+     never matches DOM that did not exist at build time — so everything the
+     script draws is reached through :global. */
+  .gantt :global(.barrier) {
     stroke: var(--text-4);
     stroke-width: 1;
     stroke-dasharray: 4 4;
@@ -1791,85 +2869,85 @@ ssh_args = -o ControlMaster=auto -o ControlPersist=60s`}</code></pre>
     fill: var(--text);
   }
 
-  .bar-hit {
+  .gantt :global(.bar-hit) {
     fill: transparent;
     cursor: pointer;
   }
 
   /* A bar is thin at the ends — the two crossings of the channel — and
      thick in the middle, where the module is actually running. */
-  .leg {
+  .gantt :global(.leg) {
     stroke: var(--text-4);
     stroke-width: 1;
   }
 
-  .bar .body {
+  .gantt :global(.bar .body) {
     fill: var(--text-4);
     stroke: none;
   }
 
   /* ok did nothing, so it is drawn as nothing: an outline. */
-  .bar.v-ok .body {
+  .gantt :global(.bar.v-ok .body) {
     fill: none;
     stroke: var(--text-4);
     stroke-width: 1;
   }
 
-  .bar.v-changed .body {
+  .gantt :global(.bar.v-changed .body) {
     fill: var(--text-2);
   }
 
-  .bar.v-skipped .body {
+  .gantt :global(.bar.v-skipped .body) {
     fill: none;
     stroke: var(--border-recess);
     stroke-dasharray: 2 2;
   }
 
-  .bar.v-failed .body {
+  .gantt :global(.bar.v-failed .body) {
     fill: var(--blood);
   }
 
   /* Ahead of the playhead the whole schedule is visible but unlit: a
      reader cannot see a barrier they have to remember. */
-  .bar.ahead {
+  .gantt :global(.bar.ahead) {
     opacity: 0.42;
   }
 
-  .bar.live .body {
+  .gantt :global(.bar.live .body) {
     fill: var(--text);
   }
 
-  .bar.live.v-ok .body {
+  .gantt :global(.bar.live.v-ok .body) {
     stroke: var(--text-2);
   }
 
-  .bar.picked .body {
+  .gantt :global(.bar.picked .body) {
     stroke: var(--arcane);
     stroke-width: 1.6;
   }
 
-  .bar.picked .leg {
+  .gantt :global(.bar.picked .leg) {
     stroke: var(--arcane);
   }
 
-  .bar-tag {
+  .gantt :global(.bar-tag) {
     font-family: var(--font-mono);
     font-size: 9.5px;
     fill: var(--text-4);
     opacity: 0;
   }
 
-  .bar:hover .bar-tag,
-  .bar.picked .bar-tag,
-  .bar.live .bar-tag {
+  .gantt :global(.bar:hover .bar-tag),
+  .gantt :global(.bar.picked .bar-tag),
+  .gantt :global(.bar.live .bar-tag) {
     opacity: 1;
   }
 
-  .bar:focus-visible {
+  .gantt :global(.bar:focus-visible) {
     outline: none;
   }
 
-  .bar:focus-visible .body {
+  .gantt :global(.bar:focus-visible .body) {
     stroke: var(--torch);
     stroke-width: 1.6;
   }
@@ -2369,62 +3447,69 @@ ssh_args = -o ControlMaster=auto -o ControlPersist=60s`}</code></pre>
     color: var(--text-3);
   }
 
-  /* one task, end to end */
+  /* ── one task, to scale ───────────────────────────────────────────── */
+
   .trips {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
-    gap: clamp(18px, 3vw, 36px);
-    margin-top: 22px;
+    display: block;
+    width: 100%;
+    height: auto;
+    margin-top: 26px;
+    overflow: visible;
   }
 
-  .trip-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 10px;
-    margin: 0;
-    padding-bottom: 8px;
-    border-bottom: 1px solid var(--border);
+  .party {
+    stroke: var(--border);
+    stroke-width: 1;
   }
 
-  .trip-head b {
+  .party-name {
     font-family: var(--font-display);
-    font-weight: 400;
+    font-size: 12.5px;
+    fill: var(--text-4);
+    text-anchor: end;
+  }
+
+  .trip-mode {
+    font-family: var(--font-mono);
     font-size: 13px;
-    color: var(--text-4);
-    white-space: nowrap;
+    fill: var(--text-3);
   }
 
-  .trip.lean .trip-head b {
-    color: var(--text-2);
+  .trip-count {
+    font-family: var(--font-display);
+    font-size: 13px;
+    fill: var(--text-4);
+    text-anchor: end;
   }
 
-  .trips ol {
-    list-style: none;
-    margin: 0;
-    padding: 0;
+  .trip.lean .trip-count {
+    fill: var(--text-2);
   }
 
-  .trips li {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 2px 10px;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--border-recess);
+  .leg line {
+    stroke: var(--text-4);
+    stroke-width: 1;
   }
 
-  .trips li code {
-    font-size: 12px;
-    color: var(--text-3);
-    overflow-wrap: anywhere;
+  /* Outbound carries something; the reply is only an acknowledgement. */
+  .leg.up line {
+    stroke: var(--border-recess);
+    stroke-dasharray: 3 3;
   }
 
-  .trips li em {
+  .trip.lean .leg.down line {
+    stroke: var(--text-2);
+    stroke-width: 1.4;
+  }
+
+  .leg-op {
     font-family: var(--font-mono);
     font-size: 11px;
-    font-style: normal;
-    color: var(--text-4);
-    text-align: end;
+    fill: var(--text-4);
+  }
+
+  .trip.lean .leg-op {
+    fill: var(--text-3);
   }
 
   /* the ladder */
@@ -2638,6 +3723,361 @@ ssh_args = -o ControlMaster=auto -o ControlPersist=60s`}</code></pre>
     color: var(--text-4);
   }
 
+  /* ── the four knobs ────────────────────────────────────────────────── */
+
+  .knobs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 10px clamp(14px, 2vw, 26px);
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .knob {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .seg {
+    display: flex;
+    gap: 1px;
+  }
+
+  .seg button {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-4);
+    background: var(--panel);
+    border: 0;
+    border-top: 1px solid var(--border);
+    padding: 5px 9px;
+    cursor: pointer;
+  }
+
+  .seg button:hover {
+    color: var(--text-2);
+  }
+
+  .seg button.on {
+    color: var(--text);
+    border-top-color: var(--arcane);
+  }
+
+  .score {
+    margin: 0 0 0 auto;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .score b {
+    font-family: var(--font-mono);
+    font-weight: 400;
+    font-size: 19px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-2);
+  }
+
+  .score span {
+    font-family: var(--font-display);
+    font-size: 12.5px;
+    color: var(--text-4);
+  }
+
+  /* The one moment on the page worth gilding: the run got under the mark. */
+  .score b.won {
+    color: var(--torch);
+  }
+
+  .score span.won {
+    color: var(--text-2);
+  }
+
+  /* the two fixed marks the run is measured against */
+  .mark {
+    stroke-width: 1;
+  }
+
+  .mark.stock {
+    stroke: var(--border-recess);
+  }
+
+  .mark.target {
+    stroke: var(--text-4);
+    stroke-dasharray: 1 4;
+  }
+
+  .mark-tag {
+    font-family: var(--font-display);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    fill: var(--border-recess);
+    text-anchor: end;
+  }
+
+  .mark-tag.target {
+    fill: var(--text-4);
+  }
+
+  /* the config file, written at runtime */
+  #cfg span {
+    display: block;
+  }
+
+  #cfg b {
+    font-weight: 400;
+    color: var(--arcane);
+  }
+
+  /* ── the resolver ──────────────────────────────────────────────────── */
+
+  .resolver {
+    margin-top: 22px;
+  }
+
+  .sources {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+    gap: 1px clamp(14px, 2vw, 28px);
+    list-style: none;
+    margin: 10px 0 0;
+    padding: 0;
+  }
+
+  .sources button {
+    display: grid;
+    grid-template-columns: 2.6ch minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 10px;
+    width: 100%;
+    padding: 7px 8px;
+    background: none;
+    border: 0;
+    border-top: 1px solid var(--border-recess);
+    text-align: start;
+    cursor: pointer;
+  }
+
+  .sources button:hover .src-file {
+    color: var(--text-2);
+  }
+
+  .sources button.on {
+    background: var(--panel);
+    border-top-color: var(--arcane);
+  }
+
+  .src-rung {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-4);
+    text-align: end;
+  }
+
+  .src-file {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-4);
+    overflow-wrap: anywhere;
+  }
+
+  .sources button.on .src-file,
+  .sources button.on .src-rung {
+    color: var(--text-3);
+  }
+
+  .src-value {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--border-recess);
+  }
+
+  .sources button.on .src-value {
+    color: var(--arcane);
+  }
+
+  .verdict-line {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 16px 0 0;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .verdict-line :global(.won-line) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .verdict-line :global(b) {
+    font-family: var(--font-mono);
+    font-weight: 400;
+    font-size: 15px;
+    color: var(--text);
+  }
+
+  .verdict-line :global(.split b) {
+    font-size: 13.5px;
+    color: var(--text-3);
+  }
+
+  .verdict-line :global(span span),
+  .verdict-line :global(.won-line > span) {
+    font-size: 13px;
+    color: var(--text-4);
+  }
+
+  .verdict-line :global(.undef) {
+    color: var(--blood);
+  }
+
+  /* A rung that is set is visible; the one that won is the only one lit. */
+  .ladder li.set .rung {
+    color: var(--arcane);
+  }
+
+  .ladder li.set .what {
+    color: var(--text-2);
+  }
+
+  .ladder li.wins {
+    background: var(--panel);
+    border-bottom-color: var(--text-4);
+  }
+
+  .ladder li.wins .what {
+    color: var(--text);
+  }
+
+  .ladder li.wins .rung {
+    color: var(--text);
+  }
+
+  /* ── the five words ────────────────────────────────────────────────── */
+
+  .flow {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin-top: 26px;
+    overflow: visible;
+  }
+
+  .edge path {
+    fill: none;
+    stroke: var(--border-recess);
+    stroke-width: 1;
+  }
+
+  .edge-label {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    fill: var(--text-4);
+  }
+
+  .fnode rect {
+    fill: var(--ground);
+    stroke: var(--border);
+    stroke-width: 1;
+  }
+
+  .fnode text {
+    font-family: var(--font-display);
+    font-size: 13px;
+    fill: var(--text-3);
+    text-anchor: middle;
+  }
+
+  .fnode-sub {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    fill: var(--text-4);
+  }
+
+  .fnode.ask rect {
+    stroke: var(--text-4);
+  }
+
+  .fnode.ask text {
+    fill: var(--text-2);
+  }
+
+  .fnode.start rect {
+    stroke-dasharray: 3 3;
+  }
+
+  /* A terminal is drawn the way its bar is drawn on the schedule above, so
+     the two pictures are of the same thing. */
+  .fnode.end rect {
+    fill: none;
+  }
+
+  .fnode.v-changed rect {
+    fill: var(--panel);
+    stroke: var(--text-2);
+  }
+
+  .fnode.v-changed text {
+    fill: var(--text);
+  }
+
+  .fnode.v-skipped rect {
+    stroke-dasharray: 2 2;
+  }
+
+  .fnode.v-failed rect,
+  .fnode.v-unreachable rect {
+    stroke: var(--blood);
+  }
+
+  .fnode.v-failed text,
+  .fnode.v-unreachable text {
+    fill: var(--blood);
+  }
+
+  /* A tree with no lines in it is a list. */
+  .role-tree {
+    position: relative;
+  }
+
+  .role-tree li.in {
+    position: relative;
+  }
+
+  .role-tree li.in code {
+    padding-inline-start: 22px;
+  }
+
+  .role-tree li.in::before {
+    content: "";
+    position: absolute;
+    inset-inline-start: 5px;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: var(--border-recess);
+  }
+
+  .role-tree li.in.last::before {
+    bottom: 50%;
+  }
+
+  .role-tree li.in::after {
+    content: "";
+    position: absolute;
+    inset-inline-start: 5px;
+    top: 50%;
+    width: 9px;
+    height: 1px;
+    background: var(--border-recess);
+  }
+
   /* ── narrower ──────────────────────────────────────────────────────── */
 
   /* The detail pane goes under the run before the source does: a reader
@@ -2694,6 +4134,32 @@ ssh_args = -o ControlMaster=auto -o ControlPersist=60s`}</code></pre>
 
     .ladder {
       columns: 1;
+    }
+
+    /* Same rule as the stage: a drawing that is shrunk until its labels are
+       four pixels tall has become decoration. These scroll instead. */
+    .hook,
+    .panel {
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+    }
+
+    .grid,
+    .flow {
+      min-width: 640px;
+    }
+
+    .trips {
+      min-width: 600px;
+    }
+
+    .knobs {
+      gap: 10px 16px;
+    }
+
+    .score {
+      margin-inline-start: 0;
+      width: 100%;
     }
   }
 </style>

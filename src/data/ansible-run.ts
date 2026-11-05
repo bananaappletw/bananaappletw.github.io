@@ -1254,8 +1254,11 @@ export { EVENTS };
 
 /**
  * One scheduled event, in virtual milliseconds, with the two crossings of
- * the channel either side of the module's own work. A skipped event has
- * `out === back === t0`, because nothing ever left the control node.
+ * the channel either side of the module's own work. An event decided on the
+ * control node — a skipped task, or a fact gathering served from the cache —
+ * has `t0 === out === back === t1`, because nothing left the control node
+ * and nothing took any time. The Gantt gives it a minimum width; the model
+ * does not.
  */
 export type Slot = {
   event: number;
@@ -1274,66 +1277,216 @@ export type Slot = {
 };
 
 /**
- * Built here so that the invariants can be tested rather than asserted:
- * the linear strategy's barrier between tasks, and the fork ceiling on
- * concurrency. Both are visible on the page as gaps, and both are the
- * reason a run takes as long as it does.
+ * The four things a reader can change, and the only four on this page that
+ * actually move the clock. They are knobs rather than prose because the
+ * page's claim — that a run's length is decided by configuration and not by
+ * the YAML — is one a reader should be able to disprove.
  */
-const build = (): { slots: Slot[]; end: number } => {
-  const slots: Slot[] = [];
-  /** when each worker slot is free again */
-  const forks = new Array<number>(FORKS).fill(0);
-  /** the linear strategy: no task starts before every host finished the last */
-  let barrier = 0;
-
-  for (const task of TASKS) {
-    let taskEnd = barrier;
-
-    for (const host of task.hosts) {
-      const index = EVENTS.findIndex(e => e.task === task.n && e.host === host);
-      if (index < 0) continue;
-      const event = EVENTS[index];
-
-      /* a skipped task never reaches a worker — it is one comparison */
-      if (event.verdict === "skipped") {
-        slots.push({
-          event: index,
-          task: task.n,
-          host,
-          t0: barrier,
-          out: barrier,
-          back: barrier,
-          t1: barrier + 0.05,
-          fork: -1,
-        });
-        taskEnd = Math.max(taskEnd, barrier + 0.05);
-        continue;
-      }
-
-      const fork = forks.indexOf(Math.min(...forks));
-      const t0 = Math.max(forks[fork], barrier);
-      const ms = LINK_MS[host];
-      const out = t0 + ms;
-      const back = out + event.runMs;
-      const t1 = back + ms;
-
-      slots.push({ event: index, task: task.n, host, t0, out, back, t1, fork });
-      forks[fork] = t1;
-      taskEnd = Math.max(taskEnd, t1);
-    }
-
-    barrier = taskEnd;
-  }
-
-  return { slots, end: barrier };
+export type RunOptions = {
+  /** how many hosts are worked at once */
+  forks: number;
+  /** `linear` puts a barrier after every task; `free` lets hosts run ahead */
+  strategy: "linear" | "free";
+  /** `implicit` runs `setup` every play; `cached` reads it off disk */
+  gathering: "implicit" | "cached";
+  /** one SSH operation per task, or four */
+  pipelining: boolean;
 };
 
-const built = build();
+export const DEFAULTS: RunOptions = {
+  forks: FORKS,
+  strategy: "linear",
+  gathering: "implicit",
+  pipelining: true,
+};
+
+/** The choices the page offers, so the control and the model cannot drift. */
+export const CHOICES = {
+  forks: [1, 2, 3, 5],
+  strategy: ["linear", "free"] as const,
+  gathering: ["implicit", "cached"] as const,
+  pipelining: [true, false] as const,
+};
+
+/**
+ * What one event costs under a given configuration.
+ *
+ * Without pipelining a task is four SSH operations rather than one — make a
+ * temp directory, push the module, run it, remove the directory — and each
+ * is a round trip. That is why the knob matters on a far link and barely
+ * registers on a near one next to a package manager.
+ *
+ * A cached fact gathering is not a cheaper `setup`: it is no `setup` at all.
+ * The facts are read on the control node, so the host is never contacted.
+ */
+const costOf = (event: Event, opt: RunOptions) => {
+  if (event.verdict === "skipped") return { run: 0, wire: 0, real: false };
+  if (event.module.endsWith("setup") && opt.gathering === "cached") {
+    return { run: 0, wire: 0, real: false };
+  }
+  const trips = opt.pipelining ? 1 : 4;
+  return {
+    run: event.runMs,
+    wire: 2 * trips * LINK_MS[event.host],
+    real: true,
+  };
+};
+
+/**
+ * The schedule, as a pure function of the four knobs — which is what lets
+ * the page recompute it on a click and `tests/ansible-run.test.ts` hold it
+ * to the rules at every setting rather than at one.
+ *
+ * `linear` walks the task list, with a barrier at each row. `free` lets each
+ * host run its own list as fast as a worker becomes available, which is the
+ * whole difference: nothing waits for anybody. Handlers flush at the end of
+ * the play under both, so the handler row is a barrier either way.
+ */
+export const buildSchedule = (
+  opt: RunOptions = DEFAULTS,
+): { slots: Slot[]; end: number } => {
+  const slots: Slot[] = [];
+  const forks = new Array<number>(Math.max(1, opt.forks)).fill(0);
+  const index = (task: number, host: HostId) =>
+    EVENTS.findIndex(e => e.task === task && e.host === host);
+
+  /** place one event, no earlier than `floor`, and say when it ended */
+  const place = (task: number, host: HostId, floor: number) => {
+    const at = index(task, host);
+    if (at < 0) return floor;
+    const cost = costOf(EVENTS[at], opt);
+
+    if (!cost.real) {
+      /* Decided on the control node: no worker, no connection, and no time
+         either. Giving it a sliver so it could be seen would be charging a
+         run for something it did not do — the drawing gives it a minimum
+         width instead. */
+      slots.push({
+        event: at,
+        task,
+        host,
+        t0: floor,
+        out: floor,
+        back: floor,
+        t1: floor,
+        fork: -1,
+      });
+      return floor;
+    }
+
+    const fork = forks.indexOf(Math.min(...forks));
+    const t0 = Math.max(forks[fork], floor);
+    const out = t0 + cost.wire / 2;
+    const back = out + cost.run;
+    const t1 = back + cost.wire / 2;
+    slots.push({ event: at, task, host, t0, out, back, t1, fork });
+    forks[fork] = t1;
+    return t1;
+  };
+
+  let playFloor = 0;
+
+  for (const play of PLAYS) {
+    const tasks = TASKS.filter(t => t.play === play.n && !t.handler);
+    const handlers = TASKS.filter(t => t.play === play.n && t.handler);
+    let end = playFloor;
+
+    if (opt.strategy === "linear") {
+      let barrier = playFloor;
+      for (const task of tasks) {
+        let row = barrier;
+        for (const host of task.hosts) {
+          row = Math.max(row, place(task.n, host, barrier));
+        }
+        barrier = row;
+      }
+      end = barrier;
+    } else {
+      /* free: each host runs its own list, and only the forks hold it back */
+      const cursor: Partial<Record<HostId, number>> = {};
+      const queue = new Map<HostId, number[]>();
+      for (const task of tasks) {
+        for (const host of task.hosts) {
+          queue.set(host, [...(queue.get(host) ?? []), task.n]);
+          cursor[host] ??= playFloor;
+        }
+      }
+      /* Always take whichever host could start soonest, so a worker is never
+         left idle while some host is ready — which is what `free` means. */
+      while ([...queue.values()].some(list => list.length)) {
+        let pick: HostId | null = null;
+        let best = Infinity;
+        for (const [host, list] of queue) {
+          if (!list.length) continue;
+          const when = Math.max(cursor[host] ?? 0, Math.min(...forks));
+          if (when < best) {
+            best = when;
+            pick = host;
+          }
+        }
+        if (!pick) break;
+        const list = queue.get(pick)!;
+        const task = list.shift()!;
+        cursor[pick] = place(task, pick, cursor[pick] ?? playFloor);
+        end = Math.max(end, cursor[pick]!);
+      }
+    }
+
+    /* Handlers flush at the end of the play, under either strategy. */
+    for (const handler of handlers) {
+      let row = end;
+      for (const host of handler.hosts) {
+        row = Math.max(row, place(handler.n, host, end));
+      }
+      end = row;
+    }
+
+    playFloor = end;
+  }
+
+  slots.sort((a, b) => a.t0 - b.t0 || a.task - b.task);
+  return { slots, end: playFloor };
+};
+
+const built = buildSchedule();
 
 export const SCHEDULE: Slot[] = built.slots;
 
 /** Virtual milliseconds the whole run takes, plus a beat to read the recap. */
 export const RUN_END = built.end + 120;
+
+/**
+ * The fastest the run can be made to go, and the slowest — worked out over
+ * every combination the page offers rather than asserted, so the target the
+ * page sets a reader is one the page knows is reachable.
+ */
+const spread = (() => {
+  let best = Infinity;
+  let worst = 0;
+  for (const forks of CHOICES.forks) {
+    for (const strategy of CHOICES.strategy) {
+      for (const gathering of CHOICES.gathering) {
+        for (const pipelining of CHOICES.pipelining) {
+          const { end } = buildSchedule({
+            forks,
+            strategy,
+            gathering,
+            pipelining,
+          });
+          best = Math.min(best, end);
+          worst = Math.max(worst, end);
+        }
+      }
+    }
+  }
+  return { best, worst };
+})();
+
+export const BEST_MS = spread.best;
+export const WORST_MS = spread.worst;
+
+/** The target, rounded up to the next half second above what is reachable. */
+export const TARGET_MS = Math.ceil((spread.best + 1) / 500) * 500;
 
 /* ── the recap ─────────────────────────────────────────────────────────── */
 
