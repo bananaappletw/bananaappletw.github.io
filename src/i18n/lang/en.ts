@@ -10,6 +10,7 @@ export default {
     search: "Search",
     list: "List",
     network: "Network",
+    ansible: "Ansible",
   },
   post: {
     publishedAt: "Published at",

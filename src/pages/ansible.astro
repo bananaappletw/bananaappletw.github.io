@@ -1,0 +1,2699 @@
+---
+/**
+ * /ansible — one playbook run, simulated.
+ *
+ * The sibling page, `/network`, follows a request across cables. This
+ * follows a playbook across hosts, and it is built the same way and for the
+ * same reason: the YAML is the easy half. What nobody can see from the YAML
+ * is the SHAPE of the run, and the shape is a schedule.
+ *
+ * ── three panes, which is a debugger ─────────────────────────────────────
+ *
+ * Source on the left, execution in the middle, detail on the right. That
+ * arrangement is borrowed on purpose: the thing a reader needs is the line
+ * of YAML, the moment it ran, and what actually went over the wire, all
+ * visible at once. Clicking any one of the three moves the other two.
+ *
+ * ── the middle pane is two drawings, not one ─────────────────────────────
+ *
+ * A star shows that this is agentless — one machine holds Ansible and the
+ * others hold nothing — and shows which link is busy. A Gantt shows the
+ * part a star cannot: that three hosts and two forks means one host always
+ * waits, and that the default `linear` strategy puts a barrier after every
+ * task, so each row of the run costs what its slowest host costs.
+ *
+ * The whole future of the run is drawn from the first frame rather than
+ * revealed. That is deliberate. A reader cannot see a barrier they have to
+ * remember; they can see one they are looking at.
+ *
+ * ── the clock runs at life size ──────────────────────────────────────────
+ *
+ * `/network` slows its clock about forty times, because a packet crosses a
+ * room in a fifth of a millisecond. Here 1× is real time: seven seconds of
+ * run take seven seconds to watch, and two and a half of them are one
+ * package manager. Sitting through that is the lesson, so it is the default,
+ * and the faster speeds are there for the second viewing.
+ */
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Breadcrumb from "@/components/Breadcrumb.astro";
+import Main from "@/components/Main.astro";
+import Footer from "@/components/Footer.astro";
+import config from "@/config";
+import {
+  CHECK_MODE,
+  EVENTS,
+  FORKS,
+  GROUPS,
+  HOSTS,
+  INVENTORY,
+  LINKS,
+  LINK_MS,
+  MANAGED,
+  PLAYBOOK,
+  PLAYS,
+  PRECEDENCE,
+  RECAP,
+  ROLE_TREE,
+  RUN_END,
+  SCHEDULE,
+  TASKS,
+  TRANSPORT,
+  VERDICTS,
+} from "@/data/ansible-run";
+
+const title = "Ansible";
+const description =
+  "One ansible-playbook run as a live simulation: the schedule, the forks, the barrier after every task, and what each module actually sends over SSH — with the playbook beside it.";
+
+/* ── the star ──────────────────────────────────────────────────────────── */
+
+const FAN_W = 1000;
+const FAN_H = 300;
+const fanAt = (n: { x: number; y: number }) => ({
+  x: n.x * FAN_W,
+  y: n.y * FAN_H,
+});
+const fanPos = Object.fromEntries(HOSTS.map(h => [h.id, fanAt(h)]));
+
+/* ── the Gantt ─────────────────────────────────────────────────────────── */
+
+const G_W = 1000;
+const LANE_H = 44;
+const G_TOP = 34;
+const G_LEFT = 96;
+const G_RIGHT = 988;
+const G_H = G_TOP + MANAGED.length * LANE_H + 14;
+
+/** virtual milliseconds → x */
+const scale = (ms: number) => G_LEFT + (ms / RUN_END) * (G_RIGHT - G_LEFT);
+const laneY = (host: (typeof MANAGED)[number]) =>
+  G_TOP + MANAGED.indexOf(host) * LANE_H;
+
+/** Where the linear strategy puts a wall: the end of every task but the last. */
+const barriers = TASKS.slice(0, -1).map(task => ({
+  n: task.n,
+  ms: Math.max(...SCHEDULE.filter(s => s.task === task.n).map(s => s.t1)),
+}));
+
+/** Each task's window, for the rail under the drawing. */
+const windows = TASKS.map(task => {
+  const mine = SCHEDULE.filter(s => s.task === task.n);
+  return {
+    n: task.n,
+    name: task.name,
+    play: task.play,
+    handler: task.handler ?? false,
+    t0: Math.min(...mine.map(s => s.t0)),
+    t1: Math.max(...mine.map(s => s.t1)),
+  };
+});
+
+/** Where the seven seconds went, for the panel the run ends on. */
+const spent = (() => {
+  const real = SCHEDULE.filter(s => s.fork >= 0);
+  const module = real.reduce((n, s) => n + EVENTS[s.event].runMs, 0);
+  const wire = real.reduce((n, s) => n + 2 * LINK_MS[s.host], 0);
+  const facts = real
+    .filter(s => EVENTS[s.event].module.endsWith("setup"))
+    .reduce((n, s) => n + EVENTS[s.event].runMs, 0);
+  const installs = real
+    .filter(s => s.task === 1)
+    .reduce((n, s) => n + EVENTS[s.event].runMs, 0);
+  return { module, wire, facts, installs, wall: RUN_END - 120 };
+})();
+
+/**
+ * The listing, as one string. Astro's own indentation between elements would
+ * otherwise land inside the `<pre>` as literal blank lines, so the markup is
+ * assembled here with no whitespace between lines at all.
+ */
+const esc = (t: string) =>
+  t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+/** Notes are authored with backticks; every one of them is a <code>. */
+const ticks = (t: string) => esc(t).replace(/`([^`]+)`/g, "<code>$1</code>");
+
+const yamlHtml = PLAYBOOK.map(
+  line =>
+    `<span class="ln" data-task="${line.task ?? ""}">` +
+    (line.segs.length
+      ? line.segs
+          .map(seg =>
+            seg.k
+              ? `<span class="s-${seg.k}">${esc(seg.t)}</span>`
+              : esc(seg.t),
+          )
+          .join("")
+      : " ") +
+    `</span>`,
+).join("");
+
+const payload = {
+  hosts: Object.fromEntries(
+    HOSTS.map(h => [
+      h.id,
+      {
+        name: h.name,
+        fqdn: h.fqdn,
+        role: h.role,
+        about: h.about,
+        groups: h.groups,
+        python: h.python,
+        facts: h.facts,
+        ms: LINK_MS[h.id] ?? null,
+        ...fanPos[h.id],
+      },
+    ]),
+  ),
+  plays: PLAYS.map(p => ({
+    n: p.n,
+    name: p.name,
+    target: p.target,
+    hosts: p.hosts,
+    summary: p.summary,
+  })),
+  tasks: TASKS.map(t => ({
+    n: t.n,
+    play: t.play,
+    name: t.name,
+    module: t.module,
+    summary: t.summary,
+    hosts: t.hosts,
+    handler: t.handler ?? false,
+  })),
+  events: EVENTS.map(e => ({
+    task: e.task,
+    host: e.host,
+    verdict: e.verdict,
+    why: e.why,
+    module: e.module,
+    args: e.args,
+    stages: e.stages,
+    ret: e.ret,
+    notified: e.notified ?? null,
+    runMs: e.runMs,
+  })),
+  schedule: SCHEDULE,
+  recap: RECAP,
+  end: RUN_END,
+  forks: FORKS,
+  spent,
+};
+---
+
+<Layout title={`${title} | ${config.site.title}`} description={description}>
+  <Header />
+
+  <Breadcrumb />
+
+  <Main pageTitle={title}>
+    <div class="app-prose intro">
+      <p>
+        One <code>ansible-playbook site.yml</code>, running at life size. Four
+        hosts, two plays, two forks — and seven seconds, of which two and a half
+        are a single package manager.
+      </p>
+      <p>
+        The source is on the left, the run in the middle, the wire on the right.
+        Click a line of YAML, a bar, or a host, and the other two panes follow.
+      </p>
+    </div>
+  </Main>
+
+  <!-- Three panes need more than the 64rem reading measure, and §9's rule
+       governs copy, which this is not. -->
+  <section class="bench">
+    <div class="source">
+      <p class="label">site.yml</p>
+      <pre class="code yaml" id="yaml"><code set:html={yamlHtml} /></pre>
+
+      <p class="label sub">inventory/hosts.ini</p>
+      <pre class="code ini"><code>{INVENTORY}</code></pre>
+
+      <p class="label sub">ansible.cfg</p>
+      <pre
+        class="code ini"><code>{`[defaults]
+forks = ${FORKS}
+strategy = linear
+gathering = implicit
+
+[ssh_connection]
+pipelining = True
+ssh_args = -o ControlMaster=auto -o ControlPersist=60s`}</code></pre>
+    </div>
+
+    <div class="stage">
+      <svg
+        class="fan"
+        viewBox={`0 0 ${FAN_W} ${FAN_H}`}
+        role="img"
+        aria-label="One control node and four managed hosts, joined by SSH"
+      >
+        <g class="links">
+          {
+            LINKS.map(l => (
+              <g class="chan" data-host={l.host}>
+                <line
+                  class="hit"
+                  x1={fanPos.control.x}
+                  y1={fanPos.control.y}
+                  x2={fanPos[l.host].x}
+                  y2={fanPos[l.host].y}
+                />
+                <line
+                  class="wire"
+                  x1={fanPos.control.x}
+                  y1={fanPos.control.y}
+                  x2={fanPos[l.host].x}
+                  y2={fanPos[l.host].y}
+                />
+                <text
+                  class="ms"
+                  x={(fanPos.control.x + fanPos[l.host].x) / 2}
+                  y={(fanPos.control.y + fanPos[l.host].y) / 2 - 7}
+                >
+                  {l.ms} ms
+                </text>
+              </g>
+            ))
+          }
+        </g>
+
+        <g class="nodes">
+          {
+            HOSTS.map(h => (
+              <g
+                class="node"
+                data-host={h.id}
+                transform={`translate(${fanPos[h.id].x} ${fanPos[h.id].y})`}
+                tabindex="0"
+                role="button"
+                aria-label={`${h.name} — ${h.role}`}
+              >
+                <circle class="hit-dot" r="30" />
+                <circle class="halo" r="19" />
+                {h.id === "control" ? (
+                  <path
+                    class="glyph"
+                    d="M-13 -9h26v18h-26zM-13 -9l13 9 13 -9M-4 13h8"
+                  />
+                ) : (
+                  <path
+                    class="glyph"
+                    d="M-12 -11h24v9h-24zM-12 2h24v9h-24zM-8 -7h3M-8 6h3"
+                  />
+                )}
+                {h.id === "control" ? (
+                  <Fragment>
+                    <text class="name under" y="36">
+                      {h.name}
+                    </text>
+                    <text class="sub under" y="50">
+                      ansible-playbook site.yml
+                    </text>
+                  </Fragment>
+                ) : (
+                  <Fragment>
+                    <text class="name beside" x="38" y="-4">
+                      {h.name}
+                    </text>
+                    <text class="sub beside" x="38" y="10">
+                      {h.fqdn}
+                    </text>
+                    <text class="role beside" x="38" y="25">
+                      {h.role}
+                    </text>
+                  </Fragment>
+                )}
+              </g>
+            ))
+          }
+        </g>
+
+        <g class="payloads" aria-hidden="true"></g>
+      </svg>
+
+      <svg
+        class="gantt"
+        viewBox={`0 0 ${G_W} ${G_H}`}
+        role="img"
+        aria-label="The schedule of the run, one lane per host"
+      >
+        <g class="axis" aria-hidden="true">
+          {
+            Array.from(
+              { length: Math.floor(RUN_END / 1000) + 1 },
+              (_, i) => i * 1000,
+            ).map(ms => {
+              return (
+                <g>
+                  <line
+                    class="tick"
+                    x1={scale(ms)}
+                    y1={G_TOP - 10}
+                    x2={scale(ms)}
+                    y2={G_H - 14}
+                  />
+                  <text class="tick-ms" x={scale(ms)} y={G_TOP - 16}>
+                    {ms / 1000}s
+                  </text>
+                </g>
+              );
+            })
+          }
+        </g>
+
+        <!-- Where every host must arrive before any host may leave. -->
+        <g class="barriers" aria-hidden="true">
+          {
+            barriers.map(b => (
+              <line
+                class="barrier"
+                x1={scale(b.ms)}
+                y1={G_TOP - 6}
+                x2={scale(b.ms)}
+                y2={G_H - 16}
+              />
+            ))
+          }
+        </g>
+
+        <g class="lanes">
+          {
+            MANAGED.map(id => {
+              const h = HOSTS.find(x => x.id === id)!;
+              return (
+                <g class="lane" data-host={id}>
+                  <line
+                    class="lane-rail"
+                    x1={G_LEFT}
+                    y1={laneY(id) + LANE_H / 2}
+                    x2={G_RIGHT}
+                    y2={laneY(id) + LANE_H / 2}
+                  />
+                  <text class="lane-name" x={G_LEFT - 12} y={laneY(id) + 18}>
+                    {h.name}
+                  </text>
+                  <text class="lane-os" x={G_LEFT - 12} y={laneY(id) + 32}>
+                    {h.facts[0]?.value} {h.facts[3]?.value}
+                  </text>
+                </g>
+              );
+            })
+          }
+        </g>
+
+        <g class="bars">
+          {
+            SCHEDULE.map((s, i) => {
+              const e = EVENTS[s.event];
+              const y = laneY(s.host) + LANE_H / 2;
+              const x0 = scale(s.t0);
+              const x1 = scale(s.t1);
+              const w = Math.max(2, x1 - x0);
+              return (
+                <g
+                  class={`bar v-${e.verdict}`}
+                  data-slot={i}
+                  data-task={s.task}
+                  data-host={s.host}
+                  tabindex="0"
+                  role="button"
+                  aria-label={`${TASKS[s.task].name} on ${s.host} — ${e.verdict}`}
+                >
+                  <rect
+                    class="bar-hit"
+                    x={x0 - 3}
+                    y={y - 15}
+                    width={w + 6}
+                    height="30"
+                  />
+                  {/* the two crossings of the channel, drawn as the thin ends */}
+                  <line class="leg" x1={x0} y1={y} x2={scale(s.out)} y2={y} />
+                  <line class="leg" x1={scale(s.back)} y1={y} x2={x1} y2={y} />
+                  <rect
+                    class="body"
+                    x={scale(s.out)}
+                    y={y - 7}
+                    width={Math.max(1.5, scale(s.back) - scale(s.out))}
+                    height="14"
+                    rx="2"
+                  />
+                  <text class="bar-tag" x={x0 + 3} y={y - 12}>
+                    {s.task}
+                  </text>
+                </g>
+              );
+            })
+          }
+        </g>
+
+        <g class="head" aria-hidden="true">
+          <line
+            class="playhead"
+            x1={G_LEFT}
+            y1={G_TOP - 12}
+            x2={G_LEFT}
+            y2={G_H - 14}></line>
+        </g>
+      </svg>
+
+      <div class="transport">
+        <button type="button" id="play" aria-label="Play">Play</button>
+        <input
+          type="range"
+          id="scrub"
+          min="0"
+          max="1000"
+          value="0"
+          aria-label="Scrub the run"
+        />
+        <span class="clock"><span id="clock-s">0.00</span> s</span>
+        <span class="speeds">
+          <button type="button" data-speed="1" class="on">1&times;</button>
+          <button type="button" data-speed="4">4&times;</button>
+          <button type="button" data-speed="16">16&times;</button>
+        </span>
+      </div>
+
+      <p class="map-hint">
+        Real time at 1&times;, {FORKS} forks, <code>strategy: linear</code>. The
+        upright hairlines are barriers: no host starts a task until every host
+        has finished the one before. Space plays, arrows nudge.
+      </p>
+
+      <ol class="rail" id="rail">
+        {
+          windows.map(w => (
+            <li data-task={w.n} data-t0={w.t0}>
+              <b>{w.name}</b>
+              <span>
+                {(w.t0 / 1000).toFixed(2)}s{w.handler ? " · handler" : ""}
+              </span>
+            </li>
+          ))
+        }
+      </ol>
+
+      <p class="label sub">PLAY RECAP</p>
+      <table class="recap" id="recap">
+        <thead>
+          <tr>
+            <th>host</th>
+            <th>ok</th>
+            <th>changed</th>
+            <th>unreachable</th>
+            <th>failed</th>
+            <th>skipped</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            MANAGED.map(id => (
+              <tr data-host={id}>
+                <td>{HOSTS.find(h => h.id === id)!.name}</td>
+                <td data-col="ok">0</td>
+                <td data-col="changed">0</td>
+                <td data-col="unreachable">0</td>
+                <td data-col="failed">0</td>
+                <td data-col="skipped">0</td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <aside class="sidebar" id="sidebar" aria-live="polite">
+      <p class="label" id="side-kind">Following the run</p>
+      <div id="side-body">
+        <p class="side-empty">Loading the simulation.</p>
+      </div>
+    </aside>
+  </section>
+
+  <!-- ── the reference panels ────────────────────────────────────────────
+       The simulation teaches the shape of a run. These four teach the
+       things a run never shows you, because they are decisions made before
+       it starts. -->
+  <section class="panels">
+    <figure class="panel">
+      <figcaption>
+        <p class="label">One task, end to end</p>
+        <p>
+          A module is a Python program built on the control node and thrown at
+          an interpreter. The only question is how many SSH operations that
+          takes, and one line of <code>ansible.cfg</code> answers it.
+        </p>
+      </figcaption>
+      <div class="trips">
+        {
+          TRANSPORT.map(mode => (
+            <div class={`trip ${mode.trips === 1 ? "lean" : ""}`}>
+              <p class="trip-head">
+                <code>{mode.mode}</code>
+                <b>
+                  {mode.trips} round trip{mode.trips === 1 ? "" : "s"}
+                </b>
+              </p>
+              <ol>
+                {mode.steps.map(s => (
+                  <li>
+                    <code>{s.text}</code>
+                    {s.note ? <em set:html={ticks(s.note)} /> : null}
+                  </li>
+                ))}
+              </ol>
+            </div>
+          ))
+        }
+      </div>
+      <p class="aside">
+        Multiply by every task and every host. On <code>db1</code>, fourteen
+        milliseconds each way, that is the difference between 28&nbsp;ms and
+        112&nbsp;ms of pure waiting per task — before the module has done
+        anything at all.
+      </p>
+    </figure>
+
+    <figure class="panel">
+      <figcaption>
+        <p class="label">Where a variable comes from</p>
+        <p>
+          Twenty-two rungs, lowest first, and a total order: when two of them
+          define the same name, the higher one simply wins. This is the ladder
+          everyone meets the day a value is wrong and no file looks wrong.
+        </p>
+      </figcaption>
+      <ol class="ladder">
+        {
+          PRECEDENCE.map(r => (
+            <li
+              class={
+                r.n === 22
+                  ? "top"
+                  : r.n === 2 || r.n === 12 || r.n === 15
+                    ? "seen"
+                    : undefined
+              }
+            >
+              <span class="rung">{r.n}</span>
+              <span class="what" set:html={ticks(r.what)} />
+              {r.note ? <em set:html={ticks(r.note)} /> : null}
+            </li>
+          ))
+        }
+      </ol>
+      <p class="aside">
+        The three marked rungs are the ones on this page: role defaults are the
+        floor a role offers you, <code>nginx_port</code> is a play var at 12, and
+        role vars at 15 sit <em>above</em> it — which is why a role can quietly beat
+        the playbook that calls it.
+      </p>
+    </figure>
+
+    <figure class="panel">
+      <figcaption>
+        <p class="label">Inventory, groups, role</p>
+        <p>
+          Two directory layouts carry nearly all of Ansible's structure. A group
+          is a folder name; a role is an interface made of folder names.
+        </p>
+      </figcaption>
+      <div class="trees">
+        <div class="tree">
+          <p class="tree-head">groups, and what they are for</p>
+          <ul class="groups">
+            {
+              GROUPS.map(g => (
+                <li>
+                  <code>{g.name}</code>
+                  <span>{g.members.join(", ")}</span>
+                  <em set:html={ticks(g.note)} />
+                </li>
+              ))
+            }
+          </ul>
+          <p class="tree-foot">
+            Every group may hold <code>group_vars/&lt;name&gt;.yml</code>; every
+            host may hold <code>host_vars/&lt;name&gt;.yml</code>. Host beats
+            group, always.
+          </p>
+        </div>
+        <div class="tree">
+          <p class="tree-head">a role is its layout</p>
+          <ul class="role-tree">
+            {
+              ROLE_TREE.map(r => (
+                <li class={r.depth ? "in" : "root"}>
+                  <code>{r.path}</code>
+                  {r.note ? <em set:html={ticks(r.note)} /> : null}
+                </li>
+              ))
+            }
+          </ul>
+          <p class="tree-foot">
+            Nothing here is configured. <code>tasks/main.yml</code> is loaded because
+            of its name, and <code>library/</code> is searched because of its name.
+          </p>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="panel">
+      <figcaption>
+        <p class="label">The five words a run can say</p>
+        <p>
+          A verdict is a statement about the host, not about the task — which is
+          the whole of idempotency, and the reason the same four tasks came back
+          three different ways on this page.
+        </p>
+      </figcaption>
+      <ul class="verdicts">
+        {
+          VERDICTS.map(v => (
+            <li class={`v-${v.id}`}>
+              <span class="chip">{v.id}</span>
+              <b>{v.what}</b>
+              <em set:html={ticks(v.from)} />
+            </li>
+          ))
+        }
+      </ul>
+      <div class="check">
+        <p class="tree-head">and the reason a verdict must be a prediction</p>
+        <ul>
+          {
+            CHECK_MODE.map(c => (
+              <li>
+                <code>{c.text}</code>
+                <em set:html={ticks(c.note)} />
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </figure>
+  </section>
+
+  <Footer />
+
+  <!-- Data, not code: is:inline keeps Astro's bundler out of it. -->
+  <script
+    is:inline
+    type="application/json"
+    id="run"
+    set:html={JSON.stringify(payload)}
+  />
+
+  <script>
+    type Fact = { key: string; value: string; note?: string };
+    type HostInfo = {
+      name: string;
+      fqdn: string;
+      role: string;
+      about: string;
+      groups: string[];
+      python: string;
+      facts: Fact[];
+      ms: number | null;
+      x: number;
+      y: number;
+    };
+    type TaskInfo = {
+      n: number;
+      play: number;
+      name: string;
+      module: string;
+      summary: string;
+      hosts: string[];
+      handler: boolean;
+    };
+    type PlayInfo = {
+      n: number;
+      name: string;
+      target: string;
+      hosts: string[];
+      summary: string;
+    };
+    type Arg = { key: string; raw: string; resolved?: string; note?: string };
+    type Stage = {
+      name: string;
+      where: "control" | "wire" | "target";
+      summary: string;
+      lines: { text: string; note?: string }[];
+    };
+    type EventInfo = {
+      task: number;
+      host: string;
+      verdict: "ok" | "changed" | "skipped" | "failed";
+      why: string;
+      module: string;
+      args: Arg[];
+      stages: Stage[];
+      ret: { key: string; value: string; note?: string }[];
+      notified: string | null;
+      runMs: number;
+    };
+    type Slot = {
+      event: number;
+      task: number;
+      host: string;
+      t0: number;
+      out: number;
+      back: number;
+      t1: number;
+      fork: number;
+    };
+    type RecapRow = {
+      host: string;
+      ok: number;
+      changed: number;
+      unreachable: number;
+      failed: number;
+      skipped: number;
+      done: number;
+    };
+    type Run = {
+      hosts: Record<string, HostInfo>;
+      plays: PlayInfo[];
+      tasks: TaskInfo[];
+      events: EventInfo[];
+      schedule: Slot[];
+      recap: RecapRow[];
+      end: number;
+      forks: number;
+      spent: {
+        module: number;
+        wire: number;
+        facts: number;
+        installs: number;
+        wall: number;
+      };
+    };
+
+    /**
+     * What the right-hand pane is showing. `auto` follows the run; everything
+     * else is pinned by a click, and a pin survives the clock moving on —
+     * reaching for a value means you want to read it.
+     */
+    type Selection =
+      | { kind: "auto" }
+      | { kind: "slot"; slot: number }
+      | { kind: "host"; host: string }
+      | { kind: "task"; task: number };
+
+    const start = () => {
+      const data = document.getElementById("run");
+      const fan = document.querySelector<SVGSVGElement>(".fan");
+      const gantt = document.querySelector<SVGSVGElement>(".gantt");
+      if (!data || !fan || !gantt) return;
+
+      const run: Run = JSON.parse(data.textContent ?? "{}");
+      const { hosts, tasks, events, schedule, end } = run;
+
+      const taskOf = (n: number) => tasks.find(t => t.n === n)!;
+      const eventOf = (slot: Slot) => events[slot.event];
+
+      /* ── state ──────────────────────────────────────────────────────── */
+
+      const payloads = fan.querySelector<SVGGElement>(".payloads")!;
+      const playhead = gantt.querySelector<SVGLineElement>(".playhead")!;
+      const scrub = document.getElementById("scrub") as HTMLInputElement;
+      const playBtn = document.getElementById("play") as HTMLButtonElement;
+      const clockOut = document.getElementById("clock-s")!;
+      const kindOut = document.getElementById("side-kind")!;
+      const bodyOut = document.getElementById("side-body")!;
+      const railEl = document.getElementById("rail")!;
+      const recapEl = document.getElementById("recap")!;
+      const yamlEl = document.getElementById("yaml")!;
+
+      const reduced = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+
+      let t = 0;
+      let playing = false;
+      let speed = 1;
+      let raf = 0;
+      let lastFrame = 0;
+      let selection: Selection = { kind: "auto" };
+      let pinnedByPointer = false;
+      /** which stage of the event's exchange the panel is opened at */
+      let pickedStage = 0;
+      /** the hovered argument or line, held as state so a rebuild keeps it */
+      let litLine: string | null = null;
+      let lastKey = "";
+
+      /* The Gantt's own geometry, read back off a lane rail — which never
+         moves — so there is one source for it rather than two that drift. */
+      const laneRail = gantt.querySelector<SVGLineElement>(".lane-rail")!;
+      const G_LEFT = Number(laneRail.getAttribute("x1"));
+      const G_RIGHT = Number(laneRail.getAttribute("x2"));
+      const scale = (ms: number) => G_LEFT + (ms / end) * (G_RIGHT - G_LEFT);
+      const unscale = (x: number) => ((x - G_LEFT) / (G_RIGHT - G_LEFT)) * end;
+
+      /* ── what is happening at time t ────────────────────────────────── */
+
+      /** on the wire, in one direction or the other */
+      const flying = (now: number) =>
+        schedule.filter(
+          s =>
+            s.fork >= 0 &&
+            ((now >= s.t0 && now < s.out) || (now > s.back && now <= s.t1)),
+        );
+
+      /** the module is running on the target */
+      const working = (now: number) =>
+        schedule.filter(s => s.fork >= 0 && now >= s.out && now <= s.back);
+
+      const landed = (now: number) => schedule.filter(s => now >= s.t1);
+
+      /** the task the run is in, which is the last one to have started */
+      const taskAt = (now: number) => {
+        let n = -1;
+        for (const s of schedule) if (s.t0 <= now) n = Math.max(n, s.task);
+        return n;
+      };
+
+      /** the slot the panel follows when nothing is pinned */
+      const current = (now: number) => {
+        const live = [...flying(now), ...working(now)];
+        if (live.length) {
+          return schedule.indexOf(live.reduce((a, b) => (b.t0 > a.t0 ? b : a)));
+        }
+        const done = landed(now);
+        if (!done.length) return -1;
+        return schedule.indexOf(done.reduce((a, b) => (b.t1 > a.t1 ? b : a)));
+      };
+
+      /* ── the star ───────────────────────────────────────────────────── */
+
+      const drawPayloads = (now: number) => {
+        const live = flying(now);
+        const keep = new Set<string>();
+        const control = hosts.control;
+
+        for (const slot of live) {
+          const id = `p${schedule.indexOf(slot)}`;
+          keep.add(id);
+          const host = hosts[slot.host];
+          const outbound = now < slot.out;
+          const span = outbound ? slot.out - slot.t0 : slot.t1 - slot.back;
+          const k = span
+            ? (outbound ? now - slot.t0 : now - slot.back) / span
+            : 1;
+          const p = outbound ? k : 1 - k;
+          const x = control.x + (host.x - control.x) * p;
+          const y = control.y + (host.y - control.y) * p;
+
+          let g = payloads.querySelector<SVGGElement>(`[data-p="${id}"]`);
+          if (!g) {
+            g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            g.setAttribute("data-p", id);
+            g.innerHTML =
+              `<circle class="dot" r="5"></circle>` +
+              `<text class="tag" y="-12"></text>`;
+            payloads.appendChild(g);
+          }
+          g.setAttribute("transform", `translate(${x} ${y})`);
+          g.classList.toggle("back", !outbound);
+          const tag = g.querySelector("text")!;
+          tag.textContent = outbound
+            ? `AnsiballZ_${eventOf(slot).module.split(".").pop()}`
+            : "JSON";
+        }
+
+        for (const g of [...payloads.children]) {
+          if (!keep.has(g.getAttribute("data-p") ?? "")) g.remove();
+        }
+
+        /* a channel is live while anything of its host's is in the air */
+        const onWire = new Set(live.map(s => s.host));
+        const onTarget = new Set(working(now).map(s => s.host));
+        for (const ch of fan.querySelectorAll<SVGGElement>(".chan")) {
+          const host = ch.dataset.host ?? "";
+          ch.classList.toggle("live", onWire.has(host));
+        }
+        for (const node of fan.querySelectorAll<SVGGElement>(".node")) {
+          const host = node.dataset.host ?? "";
+          node.classList.toggle("busy", onTarget.has(host) || onWire.has(host));
+        }
+      };
+
+      /* ── the Gantt ──────────────────────────────────────────────────── */
+
+      const paintGantt = (now: number) => {
+        playhead.setAttribute("x1", String(scale(now)));
+        playhead.setAttribute("x2", String(scale(now)));
+
+        const picked = selection.kind === "slot" ? selection.slot : -1;
+        const auto = current(now);
+
+        for (const bar of gantt.querySelectorAll<SVGGElement>(".bar")) {
+          const i = Number(bar.dataset.slot);
+          const s = schedule[i];
+          bar.classList.toggle("done", now >= s.t1);
+          bar.classList.toggle("live", now >= s.t0 && now < s.t1);
+          bar.classList.toggle("ahead", now < s.t0);
+          bar.classList.toggle(
+            "picked",
+            i === picked || (picked < 0 && i === auto),
+          );
+        }
+      };
+
+      /* ── the rail, the listing and the recap ────────────────────────── */
+
+      const paintRail = (now: number) => {
+        const at = taskAt(now);
+        for (const li of railEl.querySelectorAll<HTMLLIElement>("li")) {
+          const n = Number(li.dataset.task);
+          li.classList.toggle("on", n === at);
+          li.classList.toggle("done", n < at);
+        }
+      };
+
+      /** the task the listing is lighting, so it is only scrolled on a change */
+      let litTask = -2;
+
+      const paintYaml = (now: number) => {
+        const at =
+          selection.kind === "task"
+            ? selection.task
+            : selection.kind === "slot"
+              ? schedule[selection.slot].task
+              : taskAt(now);
+        let first: HTMLElement | null = null;
+        for (const ln of yamlEl.querySelectorAll<HTMLElement>(".ln")) {
+          const n = ln.dataset.task;
+          const on = n !== "" && Number(n) === at;
+          ln.classList.toggle("on", on);
+          if (on && !first) first = ln;
+        }
+
+        /* The pane scrolls itself rather than the page: `scrollIntoView`
+           would drag the whole document every time a task begins. */
+        if (at !== litTask) {
+          litTask = at;
+          if (first) {
+            const want =
+              first.offsetTop - yamlEl.clientHeight / 2 + first.offsetHeight;
+            yamlEl.scrollTo({
+              top: Math.max(0, want),
+              behavior: reduced ? "auto" : "smooth",
+            });
+          }
+        }
+      };
+
+      const paintRecap = (now: number) => {
+        const done = landed(now);
+        for (const tr of recapEl.querySelectorAll<HTMLTableRowElement>(
+          "tbody tr",
+        )) {
+          const host = tr.dataset.host ?? "";
+          const mine = done.filter(s => s.host === host).map(eventOf);
+          const n = (v: string) => mine.filter(e => e.verdict === v).length;
+          const cell = (col: string, value: number) => {
+            const td = tr.querySelector<HTMLElement>(`[data-col="${col}"]`)!;
+            td.textContent = String(value);
+            td.classList.toggle("some", value > 0);
+          };
+          cell("ok", n("ok") + n("changed"));
+          cell("changed", n("changed"));
+          cell("unreachable", 0);
+          cell("failed", n("failed"));
+          cell("skipped", n("skipped"));
+          tr.classList.toggle("full", mine.length > 0);
+        }
+      };
+
+      /* ── the sidebar ────────────────────────────────────────────────── */
+
+      const esc = (s: string) =>
+        s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      const mono = (s: string) =>
+        esc(s).replace(/`([^`]+)`/g, "<code>$1</code>");
+
+      const row = (key: string, value: string, note?: string, id?: string) =>
+        `<div class="row${id && id === litLine ? " lit" : ""}"${
+          id ? ` data-line="${id}"` : ""
+        }><dt>${esc(key)}</dt><dd>${value}${
+          note ? `<em>${mono(note)}</em>` : ""
+        }</dd></div>`;
+
+      const argRows = (args: Arg[]) =>
+        args
+          .map((a, i) =>
+            row(
+              a.key,
+              a.resolved
+                ? `<code class="raw">${esc(a.raw)}</code>` +
+                    `<span class="arrow"> &rarr; </span>` +
+                    `<code class="res">${esc(a.resolved)}</code>`
+                : `<code>${esc(a.raw)}</code>`,
+              a.note,
+              `a${i}`,
+            ),
+          )
+          .join("");
+
+      const stageStrip = (stages: Stage[]) =>
+        `<div class="strip">` +
+        stages
+          .map(
+            (s, i) =>
+              `<span class="seg w-${s.where}${i === pickedStage ? " lit" : ""}" ` +
+              `data-stage="${i}" role="button" tabindex="0">` +
+              `<span class="seg-name">${esc(s.name)}</span>` +
+              `<span class="seg-where">${s.where}</span></span>`,
+          )
+          .join("") +
+        `</div>`;
+
+      const stageBody = (stage: Stage) =>
+        `<div class="stage-head w-${stage.where}">` +
+        `<span class="stage-name">${esc(stage.name)}</span>` +
+        `<span class="stage-where">${
+          stage.where === "control"
+            ? "on the control node"
+            : stage.where === "wire"
+              ? "over SSH"
+              : "on the managed host"
+        }</span>` +
+        `<span class="stage-summary">${mono(stage.summary)}</span>` +
+        `</div>` +
+        `<div class="lines">` +
+        stage.lines
+          .map(
+            (l, i) =>
+              `<div class="line${litLine === `l${i}` ? " lit" : ""}" ` +
+              `data-line="l${i}"><code>${esc(l.text)}</code>${
+                l.note ? `<em>${mono(l.note)}</em>` : ""
+              }</div>`,
+          )
+          .join("") +
+        `</div>`;
+
+      const slotPanel = (i: number) => {
+        const s = schedule[i];
+        const e = eventOf(s);
+        const task = taskOf(s.task);
+        const host = hosts[s.host];
+        const stage = e.stages[Math.min(pickedStage, e.stages.length - 1)];
+
+        kindOut.textContent = task.handler
+          ? `RUNNING HANDLER · ${host.name}`
+          : `TASK ${s.task} · ${host.name}`;
+
+        return (
+          `<p class="side-task"><b>${esc(task.name)}</b>` +
+          `<span>${esc(task.module)}</span></p>` +
+          `<p class="side-lead">${mono(task.summary)}</p>` +
+          `<p class="verdict v-${e.verdict}">` +
+          `<span class="chip">${e.verdict}</span>` +
+          `<span class="why">${mono(e.why)}</span></p>` +
+          (e.module !== task.module
+            ? `<p class="swap">Resolved to <code>${esc(e.module)}</code> on ` +
+              `this host — not the module the YAML names.</p>`
+            : "") +
+          (e.notified
+            ? `<p class="swap">Notified <code>${esc(e.notified)}</code>, which ` +
+              `will not run until the play is over.</p>`
+            : "") +
+          `<p class="label sub">Arguments <span class="size">as resolved</span></p>` +
+          `<div class="fields">${argRows(e.args)}</div>` +
+          `<p class="label sub">The exchange <span class="size">` +
+          `${(s.t1 - s.t0).toFixed(0)} ms${
+            s.fork >= 0 ? ` · fork ${s.fork}` : " · no fork"
+          }</span></p>` +
+          stageStrip(e.stages) +
+          stageBody(stage) +
+          `<p class="label sub">Returned</p>` +
+          `<div class="fields">` +
+          e.ret
+            .map(r => row(r.key, `<code>${esc(r.value)}</code>`, r.note))
+            .join("") +
+          `</div>` +
+          `<div class="fields split">` +
+          row("started", `${(s.t0 / 1000).toFixed(2)}s`) +
+          row(
+            "on the wire",
+            `${(2 * (host.ms ?? 0)).toFixed(1)} ms`,
+            "two crossings, because pipelining makes it one operation",
+          ) +
+          row("in the module", `${e.runMs} ms`) +
+          `</div>`
+        );
+      };
+
+      const hostPanel = (id: string) => {
+        const h = hosts[id];
+        kindOut.textContent = id === "control" ? "CONTROL NODE" : "HOST";
+        const mine = schedule.filter(s => s.host === id);
+        const counts = (v: string) =>
+          mine.filter(s => eventOf(s).verdict === v).length;
+
+        return (
+          `<p class="side-task"><b>${esc(h.name)}</b>` +
+          `<span>${esc(h.fqdn)}</span></p>` +
+          `<p class="side-lead">${mono(h.about)}</p>` +
+          (id === "control"
+            ? `<div class="fields">` +
+              row("python", `<code>${esc(h.python)}</code>`) +
+              row(
+                "installed here only",
+                `<code>ansible-core</code>`,
+                "the managed hosts need SSH and a Python, and nothing else",
+              ) +
+              `</div>`
+            : `<div class="fields">` +
+              row("groups", h.groups.map(g => `<code>${g}</code>`).join(" ")) +
+              row(
+                "interpreter",
+                `<code>${esc(h.python)}</code>`,
+                "discovered, then every module is piped into it",
+              ) +
+              row(
+                "link",
+                `${h.ms} ms`,
+                "each way, on a connection ControlPersist keeps open",
+              ) +
+              row(
+                "this run",
+                `${counts("ok") + counts("changed")} ok · ` +
+                  `${counts("changed")} changed · ${counts("skipped")} skipped`,
+              ) +
+              `</div>` +
+              `<p class="label sub">Facts that decided something</p>` +
+              `<div class="fields">` +
+              h.facts
+                .map(f =>
+                  row(
+                    f.key.replace("ansible_facts.", ""),
+                    `<code>${esc(f.value)}</code>`,
+                    f.note,
+                  ),
+                )
+                .join("") +
+              `</div>`)
+        );
+      };
+
+      const taskPanel = (n: number) => {
+        const task = taskOf(n);
+        const play = run.plays.find(p => p.n === task.play)!;
+        kindOut.textContent = task.handler ? "HANDLER" : `TASK ${n}`;
+        const mine = schedule.filter(s => s.task === n);
+
+        return (
+          `<p class="side-task"><b>${esc(task.name)}</b>` +
+          `<span>${esc(task.module)}</span></p>` +
+          `<p class="side-lead">${mono(task.summary)}</p>` +
+          `<p class="swap">In play ${play.n + 1}, <b>${esc(play.name)}</b> ` +
+          `&mdash; <code>hosts: ${esc(play.target)}</code></p>` +
+          `<p class="label sub">Per host</p>` +
+          `<div class="fields">` +
+          mine
+            .map(s => {
+              const e = eventOf(s);
+              return row(
+                hosts[s.host].name,
+                `<span class="chip v-${e.verdict}">${e.verdict}</span>`,
+                e.why,
+              );
+            })
+            .join("") +
+          `</div>` +
+          `<p class="side-note">Click a bar on the schedule for what went over ` +
+          `the wire.</p>`
+        );
+      };
+
+      const endPanel = () => {
+        kindOut.textContent = "PLAY RECAP";
+        const { spent } = run;
+        const pct = (n: number) => `${((n / spent.wall) * 100).toFixed(0)}%`;
+        return (
+          `<p class="side-lead">The run finished in ` +
+          `<b>${(spent.wall / 1000).toFixed(2)} s</b>. Almost none of it was ` +
+          `Ansible, and almost none of it was the network.</p>` +
+          `<div class="fields">` +
+          row(
+            "inside modules",
+            `${(spent.module / 1000).toFixed(2)} s`,
+            "and this exceeds the wall clock, because two forks overlap",
+          ) +
+          row(
+            "the two installs",
+            `${(spent.installs / 1000).toFixed(2)} s`,
+            `${pct(spent.installs)} of the run, in one task`,
+          ) +
+          row(
+            "gathering facts",
+            `${(spent.facts / 1000).toFixed(2)} s`,
+            "four hosts, ~1,200 facts each, and this play reads six of them",
+          ) +
+          row(
+            "on the wire",
+            `${spent.wire.toFixed(0)} ms`,
+            "every crossing of every link, added up",
+          ) +
+          `</div>` +
+          `<p class="side-note">So the three things that would actually make ` +
+          `this run faster are: raise <code>forks</code> above the host count, ` +
+          `cache or skip fact gathering, and keep <code>pipelining</code> on. ` +
+          `Rewriting the YAML would change nothing.</p>`
+        );
+      };
+
+      const paintSidebar = (now: number) => {
+        /* Declared without a value: the chain below is exhaustive, so an
+           initialiser here would only ever be thrown away. */
+        let key: string;
+        let html: string;
+
+        if (selection.kind === "slot") {
+          key = `s${selection.slot}:${pickedStage}:${litLine}`;
+          html = slotPanel(selection.slot);
+        } else if (selection.kind === "host") {
+          key = `h${selection.host}:${litLine}`;
+          html = hostPanel(selection.host);
+        } else if (selection.kind === "task") {
+          key = `t${selection.task}:${litLine}`;
+          html = taskPanel(selection.task);
+        } else if (now >= end - 120) {
+          key = "end";
+          html = endPanel();
+        } else {
+          const i = current(now);
+          if (i < 0) {
+            key = "pre";
+            kindOut.textContent = "Following the run";
+            html =
+              `<p class="side-empty">Press play. The first thing any play ` +
+              `does is gather facts, whether or not anything reads them.</p>`;
+          } else {
+            key = `s${i}:${pickedStage}:${litLine}`;
+            html = slotPanel(i);
+          }
+        }
+
+        if (key === lastKey) return;
+        lastKey = key;
+        bodyOut.innerHTML = html;
+      };
+
+      /* ── the loop ───────────────────────────────────────────────────── */
+
+      const render = () => {
+        drawPayloads(t);
+        paintGantt(t);
+        paintRail(t);
+        paintYaml(t);
+        paintRecap(t);
+        paintSidebar(t);
+        clockOut.textContent = (t / 1000).toFixed(2);
+        scrub.value = String(Math.round((t / end) * 1000));
+      };
+
+      const frame = (now: number) => {
+        if (!playing) return;
+        const dt = Math.min(64, now - lastFrame);
+        lastFrame = now;
+        t += dt * speed;
+        if (t >= end) {
+          t = end;
+          setPlaying(false);
+          render();
+          return;
+        }
+        render();
+        raf = requestAnimationFrame(frame);
+      };
+
+      function setPlaying(on: boolean) {
+        playing = on && !reduced;
+        playBtn.textContent = playing ? "Pause" : "Play";
+        playBtn.setAttribute("aria-label", playing ? "Pause" : "Play");
+        if (playing) {
+          lastFrame = performance.now();
+          raf = requestAnimationFrame(frame);
+        } else {
+          cancelAnimationFrame(raf);
+        }
+      }
+
+      const select = (s: Selection) => {
+        selection = s;
+        pinnedByPointer = false;
+        pickedStage = 0;
+        lastKey = "";
+        render();
+      };
+
+      /* ── what a reader can do ───────────────────────────────────────── */
+
+      playBtn.addEventListener("click", () => {
+        if (!playing && t >= end) t = 0;
+        setPlaying(!playing);
+      });
+
+      scrub.addEventListener("input", () => {
+        t = (Number(scrub.value) / 1000) * end;
+        lastKey = "";
+        render();
+      });
+
+      for (const b of document.querySelectorAll<HTMLButtonElement>(
+        "[data-speed]",
+      )) {
+        b.addEventListener("click", () => {
+          speed = Number(b.dataset.speed);
+          for (const o of document.querySelectorAll("[data-speed]")) {
+            o.classList.toggle("on", o === b);
+          }
+        });
+      }
+
+      /* a bar is the event; a lane name is the host */
+      const pickFromGantt = (target: EventTarget | null) => {
+        const el = target as Element | null;
+        const bar = el?.closest<SVGGElement>(".bar");
+        if (bar) {
+          select({ kind: "slot", slot: Number(bar.dataset.slot) });
+          return true;
+        }
+        const lane = el?.closest<SVGGElement>(".lane");
+        if (lane?.dataset.host) {
+          select({ kind: "host", host: lane.dataset.host });
+          return true;
+        }
+        return false;
+      };
+
+      gantt.addEventListener("click", e => {
+        if (pickFromGantt(e.target)) return;
+        /* empty track: scrub to that moment instead */
+        const box = gantt.getBoundingClientRect();
+        const x =
+          ((e.clientX - box.left) / box.width) * gantt.viewBox.baseVal.width;
+        const ms = unscale(x);
+        if (ms >= 0 && ms <= end) {
+          t = ms;
+          select({ kind: "auto" });
+        }
+      });
+
+      gantt.addEventListener("keydown", e => {
+        if (e.key === "Enter" || e.key === " ") {
+          if (pickFromGantt(e.target)) e.preventDefault();
+        }
+      });
+
+      fan.addEventListener("click", e => {
+        const el = e.target as Element;
+        const node = el.closest<SVGGElement>(".node");
+        if (node?.dataset.host) {
+          select({ kind: "host", host: node.dataset.host });
+          return;
+        }
+        const chan = el.closest<SVGGElement>(".chan");
+        if (chan?.dataset.host)
+          select({ kind: "host", host: chan.dataset.host });
+      });
+
+      fan.addEventListener("keydown", e => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        const node = (e.target as Element).closest<SVGGElement>(".node");
+        if (node?.dataset.host) {
+          e.preventDefault();
+          select({ kind: "host", host: node.dataset.host });
+        }
+      });
+
+      /* a line of YAML selects its task; the rail jumps the clock to it */
+      yamlEl.addEventListener("click", e => {
+        const ln = (e.target as Element).closest<HTMLElement>(".ln");
+        const n = ln?.dataset.task;
+        if (n) select({ kind: "task", task: Number(n) });
+      });
+
+      railEl.addEventListener("click", e => {
+        const li = (e.target as Element).closest<HTMLLIElement>("li");
+        if (!li) return;
+        t = Number(li.dataset.t0);
+        select({ kind: "auto" });
+      });
+
+      /**
+       * Reaching into the panel pins it. A panel that moves to the next event
+       * mid-read is useless, so the pointer arriving holds what is on screen
+       * and the pointer leaving hands it back.
+       */
+      bodyOut.addEventListener("pointerenter", () => {
+        if (selection.kind !== "auto") return;
+        const i = current(t);
+        if (i < 0) return;
+        selection = { kind: "slot", slot: i };
+        pinnedByPointer = true;
+        lastKey = "";
+        render();
+      });
+
+      bodyOut.addEventListener("pointerleave", () => {
+        litLine = null;
+        if (!pinnedByPointer) {
+          lastKey = "";
+          render();
+          return;
+        }
+        pinnedByPointer = false;
+        selection = { kind: "auto" };
+        lastKey = "";
+        render();
+      });
+
+      bodyOut.addEventListener("pointerover", e => {
+        const el = (e.target as Element).closest<HTMLElement>("[data-line]");
+        const id = el?.dataset.line ?? null;
+        if (id === litLine) return;
+        litLine = id;
+        for (const n of bodyOut.querySelectorAll("[data-line]")) {
+          n.classList.toggle("lit", (n as HTMLElement).dataset.line === id);
+        }
+      });
+
+      bodyOut.addEventListener("click", e => {
+        const seg = (e.target as Element).closest<HTMLElement>("[data-stage]");
+        if (!seg) return;
+        pickedStage = Number(seg.dataset.stage);
+        lastKey = "";
+        render();
+      });
+
+      const keys = (e: KeyboardEvent) => {
+        const tag = (e.target as HTMLElement)?.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA") return;
+        if (e.key === " ") {
+          e.preventDefault();
+          if (!playing && t >= end) t = 0;
+          setPlaying(!playing);
+        } else if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+          e.preventDefault();
+          setPlaying(false);
+          t = Math.max(
+            0,
+            Math.min(end, t + (e.key === "ArrowRight" ? 120 : -120)),
+          );
+          lastKey = "";
+          render();
+        } else if (e.key === "Escape") {
+          select({ kind: "auto" });
+        }
+      };
+
+      document.addEventListener("keydown", keys);
+      document.addEventListener("astro:before-swap", () => {
+        cancelAnimationFrame(raf);
+        document.removeEventListener("keydown", keys);
+      });
+
+      render();
+      if (!reduced) setPlaying(true);
+    };
+
+    start();
+    document.addEventListener("astro:after-swap", start);
+  </script>
+</Layout>
+
+<style>
+  .intro {
+    margin-bottom: clamp(26px, 4vh, 40px);
+  }
+
+  /* ── the bench ─────────────────────────────────────────────────────── */
+
+  /* Source, execution, detail. Three panes is the arrangement of a
+     debugger, borrowed because it is the right mental model for a run. */
+  .bench {
+    display: grid;
+    grid-template-columns:
+      minmax(0, 0.66fr) minmax(0, 1.6fr)
+      minmax(260px, 0.88fr);
+    gap: clamp(18px, 2.2vw, 34px);
+    width: 100%;
+    max-width: 104rem;
+    margin-inline: auto;
+    padding-inline: clamp(22px, 5vw, 40px);
+    padding-bottom: clamp(30px, 6vh, 60px);
+  }
+
+  /* ── the source pane ───────────────────────────────────────────────── */
+
+  .source {
+    min-width: 0;
+    align-self: start;
+    position: sticky;
+    top: 16px;
+  }
+
+  .code {
+    margin: 10px 0 0;
+    padding: 12px 14px;
+    background: var(--panel);
+    border-inline-start: 1px solid var(--border-recess);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.65;
+    overflow-x: auto;
+    color: var(--syn-plain);
+    white-space: pre;
+  }
+
+  /* A sticky source pane that is taller than the screen is no use, so it
+     scrolls on its own and the running task is brought into it. */
+  .yaml {
+    max-height: 64vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+
+  /* Written with set:html, so every selector below has to be global. */
+  .yaml :global(.ln) {
+    display: block;
+    margin-inline: -14px;
+    padding-inline: 14px;
+    cursor: pointer;
+  }
+
+  .yaml :global(.ln[data-task=""]) {
+    cursor: default;
+  }
+
+  .yaml :global(.ln:not([data-task=""]):hover) {
+    background: var(--haze);
+  }
+
+  /* The running task lights its own source. One hairline, inside the
+     recess, because §9 draws no box. */
+  .yaml :global(.ln.on) {
+    background: var(--arcane-tint);
+    box-shadow: inset 2px 0 0 var(--arcane);
+  }
+
+  .yaml :global(.s-key) {
+    color: var(--syn-keyword);
+  }
+
+  .yaml :global(.s-name),
+  .yaml :global(.s-str) {
+    color: var(--syn-string);
+  }
+
+  .yaml :global(.s-num) {
+    color: var(--syn-constant);
+  }
+
+  .yaml :global(.s-jinja) {
+    color: var(--arcane);
+  }
+
+  .yaml :global(.s-comment) {
+    color: var(--syn-comment);
+  }
+
+  .ini {
+    color: var(--syn-plain);
+  }
+
+  /* ── the star ──────────────────────────────────────────────────────── */
+
+  .fan,
+  .gantt {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  .wire {
+    stroke: var(--border);
+    stroke-width: 1;
+  }
+
+  .chan.live .wire {
+    stroke: var(--text-4);
+    stroke-width: 1.4;
+  }
+
+  /* A hairline cannot be clicked, so every channel carries a fat
+     transparent twin. */
+  .hit {
+    stroke: transparent;
+    stroke-width: 18;
+    cursor: pointer;
+  }
+
+  .ms {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    fill: var(--text-4);
+    text-anchor: middle;
+  }
+
+  .glyph {
+    fill: none;
+    stroke: var(--text-3);
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .halo {
+    fill: var(--ground);
+  }
+
+  .hit-dot {
+    fill: transparent;
+    cursor: pointer;
+  }
+
+  .node .name {
+    font-family: var(--font-display);
+    font-size: 14px;
+    fill: var(--text-3);
+  }
+
+  .node .sub {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    fill: var(--text-4);
+  }
+
+  /* Four hosts stacked in a column cannot carry centred captions: they
+     collide with each other and with the schedule's axis below. */
+  .node .under {
+    text-anchor: middle;
+  }
+
+  .node .beside {
+    text-anchor: start;
+  }
+
+  .node.busy .glyph,
+  .node:hover .glyph {
+    stroke: var(--text);
+  }
+
+  .node.busy .name {
+    fill: var(--text-2);
+  }
+
+  .node:focus-visible {
+    outline: none;
+  }
+
+  .node:focus-visible .glyph {
+    stroke: var(--torch);
+  }
+
+  .node .role {
+    font-size: 12px;
+    fill: var(--text-4);
+  }
+
+  /* The page's gold: the thing being followed, and nothing else. At most
+     two are ever in the air, because there are two forks. */
+  .payloads :global(.dot) {
+    fill: var(--torch);
+  }
+
+  .payloads :global(.back .dot) {
+    fill: var(--arcane);
+  }
+
+  .payloads :global(.tag) {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    fill: var(--text-3);
+    text-anchor: middle;
+  }
+
+  /* ── the schedule ──────────────────────────────────────────────────── */
+
+  .tick {
+    stroke: var(--border);
+    stroke-width: 1;
+    stroke-dasharray: 1 7;
+  }
+
+  .tick-ms {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    fill: var(--text-4);
+    text-anchor: middle;
+  }
+
+  /* The wall the linear strategy puts after every task. */
+  .barrier {
+    stroke: var(--text-4);
+    stroke-width: 1;
+    stroke-dasharray: 4 4;
+    opacity: 0.75;
+  }
+
+  .lane-rail {
+    stroke: var(--border-recess);
+    stroke-width: 1;
+  }
+
+  .lane-name {
+    font-family: var(--font-display);
+    font-size: 13px;
+    fill: var(--text-3);
+    text-anchor: end;
+    cursor: pointer;
+  }
+
+  .lane-os {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    fill: var(--text-4);
+    text-anchor: end;
+    cursor: pointer;
+  }
+
+  .lane:hover .lane-name {
+    fill: var(--text);
+  }
+
+  .bar-hit {
+    fill: transparent;
+    cursor: pointer;
+  }
+
+  /* A bar is thin at the ends — the two crossings of the channel — and
+     thick in the middle, where the module is actually running. */
+  .leg {
+    stroke: var(--text-4);
+    stroke-width: 1;
+  }
+
+  .bar .body {
+    fill: var(--text-4);
+    stroke: none;
+  }
+
+  /* ok did nothing, so it is drawn as nothing: an outline. */
+  .bar.v-ok .body {
+    fill: none;
+    stroke: var(--text-4);
+    stroke-width: 1;
+  }
+
+  .bar.v-changed .body {
+    fill: var(--text-2);
+  }
+
+  .bar.v-skipped .body {
+    fill: none;
+    stroke: var(--border-recess);
+    stroke-dasharray: 2 2;
+  }
+
+  .bar.v-failed .body {
+    fill: var(--blood);
+  }
+
+  /* Ahead of the playhead the whole schedule is visible but unlit: a
+     reader cannot see a barrier they have to remember. */
+  .bar.ahead {
+    opacity: 0.42;
+  }
+
+  .bar.live .body {
+    fill: var(--text);
+  }
+
+  .bar.live.v-ok .body {
+    stroke: var(--text-2);
+  }
+
+  .bar.picked .body {
+    stroke: var(--arcane);
+    stroke-width: 1.6;
+  }
+
+  .bar.picked .leg {
+    stroke: var(--arcane);
+  }
+
+  .bar-tag {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    fill: var(--text-4);
+    opacity: 0;
+  }
+
+  .bar:hover .bar-tag,
+  .bar.picked .bar-tag,
+  .bar.live .bar-tag {
+    opacity: 1;
+  }
+
+  .bar:focus-visible {
+    outline: none;
+  }
+
+  .bar:focus-visible .body {
+    stroke: var(--torch);
+    stroke-width: 1.6;
+  }
+
+  .playhead {
+    stroke: var(--ornament);
+    stroke-width: 1;
+  }
+
+  /* ── transport ─────────────────────────────────────────────────────── */
+
+  .transport {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 10px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .transport button {
+    font-family: var(--font-display);
+    font-size: 15px;
+    color: var(--text-3);
+    background: none;
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    padding: 2px 2px 4px;
+    cursor: pointer;
+  }
+
+  .transport button:hover,
+  .transport button.on {
+    color: var(--text);
+    border-bottom-color: var(--text-4);
+  }
+
+  .speeds {
+    display: flex;
+    gap: 8px;
+  }
+
+  #scrub {
+    flex: 1;
+    accent-color: var(--text-3);
+    cursor: pointer;
+  }
+
+  .clock {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text-4);
+    font-variant-numeric: tabular-nums;
+    min-width: 7ch;
+    text-align: end;
+  }
+
+  .map-hint {
+    margin: 10px 0 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-4);
+  }
+
+  /* ── the task rail ─────────────────────────────────────────────────── */
+
+  .bench .rail {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+    gap: 0 12px;
+    list-style: none;
+    margin: 18px 0 0;
+    padding: 0;
+  }
+
+  .bench .rail :global(li) {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 9px 0 0;
+    border-top: 1px solid var(--border);
+    cursor: pointer;
+    color: var(--text-4);
+    min-width: 0;
+  }
+
+  .bench .rail :global(li b) {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 12.5px;
+    line-height: 1.25;
+    color: var(--text-4);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .bench .rail :global(li span) {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .bench .rail :global(li.done b) {
+    color: var(--text-3);
+  }
+
+  .bench .rail :global(li.on) {
+    border-top-color: var(--text-3);
+  }
+
+  .bench .rail :global(li.on b) {
+    color: var(--text);
+  }
+
+  .bench .rail :global(li:hover b) {
+    color: var(--text-2);
+  }
+
+  /* ── the recap ─────────────────────────────────────────────────────── */
+
+  .recap {
+    width: 100%;
+    margin-top: 10px;
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .recap th {
+    text-align: end;
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-4);
+    border-bottom: 1px solid var(--border);
+    padding: 0 0 6px 10px;
+  }
+
+  .recap th:first-child,
+  .recap td:first-child {
+    text-align: start;
+    padding-inline-start: 0;
+  }
+
+  .recap td {
+    text-align: end;
+    padding: 5px 0 5px 10px;
+    color: var(--text-4);
+    border-bottom: 1px solid var(--border-recess);
+  }
+
+  .recap tr.full td:first-child {
+    color: var(--text-2);
+  }
+
+  .recap td.some {
+    color: var(--text-2);
+  }
+
+  /* ── the sidebar ───────────────────────────────────────────────────── */
+
+  .sidebar {
+    border-inline-start: 1px solid var(--border);
+    padding-inline-start: clamp(14px, 1.6vw, 24px);
+    min-width: 0;
+  }
+
+  .sidebar :global(.side-task) {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 12px 0 0;
+  }
+
+  .sidebar :global(.side-task b) {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 17px;
+    color: var(--text);
+  }
+
+  .sidebar :global(.side-task span) {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--text-4);
+  }
+
+  .sidebar :global(.side-lead) {
+    margin: 10px 0 0;
+    color: var(--text-2);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .sidebar :global(.side-empty),
+  .sidebar :global(.side-note) {
+    margin: 12px 0 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-4);
+  }
+
+  .sidebar :global(.swap) {
+    margin: 12px 0 0;
+    padding-inline-start: 12px;
+    border-inline-start: 1px solid var(--border);
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--text-3);
+  }
+
+  .sidebar :global(.verdict) {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 14px 0 0;
+  }
+
+  .sidebar :global(.verdict .why) {
+    font-size: 13.5px;
+    line-height: 1.6;
+    font-style: italic;
+    color: var(--text-3);
+  }
+
+  /* ── verdict chips, used in both panes ─────────────────────────────── */
+
+  :global(.chip) {
+    display: inline-block;
+    align-self: start;
+    justify-self: start;
+    font-family: var(--font-display);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-4);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 2px;
+  }
+
+  :global(.v-changed .chip),
+  :global(.chip.v-changed) {
+    color: var(--text);
+    border-bottom-color: var(--text-3);
+  }
+
+  :global(.v-ok .chip),
+  :global(.chip.v-ok) {
+    color: var(--text-3);
+  }
+
+  :global(.v-skipped .chip),
+  :global(.chip.v-skipped) {
+    color: var(--text-4);
+    border-bottom-style: dashed;
+  }
+
+  :global(.v-failed .chip),
+  :global(.chip.v-failed),
+  :global(.v-unreachable .chip) {
+    color: var(--blood);
+    border-bottom-color: var(--blood);
+  }
+
+  .sidebar :global(.label.sub) {
+    margin-top: 20px;
+  }
+
+  .sidebar :global(.size) {
+    margin-inline-start: 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--text-4);
+  }
+
+  /* ── the stage strip ───────────────────────────────────────────────── */
+
+  .sidebar :global(.strip) {
+    display: flex;
+    gap: 2px;
+    margin-top: 10px;
+  }
+
+  .sidebar :global(.seg) {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    padding: 6px;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    overflow: hidden;
+    cursor: pointer;
+  }
+
+  .sidebar :global(.seg.lit) {
+    border-top-color: var(--arcane);
+  }
+
+  .sidebar :global(.seg-name) {
+    font-family: var(--font-display);
+    font-size: 12px;
+    white-space: nowrap;
+    color: var(--text-3);
+  }
+
+  .sidebar :global(.seg.lit .seg-name) {
+    color: var(--arcane);
+  }
+
+  .sidebar :global(.seg-where) {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.04em;
+    color: var(--text-4);
+  }
+
+  /* Where the work happens is the distinction the YAML hides, so it is
+     drawn: a stage on the wire is marked, the others are not. */
+  .sidebar :global(.seg.w-wire) {
+    border-top-style: dashed;
+  }
+
+  .sidebar :global(.stage-head) {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "name where" "summary summary";
+    gap: 2px 8px;
+    margin-top: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar :global(.stage-name) {
+    grid-area: name;
+    font-family: var(--font-display);
+    color: var(--text-2);
+  }
+
+  .sidebar :global(.stage-where) {
+    grid-area: where;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-4);
+  }
+
+  .sidebar :global(.stage-head.w-wire .stage-where) {
+    color: var(--arcane);
+  }
+
+  .sidebar :global(.stage-summary) {
+    grid-area: summary;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--text-4);
+  }
+
+  .sidebar :global(.lines) {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: var(--panel);
+    border-inline-start: 1px solid var(--border-recess);
+  }
+
+  .sidebar :global(.line) {
+    padding: 3px 0;
+  }
+
+  .sidebar :global(.line code) {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: var(--text-3);
+    overflow-wrap: anywhere;
+  }
+
+  .sidebar :global(.line.lit code) {
+    color: var(--text);
+  }
+
+  .sidebar :global(.line em) {
+    display: block;
+    margin-top: 2px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--text-4);
+  }
+
+  /* ── fields ────────────────────────────────────────────────────────── */
+
+  .sidebar :global(.fields) {
+    margin-top: 10px;
+  }
+
+  .sidebar :global(.fields.split) {
+    margin-top: 18px;
+    padding-top: 6px;
+    border-top: 1px solid var(--border);
+  }
+
+  .sidebar :global(.row) {
+    display: grid;
+    grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr);
+    gap: 2px 12px;
+    padding: 5px 0;
+  }
+
+  .sidebar :global(.row.lit) {
+    background: var(--haze);
+  }
+
+  .sidebar :global(.row dt) {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-4);
+    overflow-wrap: anywhere;
+  }
+
+  .sidebar :global(.row dd) {
+    margin: 0;
+    font-size: 13.5px;
+    color: var(--text-2);
+    overflow-wrap: anywhere;
+  }
+
+  .sidebar :global(.row dd code) {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-2);
+  }
+
+  /* Raw on the left, resolved on the right: the one picture of what Jinja
+     actually does, and where it does it. */
+  .sidebar :global(.row dd .raw) {
+    color: var(--arcane);
+  }
+
+  .sidebar :global(.row dd .arrow) {
+    color: var(--text-4);
+  }
+
+  .sidebar :global(.row dd em) {
+    display: block;
+    margin-top: 3px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--text-4);
+  }
+
+  /* ── the reference panels ──────────────────────────────────────────── */
+
+  .panels {
+    display: grid;
+    gap: clamp(40px, 7vh, 76px);
+    width: 100%;
+    max-width: 74rem;
+    margin-inline: auto;
+    padding-inline: clamp(22px, 6vw, 40px);
+    padding-block: clamp(30px, 6vh, 56px) clamp(40px, 8vh, 80px);
+    border-top: 1px solid var(--border);
+  }
+
+  .panel {
+    margin: 0;
+  }
+
+  .panel figcaption {
+    max-width: 58ch;
+  }
+
+  .panel figcaption p:not(.label) {
+    margin: 8px 0 0;
+    font-size: 15.5px;
+    line-height: 1.65;
+    color: var(--text-2);
+  }
+
+  .panel .aside {
+    margin: 18px 0 0;
+    max-width: 62ch;
+    padding-inline-start: 12px;
+    border-inline-start: 1px solid var(--border);
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--text-4);
+  }
+
+  .panel code {
+    font-family: var(--font-mono);
+    font-size: 0.88em;
+    color: var(--text-3);
+  }
+
+  /* one task, end to end */
+  .trips {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+    gap: clamp(18px, 3vw, 36px);
+    margin-top: 22px;
+  }
+
+  .trip-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+    margin: 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .trip-head b {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 13px;
+    color: var(--text-4);
+    white-space: nowrap;
+  }
+
+  .trip.lean .trip-head b {
+    color: var(--text-2);
+  }
+
+  .trips ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .trips li {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2px 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-recess);
+  }
+
+  .trips li code {
+    font-size: 12px;
+    color: var(--text-3);
+    overflow-wrap: anywhere;
+  }
+
+  .trips li em {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-style: normal;
+    color: var(--text-4);
+    text-align: end;
+  }
+
+  /* the ladder */
+  .ladder {
+    list-style: none;
+    margin: 22px 0 0;
+    padding: 0;
+    columns: 2;
+    column-gap: clamp(22px, 4vw, 48px);
+  }
+
+  .ladder li {
+    display: grid;
+    grid-template-columns: 2.4ch 1fr;
+    grid-template-areas: "rung what" ". note";
+    gap: 1px 10px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border-recess);
+    break-inside: avoid;
+  }
+
+  .ladder .rung {
+    grid-area: rung;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-4);
+    text-align: end;
+    padding-top: 2px;
+  }
+
+  .ladder .what {
+    grid-area: what;
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--text-3);
+  }
+
+  .ladder li em {
+    grid-area: note;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--text-4);
+  }
+
+  .ladder li.seen .what {
+    color: var(--text-2);
+  }
+
+  .ladder li.seen .rung {
+    color: var(--arcane);
+  }
+
+  .ladder li.top {
+    border-bottom-color: var(--text-4);
+  }
+
+  .ladder li.top .what {
+    color: var(--text);
+  }
+
+  /* inventory and roles */
+  .trees {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+    gap: clamp(18px, 3vw, 40px);
+    margin-top: 22px;
+  }
+
+  .tree-head {
+    margin: 0 0 10px;
+    font-family: var(--font-display);
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    color: var(--text-3);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tree-foot {
+    margin: 12px 0 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-4);
+  }
+
+  .trees ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .groups li {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    grid-template-areas: "name members" ". note";
+    gap: 1px 10px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border-recess);
+  }
+
+  .groups li code {
+    grid-area: name;
+    font-size: 12.5px;
+    color: var(--text-2);
+  }
+
+  .groups li span {
+    grid-area: members;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--text-3);
+  }
+
+  .groups li em,
+  .role-tree li em {
+    grid-area: note;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--text-4);
+  }
+
+  .role-tree li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: "path note";
+    gap: 2px 10px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border-recess);
+  }
+
+  .role-tree li code {
+    grid-area: path;
+    font-size: 12px;
+    color: var(--text-3);
+  }
+
+  .role-tree li em {
+    grid-area: note;
+    text-align: end;
+  }
+
+  .role-tree li.root code {
+    color: var(--text-2);
+  }
+
+  .role-tree li.in code {
+    padding-inline-start: 14px;
+  }
+
+  /* the five words */
+  .verdicts {
+    list-style: none;
+    margin: 22px 0 0;
+    padding: 0;
+  }
+
+  .verdicts li {
+    display: grid;
+    grid-template-columns: 11ch minmax(0, 1fr);
+    grid-template-areas: "chip what" ". from";
+    gap: 3px 14px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-recess);
+  }
+
+  .verdicts .chip {
+    grid-area: chip;
+  }
+
+  .verdicts li b {
+    grid-area: what;
+    font-weight: 400;
+    font-size: 14.5px;
+    color: var(--text-2);
+  }
+
+  .verdicts li em {
+    grid-area: from;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--text-4);
+  }
+
+  .check {
+    margin-top: 26px;
+  }
+
+  .check ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .check li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    gap: 2px 14px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border-recess);
+  }
+
+  .check li code {
+    font-size: 12.5px;
+    color: var(--text-3);
+    overflow-wrap: anywhere;
+  }
+
+  .check li em {
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--text-4);
+  }
+
+  /* ── narrower ──────────────────────────────────────────────────────── */
+
+  /* The detail pane goes under the run before the source does: a reader
+     scrubbing the schedule needs the YAML in view more than the hex. */
+  @media (max-width: 86rem) {
+    .bench {
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.6fr);
+    }
+
+    .sidebar {
+      grid-column: 1 / -1;
+      border-inline-start: 0;
+      border-top: 1px solid var(--border);
+      padding-inline-start: 0;
+      padding-top: 16px;
+    }
+  }
+
+  @media (max-width: 62rem) {
+    .bench {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .source {
+      position: static;
+      order: 2;
+    }
+
+    .sidebar {
+      order: 3;
+    }
+
+    /* Four lanes and a seven-second axis do not fit in a phone, and
+       shrinking them is how a diagram becomes decoration. */
+    .stage {
+      order: 1;
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+    }
+
+    .fan,
+    .gantt {
+      min-width: 620px;
+    }
+
+    .transport,
+    .map-hint,
+    .bench .rail,
+    .recap {
+      position: sticky;
+      inset-inline-start: 0;
+      max-width: 100%;
+    }
+
+    .ladder {
+      columns: 1;
+    }
+  }
+</style>

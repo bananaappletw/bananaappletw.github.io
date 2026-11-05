@@ -8,6 +8,7 @@ export interface UIStrings {
     search: string;
     list: string;
     network: string;
+    ansible: string;
   };
   post: {
     publishedAt: string;
