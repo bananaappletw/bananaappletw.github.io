@@ -1,7 +1,12 @@
 import type { ResolvedTorchlightConfig } from "@/types/config";
 import { getAssetPath } from "./withBase";
 
-const publicFiles = import.meta.glob("/public/*", { eager: false });
+// Images only: the glob makes Vite treat each match as a module, so a binary
+// download in public/ (e.g. gps-simulator.apk) would otherwise break the build.
+const publicFiles = import.meta.glob(
+  "/public/*.{png,jpg,jpeg,webp,avif,gif,svg}",
+  { eager: false },
+);
 
 function existsInPublic(filename: string): boolean {
   return `/public/${filename}` in publicFiles;
