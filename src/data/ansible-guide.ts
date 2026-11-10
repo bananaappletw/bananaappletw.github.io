@@ -149,9 +149,12 @@ const bar = (label: string, width = 46) => {
  */
 export const outputAt = (step: number, second = false): OutLine[] => {
   const hosts = HOSTS_AT[step] ?? [];
-  if (!hosts.length) return [];
-  const lines: OutLine[] = [];
   const shown = tasksAt(step);
+  /* Before step 3 there is no file, so there is no `ansible-playbook` run
+     and nothing to print. A PLAY RECAP of zeroes would be a lie about a
+     command the reader has not typed yet. */
+  if (!hosts.length || !shown.length) return [];
+  const lines: OutLine[] = [];
 
   for (const play of PLAYS) {
     const mine = shown.filter(t => t.play === play.n && !t.handler);
@@ -275,19 +278,19 @@ export const STEPS: Step[] = [
   {
     n: 1,
     title: "The problem",
-    lead: "Four machines. Three of them should be serving nginx on port 8080, with a config you can read, a firewall rule, and the service enabled at boot. The fourth needs a database. You could open four terminals — and then do it again next month, from memory, hoping you remember which of the four you already did.",
+    lead: "You have four machines. Three of them should run nginx on port 8080, with a config file, an open firewall port, and the service set to start at boot. The fourth needs a database. You could log into each one and do it by hand. Then next month you have to do it again, and remember exactly what you did.",
     keywords: [],
     takeaway:
-      "Ansible is that list written down, in a form a machine can carry out against all four — and safely carry out twice.",
+      "Ansible is that list of steps, written in a file. It runs the list on all four machines for you, and it is safe to run twice.",
   },
   {
     n: 2,
     title: "One host, one module",
-    lead: "Start with no file at all. Ansible can run a single module against a single host from the command line, and everything else on this page is that, repeated and written down.",
+    lead: "Start with no file at all. Ansible can run one module on one host straight from the command line. Everything else on this page is this, repeated and written down.",
     shell: [
       {
         text: "ansible -i inventory/hosts.ini web1 -m ansible.builtin.ping",
-        note: "does SSH work, and is there a Python at the other end",
+        note: "check that SSH works and Python is there",
       },
       { text: 'web1 | SUCCESS => {"ping": "pong"}', out: true },
       { text: "", out: true },
@@ -300,77 +303,77 @@ export const STEPS: Step[] = [
     keywords: [
       {
         word: "-i inventory/hosts.ini",
-        what: "the file that says which machines exist and what they are called. Without it Ansible has no idea what `web1` means.",
+        what: "The file that lists your machines and their names. Without it, Ansible does not know what `web1` means.",
       },
       {
         word: "-m",
-        what: "the module: the unit of work. `ping`, `package`, `copy`, `service` — around a thousand of them ship in collections.",
+        what: "The module. A module is one unit of work: `ping`, `package`, `copy`, `service`. About a thousand of them exist.",
       },
       {
         word: "-a",
-        what: "the module's arguments, as `key=value` pairs here and as YAML everywhere else.",
+        what: "The module's arguments. Here they are `key=value` pairs. In a file they are YAML.",
       },
       {
         word: "-b",
-        what: "become: run it as root, via sudo.",
-        without: "Without it you are the `deploy` user and the install fails.",
+        what: "Short for become. Run the module as root, using sudo.",
+        without: "Without it you stay the `deploy` user and the install fails.",
       },
     ],
     takeaway:
-      "A module plus its arguments plus a host is the whole unit. Nothing is installed on web1 to make this work — Ansible speaks SSH and Python.",
+      "One module, its arguments, and one host. That is the whole unit. You do not install anything on web1 first — Ansible only needs SSH and a Python.",
   },
   {
     n: 3,
     title: "Write it down",
-    lead: "The same thing, in a file. A TASK is a name, a module and the module's arguments — the three things you just typed, one per line. A task cannot stand alone, so it arrives wrapped in a PLAY, and `--limit web1` keeps it to the one machine for now.",
+    lead: "Now put it in a file. A task is three things: a name, a module, and the module's arguments. That is what you just typed. A task cannot sit alone in a file, so it goes inside a play. `--limit web1` keeps the run on one machine for now.",
     shell: [
       {
         text: "ansible-playbook -i inventory/hosts.ini site.yml --limit web1",
-        note: "the file, against one host",
+        note: "run the file on one host",
       },
     ],
     keywords: [
       {
         word: "- name:",
-        what: "a label. It is what the output prints and nothing else; the task works without it.",
+        what: "A label. It only changes what the output prints. The task still works without it.",
         without:
-          "Without it the output prints the module name, and a run becomes much harder to read.",
+          "Without it the output shows the module name, which is much harder to read.",
       },
       {
         word: "ansible.builtin.package:",
-        what: "the module, fully qualified — namespace, collection, module. `ansible.builtin` ships with Ansible; others come from Galaxy.",
+        what: "The module's full name: namespace, collection, module. `ansible.builtin` comes with Ansible. Others come from Galaxy.",
       },
       {
         word: "state: present",
-        what: "an assertion about how the host should end up, not a command to run. This is the difference that makes the next step possible.",
+        what: "This says how the host should end up. It is not a command to run. That difference is what makes the next step work.",
       },
       {
         word: "hosts:",
-        what: "which machines. A task cannot stand on its own, so it arrives inside a play, and the play names its targets.",
+        what: "Which machines to run on. A task cannot sit alone, so it goes in a play, and the play picks the targets.",
       },
       {
         word: "become:",
-        what: "the `-b` from step 2, set once for every task in the play instead of per command.",
+        what: "The same as `-b` in step 2. Set it once here and it applies to every task in the play.",
       },
       {
         word: "tasks:",
-        what: "everything below here runs, in order, against every host the play named.",
+        what: "Everything below this runs in order, on every host the play picked.",
       },
       {
         word: "Gathering Facts",
-        what: "a task you did not write. Every play opens by running `setup` against each host to learn ~1,200 facts about it. Step 7 is where that pays off.",
+        what: "A task you did not write. Every play starts by running `setup` on each host to collect about 1,200 facts about it. Step 7 uses one of them.",
         without:
-          "`gather_facts: false` turns it off — and anything reading a fact then breaks.",
+          "`gather_facts: false` turns it off. Then anything that reads a fact breaks.",
       },
     ],
     output: "one",
     takeaway:
-      "A task is a module call with a label, and it lives in a play. The YAML maps one-to-one onto the command line you just used.",
+      "A task is a module call with a label, and it lives in a play. The file says the same thing as the command line you used before.",
   },
   {
     n: 4,
     title: "Run it twice",
-    lead: "Run the same file again, immediately. Nothing is installed a second time — the module looks at the host, finds nginx already present, and says so. That property has a name, and it is the reason Ansible is safe to run on a schedule, from CI, or by someone who does not know what the last person did.",
+    lead: "Run the same file again, right away. Nginx is not installed a second time. The module checks the host first, finds nginx already there, and reports `ok` instead of `changed`. This is called idempotent, and it is why you can run Ansible on a schedule, or from CI, without worrying.",
     shell: [
       {
         text: "ansible-playbook -i inventory/hosts.ini site.yml --limit web1",
@@ -381,20 +384,20 @@ export const STEPS: Step[] = [
     keywords: [
       {
         word: "changed",
-        what: "the module altered the host.",
+        what: "The module changed the host.",
       },
       {
         word: "ok",
-        what: "the module ran, checked, and found there was nothing to do.",
+        what: "The module ran, checked, and found nothing to do.",
       },
     ],
     takeaway:
-      "Idempotent: running it twice is the same as running it once. You get that free from `state:` modules and lose it the moment you reach for `shell:`.",
+      "Idempotent means running it twice does the same as running it once. `state:` modules give you this for free. `shell:` does not.",
   },
   {
     n: 5,
     title: "More than one machine",
-    lead: "Drop the `--limit`. Nothing in the file changes — it already said `hosts: webservers`, and that one line is the fan-out. The task you wrote once now runs against three machines and comes back with three different answers.",
+    lead: "Remove `--limit`. Nothing in the file changes. It already said `hosts: webservers`, and that one line is what spreads the work across machines. The task you wrote once now runs on three hosts, and comes back with three different answers.",
     shell: [
       {
         text: "ansible-playbook -i inventory/hosts.ini site.yml",
@@ -404,74 +407,90 @@ export const STEPS: Step[] = [
     keywords: [
       {
         word: "hosts: webservers",
-        what: "a group from the inventory. Ansible expands it to web1, web2 and web3 and runs every task against all of them.",
+        what: "A group from the inventory. Ansible expands it to web1, web2 and web3, and runs every task on all of them.",
         without:
-          "`--limit` narrows it at the command line without editing the file, which is what the last two steps were doing.",
+          "`--limit` narrows it from the command line, without editing the file. That is what the last two steps did.",
       },
       {
         word: "web2 says ok",
-        what: "the same task, the same file, a different answer — because web2 already had nginx. A verdict describes the host, not the task.",
+        what: "Same task, same file, different answer. web2 already had nginx. A verdict describes the host, not the task.",
       },
     ],
     output: "one",
     grid: true,
     takeaway:
-      "Play = hosts + tasks. The same task, the same file, three machines — and three different answers, because web2 already had nginx.",
+      "One line picks the machines. The answers differ because the machines differ.",
   },
   {
     n: 6,
     title: "More than one task",
-    lead: "Add a second task. Tasks run top to bottom, and every host finishes a task before any host starts the next — so the grid grows downwards, a row at a time.",
+    lead: "Add a second task. Tasks run from top to bottom. Every host finishes a task before any host starts the next one, so the grid grows downward, one row at a time.",
     keywords: [
       {
         word: "state: started",
-        what: "running now.",
+        what: "Running now.",
       },
       {
         word: "enabled: true",
-        what: "running after a reboot. Two independent assertions in one task, and one `changed` covering both.",
+        what: "Running again after a reboot. These are two separate checks, and one `changed` covers both.",
       },
     ],
     output: "one",
     grid: true,
     takeaway:
-      "Order is the file's order. A play is a column of task rows, each run against every host.",
+      "Tasks run in file order. A play is a stack of task rows, and each row runs on every host.",
   },
   {
     n: 7,
     title: "Hosts differ",
-    lead: "web3 is Debian; the other two are Red Hat. Ansible already knows, because of the facts it gathered — so a task can be given a condition, and a file can be given a variable instead of a number.",
+    lead: "web3 runs Debian. The other two run Red Hat. Ansible already knows, because of the facts it gathered. So you can give a task a condition, and put a variable in the file instead of a fixed number.",
     keywords: [
       {
         word: "vars:",
-        what: "names you set once and use everywhere below. `nginx_port: 8080`.",
+        what: "Names you set once and use below. Here, `nginx_port: 8080`.",
       },
       {
         word: "{{ nginx_port }}",
-        what: "Jinja2. It is rendered on YOUR machine, before anything is sent — the host never sees the braces.",
+        what: "Jinja2. It is filled in on YOUR machine, before anything is sent. The host never sees the braces.",
       },
       {
         word: 'mode: "0644"',
-        what: "quoted, always. Unquoted, YAML reads `0644` as an octal number and the file lands with the wrong permissions.",
+        what: "Always put quotes around it. Without them YAML reads `0644` as a number, and the file gets the wrong permissions.",
       },
       {
         word: "when:",
-        what: "a condition, tested on your machine against the facts. False means the task is skipped and no connection is opened at all.",
+        what: "A condition. Ansible tests it on your machine against the facts. If it is false, the task is skipped and no connection is opened.",
       },
       {
         word: "template:",
-        what: "renders a `.j2` file locally, compares it with what is on the host, and transfers only if they differ.",
+        what: "Fills in a `.j2` file on your machine, compares the result with the file on the host, and only sends it if they differ.",
       },
     ],
     output: "one",
     grid: true,
     takeaway:
-      "Facts describe the host; variables describe your intent; `when` joins them. One file, three different runs.",
+      "Facts describe the host. Variables describe what you want. `when:` joins the two. One file, three different runs.",
   },
   {
     n: 8,
     title: "Repeat, capture, look",
-    lead: "Three things you will reach for constantly, none of which this particular file needs. They are shown here as they are used, not folded into `site.yml` — a guide that teaches you to write code you would delete is worse than one that says not here.",
+    lead: "Three things you will use all the time. This file does not need any of them, so they are shown on their own rather than added to `site.yml`.",
+    shell: [
+      {
+        text: "ansible-playbook -i inventory/hosts.ini site.yml --limit web1 -v",
+        note: "the same run, with every module's reply printed",
+      },
+      {
+        text: 'changed: [web1] => {"changed": true, "rc": 0, "results": [...]}',
+        out: true,
+      },
+    ],
+    keywords: [
+      {
+        word: "-v",
+        what: "Verbosity. `-v` prints each module's JSON reply. `-vv` adds the task's file and line. `-vvv` adds the SSH commands. This is the fastest way to find out why something said `changed`.",
+      },
+    ],
     insets: [
       {
         title: "loop — one task, many items",
@@ -491,7 +510,7 @@ export const STEPS: Step[] = [
           "ok: [web1] => (item=curl)",
           "changed: [web1] => (item=jq)",
         ],
-        note: "`item` is the loop variable. The task reports once per item, and the task as a whole is `changed` if any item was.",
+        note: "`item` is the loop variable. The task reports once per item. The whole task counts as `changed` if any item changed.",
       },
       {
         title: "register + debug — see what came back",
@@ -511,7 +530,7 @@ export const STEPS: Step[] = [
           '    "result.stdout": "syntax is ok"',
           "}",
         ],
-        note: "`register` captures a module's whole JSON reply into a variable. `debug` prints it — and runs on your machine, so it costs nothing. `changed_when: false` stops a read-only command reporting `changed` every time.",
+        note: "`register` saves a module's full JSON reply into a variable. `debug` prints it, and runs on your machine, so it costs nothing. `changed_when: false` stops a read-only command from saying `changed` every time.",
       },
       {
         title: "block — group, and recover",
@@ -533,93 +552,77 @@ export const STEPS: Step[] = [
           "TASK [command] **************************",
           "changed: [web1]",
         ],
-        note: "A failure inside `block` jumps to `rescue` instead of removing the host from the play. `always` runs either way.",
-      },
-    ],
-    shell: [
-      {
-        text: "ansible-playbook -i inventory/hosts.ini site.yml --limit web1 -v",
-        note: "the same run, with every module's reply printed",
-      },
-      {
-        text: 'changed: [web1] => {"changed": true, "rc": 0, "results": [...]}',
-        out: true,
-      },
-    ],
-    keywords: [
-      {
-        word: "-v",
-        what: "verbosity. `-v` prints each module's JSON reply, `-vv` adds the task's file and line, `-vvv` adds the SSH commands themselves. This is the fastest way to find out why something said `changed`.",
+        note: "If a task inside `block` fails, Ansible runs `rescue` instead of dropping the host from the play. `always` runs either way.",
       },
     ],
     takeaway:
-      "`loop` repeats, `register` captures, `debug` shows, `block` recovers. With `-v` these are the whole debugging loop.",
+      "`loop` repeats. `register` saves. `debug` prints. `block` recovers. Add `-v` and you have a way to debug.",
   },
   {
     n: 9,
     title: "React to a change",
-    lead: "nginx needs reloading when its config changes — and only then. A HANDLER is a task that does nothing until something notifies it, and then runs once, at the end of the play.",
+    lead: "Nginx needs a reload when its config changes, but only then. A handler is a task that waits. It does nothing until another task notifies it. Then it runs once, at the end of the play.",
     keywords: [
       {
         word: "handlers:",
-        what: "tasks defined but not run. They sit in the play alongside `tasks:`.",
+        what: "Tasks that are written down but do not run yet. They sit next to `tasks:` in the play.",
       },
       {
         word: "notify: Reload nginx",
-        what: "queues the handler by name — but only if this task reported `changed`.",
+        what: "Queues the handler by name. It only fires if this task reported `changed`.",
         without:
-          "An `ok` task notifies nothing. That is why web3, whose config already matched, does not reload.",
+          "A task that reports `ok` notifies nothing. web3's config already matched, so web3 does not reload.",
       },
     ],
     output: "one",
     grid: true,
     takeaway:
-      "Notified on `changed`, de-duplicated, and flushed at the end of the play — not where you wrote it.",
+      "A handler runs only when something changed, only once per host, and only at the end of the play — not where you wrote it.",
   },
   {
     n: 10,
     title: "A second play, and running it for real",
-    lead: "The database is a different group with different work, so it is a different play. Plays run one after another, always. That is the whole file — and this is how you actually set it going.",
+    lead: "The database is a different group doing different work, so it gets its own play. Plays always run one after another. That is the whole file. Here is how you set it going.",
     shell: [
       {
         text: "ansible-playbook -i inventory/hosts.ini site.yml",
-        note: "the whole thing",
+        note: "run the whole file",
       },
       {
         text: "ansible-playbook -i inventory/hosts.ini site.yml --check --diff",
-        note: "change nothing; report what WOULD change, and show the diffs",
+        note: "change nothing; show what WOULD change, and the diffs",
       },
       {
         text: "ansible-playbook -i inventory/hosts.ini site.yml --limit web1",
-        note: "one host out of the group",
+        note: "run on one host out of the group",
       },
       {
         text: "ansible-playbook -i inventory/hosts.ini site.yml --tags nginx",
-        note: "only tasks carrying that tag",
+        note: "run only the tasks with that tag",
       },
       {
         text: "ansible-playbook -i inventory/hosts.ini site.yml --start-at-task 'Open the port'",
-        note: "resume after a failure, without redoing the slow part",
+        note: "start again after a failure, without redoing the slow part",
       },
       {
         text: "ansible-doc ansible.builtin.service",
-        note: "every argument the module takes, with examples, offline",
+        note: "every argument a module takes, with examples, offline",
       },
     ],
     keywords: [
       {
         word: "--check",
-        what: "dry run. Every module is asked what it would do. `command` and `shell` are skipped, because they cannot predict.",
+        what: "A dry run. Ansible asks every module what it would do. `command` and `shell` are skipped, because they cannot predict.",
       },
       {
         word: "--limit",
-        what: "narrows the hosts without editing the inventory. The first thing to reach for when something goes wrong.",
+        what: "Picks fewer hosts, without editing the inventory. Reach for this first when something goes wrong.",
       },
     ],
     output: "one",
     grid: true,
     takeaway:
-      "That is the file the rest of this page runs. Below, it stops being source and starts being nineteen modules crossing four SSH connections.",
+      "That is the file the rest of this page runs. Below, it stops being text and becomes nineteen modules crossing four SSH connections.",
   },
 ];
 

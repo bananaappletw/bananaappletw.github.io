@@ -80,7 +80,7 @@ export const HOSTS: Host[] = [
     role: "where the playbook is, and all the thinking",
     groups: [],
     about:
-      "The only machine here with Ansible installed. It holds the inventory, resolves every variable, renders every template, builds every module and reads every reply — the managed hosts receive finished Python and know nothing about the play they are part of. Nothing is installed on them for this to work, which is the whole claim of the word agentless.",
+      "This is the only machine with Ansible installed. It holds the inventory, works out every variable, fills in every template, builds every module and reads every reply. The managed hosts only receive finished Python; they know nothing about the play they are part of. Nothing is installed on them to make this work, which is what agentless means.",
     python: "/usr/bin/python3.12",
     facts: [],
     x: 0.07,
@@ -93,19 +93,19 @@ export const HOSTS: Host[] = [
     role: "bare — every task has work to do",
     groups: ["webservers", "prod", "all"],
     about:
-      "A fresh host. nginx is not installed, no config exists, the port is shut and the service has never started, so all four tasks change something and the handler fires. This is the only host on the page where the run looks like the tutorial.",
+      "A fresh host. nginx is not installed, no config file exists, the port is shut, and the service has never started. So all four tasks change something, and the handler fires. This is the only host here where the run looks like the tutorial.",
     python: "/usr/bin/python3.9",
     facts: [
       { key: "ansible_facts.distribution", value: "Rocky" },
       {
         key: "ansible_facts.os_family",
         value: "RedHat",
-        note: "the fact the firewalld task's `when` is testing",
+        note: "the fact the firewall task's `when` is testing",
       },
       {
         key: "ansible_facts.pkg_mgr",
         value: "dnf",
-        note: "what `ansible.builtin.package` resolves to here",
+        note: "what `ansible.builtin.package` picks here",
       },
       { key: "ansible_facts.distribution_version", value: "9.4" },
       { key: "ansible_facts.processor_vcpus", value: "4" },
@@ -118,10 +118,10 @@ export const HOSTS: Host[] = [
     id: "web2",
     name: "web2",
     fqdn: "web2.example.net",
-    role: "already converged — same tasks, different verdicts",
+    role: "already done — same tasks, different answers",
     groups: ["webservers", "prod", "all"],
     about:
-      "The same operating system as web1 and the opposite result: nginx is installed, running and enabled, and the port is already open. Three of its four tasks report ok without touching anything. The tasks did not change — the host did, on an earlier run, and a verdict is a statement about the host.",
+      "The same operating system as web1, and the opposite result. nginx is installed, running and enabled, and the port is already open. Three of its four tasks report ok without touching anything. The tasks did not change; the host did, on an earlier run. A verdict describes the host.",
     python: "/usr/bin/python3.9",
     facts: [
       { key: "ansible_facts.distribution", value: "Rocky" },
@@ -141,7 +141,7 @@ export const HOSTS: Host[] = [
     role: "a different distribution, and the third fork",
     groups: ["webservers", "prod", "all"],
     about:
-      "Debian, in a group written for Red Hat. Two things follow and both are worth more than the YAML: `package` resolves to apt rather than dnf, so a different module is built for the same task, and the firewalld task is skipped from a fact — the decision is made on the control node and no connection is opened at all. It is also the host with no fork of its own, so it starts every task late and the whole play waits for it.",
+      "Debian, in a group written for Red Hat. Two things follow. First, `package` picks apt instead of dnf, so the same task builds a different program. Second, the firewall task is skipped because of a fact, and that decision is made on the control node, so no connection is opened at all. web3 also has no fork of its own, so it starts every task late and the whole play waits for it.",
     python: "/usr/bin/python3.12",
     facts: [
       { key: "ansible_facts.distribution", value: "Ubuntu" },
@@ -165,7 +165,7 @@ export const HOSTS: Host[] = [
     role: "another play, another region",
     groups: ["dbservers", "prod", "all"],
     about:
-      "In a second play, so nothing it does overlaps the web tier: plays run one after another, always. It is also in another region, and its link costs twelve times what the others do — which matters because a non-pipelined task pays that cost four times instead of once.",
+      "In a second play, so nothing it does overlaps the web tier. Plays always run one after another. It is also in another region, and its link costs twelve times what the others do. That matters because a task without pipelining pays that cost four times instead of once.",
     python: "/usr/bin/python3.11",
     facts: [
       { key: "ansible_facts.distribution", value: "Debian" },
@@ -220,12 +220,12 @@ export const GROUPS: { name: string; members: string[]; note: string }[] = [
   {
     name: "prod",
     members: ["webservers", "dbservers"],
-    note: "a group of groups — `prod:children`",
+    note: "a group made of other groups — `prod:children`",
   },
   {
     name: "all",
     members: ["prod"],
-    note: "implicit, and always there; `group_vars/all` is the floor",
+    note: "always there, even if you never write it; `group_vars/all` is the lowest level",
   },
 ];
 
@@ -374,7 +374,7 @@ export const PLAYS: Play[] = [
     target: "webservers",
     hosts: ["web1", "web2", "web3"],
     summary:
-      "Three hosts, two forks and the default linear strategy — so the play is a column of barriers, and each one is as slow as the slowest host at that row.",
+      "Three hosts, two forks, and the default linear strategy. So the play is a column of barriers, and each one takes as long as the slowest host in that row.",
     head: [
       { text: "- name: Web tier", part: "play" },
       { text: "  hosts: webservers", part: "play" },
@@ -395,7 +395,7 @@ export const PLAYS: Play[] = [
     target: "dbservers",
     hosts: ["db1"],
     summary:
-      "A second play, which is to say: nothing in it begins until the first play's last handler has finished. Plays never overlap, whatever the forks are set to.",
+      "A second play. Nothing in it starts until the first play's last handler has finished. Plays never overlap, whatever the forks are set to.",
     head: [
       { text: "- name: Database", part: "play" },
       { text: "  hosts: dbservers", part: "play" },
@@ -412,7 +412,7 @@ export const TASKS: Task[] = [
     name: "Gathering Facts",
     module: "ansible.builtin.setup",
     summary:
-      "The task nobody writes. Unless `gather_facts: false` is set, every play opens by running the largest module in Ansible against every host to learn ~1,200 facts, most of which no play will read. It is often the most expensive thing in a fast run.",
+      "The task nobody writes. Unless you set `gather_facts: false`, every play starts by running the biggest module in Ansible on every host, to learn about 1,200 facts. Most plays read none of them. In a fast run this is often the most expensive part.",
     yaml: ["    # implicit: gather_facts"],
     hosts: ["web1", "web2", "web3"],
   },
@@ -422,7 +422,7 @@ export const TASKS: Task[] = [
     name: "Install nginx",
     module: "ansible.builtin.package",
     summary:
-      "`package` is not a package manager; it is a shim that reads `ansible_facts.pkg_mgr` and builds a different module per host. web1 and web2 get dnf, web3 gets apt — one task, two programs.",
+      "`package` is not a package manager. It reads `ansible_facts.pkg_mgr` and builds a different module for each host. web1 and web2 get dnf, web3 gets apt. One task, two programs.",
     yaml: [
       "    - name: Install nginx",
       "      ansible.builtin.package:",
@@ -437,7 +437,7 @@ export const TASKS: Task[] = [
     name: "Write the site config",
     module: "ansible.builtin.template",
     summary:
-      "Jinja2 runs on the control node, never on the target. The host is sent a rendered file and has no idea a template existed — which is why `nginx_port` can be a variable at all, and why a host is asked for its checksum before anything is transferred.",
+      "Jinja2 runs on the control node, never on the target. The host is sent a finished file and never knows a template existed. That is why `nginx_port` can be a variable at all, and why the host is asked for its checksum before anything is sent.",
     yaml: [
       "    - name: Write the site config",
       "      ansible.builtin.template:",
@@ -454,7 +454,7 @@ export const TASKS: Task[] = [
     name: "Open the port",
     module: "ansible.posix.firewalld",
     summary:
-      "`when` is evaluated on the control node against facts already in hand. web3 is Debian, so this task is decided before any connection is opened — a skipped task costs one comparison, not a round trip.",
+      "`when` is tested on the control node, against facts Ansible already has. web3 is Debian, so this task is decided before any connection is opened. A skipped task costs one comparison, not a round trip.",
     yaml: [
       "    - name: Open the port",
       "      ansible.posix.firewalld:",
@@ -471,7 +471,7 @@ export const TASKS: Task[] = [
     name: "Start nginx",
     module: "ansible.builtin.service",
     summary:
-      "Two independent assertions in one task: running now, and running after a reboot. The module reports `changed` if either of them was not already true, which is how one verdict can hide two actions.",
+      "Two separate checks in one task: running now, and running after a reboot. The module says `changed` if either one was not already true. That is how one verdict can hide two actions.",
     yaml: [
       "    - name: Start nginx",
       "      ansible.builtin.service:",
@@ -488,7 +488,7 @@ export const TASKS: Task[] = [
     module: "ansible.builtin.service",
     handler: true,
     summary:
-      "Notified three times across the play and run once per host, at the end of it, and only on the hosts whose task actually changed. web3's config was already byte-identical, so web3 never notified and is not in this row.",
+      "Notified three times during the play, and run once per host at the end of it — only on the hosts whose task actually changed. web3's config already matched, so web3 never notified and is not in this row.",
     yaml: [
       "    - name: Reload nginx",
       "      ansible.builtin.service:",
@@ -503,7 +503,7 @@ export const TASKS: Task[] = [
     name: "Gathering Facts",
     module: "ansible.builtin.setup",
     summary:
-      "Gathered again, because this is a new play. Fact caching is what stops that; without it, every play pays for the same ~1,200 facts.",
+      "Gathered again, because this is a new play. Fact caching is what stops that. Without it, every play pays for the same 1,200 facts.",
     yaml: ["    # implicit: gather_facts"],
     hosts: ["db1"],
   },
@@ -513,7 +513,7 @@ export const TASKS: Task[] = [
     name: "Create the application database",
     module: "community.postgresql.postgresql_db",
     summary:
-      "Neither `builtin` nor `posix`: a collection installed from Galaxy and pinned in `requirements.yml`. The fully-qualified name is the whole addressing scheme — namespace, collection, module.",
+      "Not `builtin` and not `posix`: a collection installed from Galaxy and pinned in `requirements.yml`. The full name is the whole addressing scheme — namespace, collection, module.",
     yaml: [
       "    - name: Create the application database",
       "      community.postgresql.postgresql_db:",
@@ -633,15 +633,15 @@ const transport = (host: HostId, short: string, become = true): Stage[] => {
       name: "Build",
       where: "control",
       summary:
-        "The module's source, the Python it imports and the resolved arguments are zipped into one self-extracting script. Nothing is installed on the target; the program is the message.",
+        "The module's source, the Python it imports, and the finished arguments are zipped into one self-extracting script. Nothing is installed on the target. The program is the message.",
       lines: [
         {
           text: `AnsiballZ_${short}.py   ${kb.toFixed(1)} KB`,
-          note: "the module, module_utils, and the arguments as embedded JSON",
+          note: "the module, module_utils, and the arguments as JSON inside it",
         },
         {
           text: "ANSIBLE_MODULE_ARGS = { … }",
-          note: "every Jinja expression is already a literal by this point",
+          note: "every Jinja expression is already a plain value by this point",
         },
       ],
     },
@@ -649,11 +649,11 @@ const transport = (host: HostId, short: string, become = true): Stage[] => {
       name: "Pipe",
       where: "wire",
       summary:
-        "With `pipelining = True` there is no temp directory and no SFTP: the script is written to the standard input of an interpreter started over the connection that is already open. One SSH operation for the whole task.",
+        "With `pipelining = True` there is no temp directory and no SFTP. The script is written to the standard input of an interpreter started over the connection that is already open. One SSH operation for the whole task.",
       lines: [
         {
           text: `ssh -o ControlPath=${SOCKET[host]} deploy@${h.fqdn} \\`,
-          note: "no handshake — ControlPersist opened this socket on the first task",
+          note: "no handshake: ControlPersist opened this socket on the first task",
         },
         { text: `    "/bin/sh -c \\"${inner}\\""` },
         {
@@ -666,12 +666,12 @@ const transport = (host: HostId, short: string, become = true): Stage[] => {
       name: "Run",
       where: "target",
       summary:
-        "The script unpacks itself into a temporary directory, imports `AnsibleModule`, parses the embedded arguments, does the work and prints exactly one JSON object. Then it deletes itself.",
+        "The script unpacks itself into a temp directory, imports `AnsibleModule`, reads the arguments inside it, does the work, and prints exactly one JSON object. Then it deletes itself.",
       lines: [
         { text: `${h.python} -c "import sys; …"`, note: "run as root" },
         {
           text: "AnsibleModule(argument_spec=…)",
-          note: "the spec is what validates and type-casts the arguments",
+          note: "the spec is what checks the arguments and converts their types",
         },
       ],
     },
@@ -686,7 +686,7 @@ const verdictStage = (
   name: "Verdict",
   where: "control",
   summary:
-    "The control node reads one key. `changed` decides the colour, the recap column and whether a handler is queued — and the module, not the playbook, decides what it holds.",
+    "The control node reads one key. `changed` decides the colour, the recap column, and whether a handler is queued. The module decides what it holds, not the playbook.",
   lines: [
     { text: `"changed": ${verdict === "changed"}`, note: why },
     ...(notified
@@ -705,7 +705,7 @@ const skipStage = (expr: string, value: string): Stage => ({
   name: "Evaluate",
   where: "control",
   summary:
-    "A `when` is a Jinja expression tested on the control node against facts it already holds. It is false, so there is nothing to build, nothing to send, and no connection to open.",
+    "A `when` is a Jinja expression, tested on the control node against facts it already has. It is false, so there is nothing to build, nothing to send, and no connection to open.",
   lines: [
     { text: expr, note: "evaluated here, not there" },
     { text: `-> ${value}`, note: "the task ends on the control node" },
@@ -735,13 +735,13 @@ for (const host of ["web1", "web2", "web3", "db1"] as HostId[]) {
     task,
     host,
     verdict: "ok",
-    why: "`setup` reads; it never writes, so it can never report changed.",
+    why: "`setup` only reads. It never writes, so it can never report changed.",
     module: "ansible.builtin.setup",
     args: [
       {
         key: "gather_subset",
         raw: "all",
-        note: "narrow this to `!all,!min,network` and the cost falls by most of it",
+        note: "narrow this with `gather_subset` and most of the cost goes away",
       },
     ],
     stages: [
@@ -750,7 +750,7 @@ for (const host of ["web1", "web2", "web3", "db1"] as HostId[]) {
         name: "Return",
         where: "wire",
         summary:
-          "One JSON object with around twelve hundred keys, every one of which becomes a variable usable in every later task and template on this host.",
+          "One JSON object with about 1,200 keys. Every one of them becomes a variable you can use in any later task or template on this host.",
         lines: [
           { text: `"ansible_facts": { … 1,207 keys … }` },
           ...h.facts.slice(0, 3).map(f => ({
@@ -809,7 +809,7 @@ for (const host of ["web1", "web2", "web3"] as HostId[]) {
       {
         key: "state",
         raw: "present",
-        note: "present, not latest — `latest` is what makes a run non-idempotent",
+        note: "`present`, not `latest`. `latest` is what makes a run non-idempotent.",
       },
     ],
     stages: [
@@ -817,7 +817,7 @@ for (const host of ["web1", "web2", "web3"] as HostId[]) {
         name: "Resolve",
         where: "control",
         summary:
-          "`package` is an action plugin, not a module. It reads a fact gathered a moment ago and picks the real module, so the same line of YAML becomes a different program on each host.",
+          "`package` is an action plugin, not a module. It reads a fact gathered a moment ago and picks the real module. So the same line of YAML becomes a different program on each host.",
         lines: [
           { text: "ansible_facts.pkg_mgr", note: `is "${short}" on this host` },
           {
@@ -903,7 +903,7 @@ for (const host of ["web1", "web2", "web3"] as HostId[]) {
         key: "port",
         raw: "{{ nginx_port }}",
         resolved: "8080",
-        note: "a play var — rung 12 of the precedence ladder",
+        note: "a play var — level 12 on the precedence ladder",
       },
       {
         key: "server_name",
@@ -917,7 +917,7 @@ for (const host of ["web1", "web2", "web3"] as HostId[]) {
         name: "Render",
         where: "control",
         summary:
-          "The one stage that explains the whole module. Jinja2 runs here, with this host's variables and facts in scope, and produces bytes. The target never sees the template, the variables or Jinja.",
+          "The stage that explains the whole module. Jinja2 runs here, with this host's variables and facts, and produces bytes. The target never sees the template, the variables, or Jinja.",
         lines: [
           { text: "site.conf.j2 + vars(web) + facts(host)" },
           ...RENDERED.map(text => ({
@@ -933,7 +933,7 @@ for (const host of ["web1", "web2", "web3"] as HostId[]) {
         name: "Compare",
         where: "target",
         summary:
-          "A separate module runs first, purely to answer one question: what is the checksum of the file that is already there? That answer is what makes this task idempotent.",
+          "A separate module runs first, to answer one question: what is the checksum of the file that is already there? That answer is what makes this task idempotent.",
         lines: [
           {
             text: "AnsiballZ_stat.py -> checksum",
@@ -958,7 +958,7 @@ for (const host of ["web1", "web2", "web3"] as HostId[]) {
               name: "Return",
               where: "wire" as const,
               summary:
-                "`template` reports as `copy`, because by the time anything reached the host that is all it was.",
+                "`template` reports as `copy`, because by the time anything reached the host, that is all it was.",
               lines: [
                 { text: `"changed": true` },
                 { text: `"dest": "/etc/nginx/conf.d/site.conf"` },
@@ -1022,7 +1022,7 @@ for (const host of ["web1", "web2", "web3"] as HostId[]) {
       {
         key: "permanent",
         raw: "true",
-        note: "written to the zone file; add `immediate: true` to also change the firewall that is running",
+        note: "written to the zone file. Add `immediate: true` to change the running firewall too.",
       },
       { key: "state", raw: "enabled" },
       {
@@ -1042,12 +1042,12 @@ for (const host of ["web1", "web2", "web3"] as HostId[]) {
             name: "Verdict",
             where: "control",
             summary:
-              "A skipped host is still in the play and still in the recap — it simply did nothing. The next task will include it again.",
+              "A skipped host is still in the play and still in the recap. It simply did nothing. The next task will include it again.",
             lines: [
               { text: `"skipped": true` },
               {
                 text: `"skip_reason": "Conditional result was False"`,
-                note: "no bytes were sent to this host for this task",
+                note: "nothing was sent to this host for this task",
               },
             ],
           },
@@ -1123,7 +1123,7 @@ for (const host of ["web1", "web2", "web3"] as HostId[]) {
       {
         key: "enabled",
         raw: "true",
-        note: "running after a reboot — a second, independent assertion",
+        note: "running after a reboot — a second, separate check",
       },
     ],
     stages: [
@@ -1132,7 +1132,7 @@ for (const host of ["web1", "web2", "web3"] as HostId[]) {
         name: "Return",
         where: "wire",
         summary:
-          "One `changed` covering two assertions. The reply says which of them moved; the recap does not, and that is the honest limit of a one-word verdict.",
+          "One `changed` covering two checks. The reply says which one moved; the recap does not. That is the honest limit of a one-word verdict.",
         lines: [
           { text: `"changed": ${verdict === "changed"}` },
           { text: `"state": "started"` },
@@ -1161,14 +1161,14 @@ for (const host of ["web1", "web2"] as HostId[]) {
     task: 5,
     host,
     verdict: "changed",
-    why: "A handler that runs reports changed; it was asked to act, and it did.",
+    why: "A handler that runs reports changed. It was asked to act, and it did.",
     module: "ansible.builtin.service",
     args: [
       { key: "name", raw: "nginx" },
       {
         key: "state",
         raw: "reloaded",
-        note: "the one state that is a command rather than an assertion",
+        note: "the one state that is a command, not a check",
       },
     ],
     stages: [
@@ -1176,7 +1176,7 @@ for (const host of ["web1", "web2"] as HostId[]) {
         name: "Flush",
         where: "control",
         summary:
-          "The play's tasks are over, so the notification queue is drained — in the order the handlers are DEFINED, not the order they were notified, once per host, however many times it was notified.",
+          "The play's tasks are over, so the notification queue is emptied. Handlers run in the order they were DEFINED, not the order they were notified, and once per host however many times it was notified.",
         lines: [
           { text: "RUNNING HANDLER [Reload nginx]" },
           {
@@ -1190,12 +1190,12 @@ for (const host of ["web1", "web2"] as HostId[]) {
         name: "Return",
         where: "wire",
         summary:
-          "`reloaded` is the exception to the shape of every other module on this page: there is no state to compare, so it always acts and always reports changed.",
+          "`reloaded` is the exception on this page. There is no state to compare, so it always acts and always reports changed.",
         lines: [
           { text: `"changed": true` },
           {
             text: `"name": "nginx"`,
-            note: "SIGHUP; the workers are replaced, the socket is not",
+            note: "SIGHUP: the workers are replaced, the socket is not",
           },
         ],
       },
@@ -1219,7 +1219,7 @@ push({
   task: 7,
   host: "db1",
   verdict: "changed",
-  why: "No database called app existed; one was created with the requested encoding.",
+  why: "No database called app existed. One was created, with the encoding asked for.",
   module: "community.postgresql.postgresql_db",
   args: [
     { key: "name", raw: "app" },
@@ -1231,7 +1231,7 @@ push({
       name: "Build",
       where: "control",
       summary:
-        "A collection module, so the Python comes out of `~/.ansible/collections` rather than the Ansible package — and it needs psycopg2 present on the TARGET, which is the usual first failure with any database module.",
+        "A collection module, so the Python comes from `~/.ansible/collections` rather than the Ansible package. It also needs psycopg2 on the TARGET, which is the usual first failure with any database module.",
       lines: [
         { text: "AnsiballZ_postgresql_db.py   66.7 KB" },
         {
@@ -1245,7 +1245,7 @@ push({
       name: "Return",
       where: "wire",
       summary:
-        "One round trip, fourteen milliseconds each way. With pipelining off this task would have crossed that link four times instead of once.",
+        "One round trip, fourteen milliseconds each way. Without pipelining this task would have crossed that link four times instead of once.",
       lines: [
         { text: `"changed": true` },
         { text: `"db": "app"` },
@@ -1579,7 +1579,7 @@ export const PRECEDENCE: { n: number; what: string; note?: string }[] = [
   {
     n: 2,
     what: "role defaults",
-    note: "`roles/x/defaults/main.yml` — the floor, and where a role's knobs belong",
+    note: "`roles/x/defaults/main.yml` — the lowest level, and where a role's settings belong",
   },
   { n: 3, what: "inventory file group vars" },
   { n: 4, what: "inventory `group_vars/all`" },
@@ -1588,11 +1588,15 @@ export const PRECEDENCE: { n: number; what: string; note?: string }[] = [
   {
     n: 7,
     what: "playbook `group_vars/*`",
-    note: "a playbook-adjacent file beats the inventory's",
+    note: "a file next to the playbook beats the inventory's",
   },
   { n: 8, what: "inventory file host vars" },
   { n: 9, what: "inventory `host_vars/*`" },
-  { n: 10, what: "playbook `host_vars/*`", note: "host beats group, always" },
+  {
+    n: 10,
+    what: "playbook `host_vars/*`",
+    note: "a host beats its group, always",
+  },
   { n: 11, what: "host facts / cached `set_fact`" },
   { n: 12, what: "play vars", note: "`nginx_port: 8080` on this page" },
   { n: 13, what: "play `vars_prompt`" },
@@ -1600,7 +1604,7 @@ export const PRECEDENCE: { n: number; what: string; note?: string }[] = [
   {
     n: 15,
     what: "role vars",
-    note: "`roles/x/vars/main.yml` — high, and the usual surprise",
+    note: "`roles/x/vars/main.yml` — high up, and the usual surprise",
   },
   { n: 16, what: "block vars" },
   { n: 17, what: "task vars" },
@@ -1611,27 +1615,31 @@ export const PRECEDENCE: { n: number; what: string; note?: string }[] = [
   {
     n: 22,
     what: "extra vars",
-    note: "`-e` — wins over everything, and cannot be overridden",
+    note: "`-e` — beats everything, and nothing can override it",
   },
 ];
 
 /** A role is a directory layout, and the layout is the API. */
 export const ROLE_TREE: { path: string; depth: number; note?: string }[] = [
   { path: "roles/webserver/", depth: 0 },
-  { path: "defaults/main.yml", depth: 1, note: "rung 2 — overridable" },
-  { path: "vars/main.yml", depth: 1, note: "rung 15 — hard to override" },
+  { path: "defaults/main.yml", depth: 1, note: "level 2 — easy to override" },
+  { path: "vars/main.yml", depth: 1, note: "level 15 — hard to override" },
   {
     path: "tasks/main.yml",
     depth: 1,
-    note: "the entry point; loaded automatically",
+    note: "the entry point, loaded automatically",
   },
-  { path: "handlers/main.yml", depth: 1, note: "what `notify` can name" },
+  {
+    path: "handlers/main.yml",
+    depth: 1,
+    note: "the handlers `notify` can name",
+  },
   {
     path: "templates/site.conf.j2",
     depth: 1,
-    note: "rendered on the control node",
+    note: "filled in on the control node",
   },
-  { path: "files/", depth: 1, note: "copied verbatim" },
+  { path: "files/", depth: 1, note: "copied exactly as they are" },
   {
     path: "meta/main.yml",
     depth: 1,
@@ -1640,7 +1648,7 @@ export const ROLE_TREE: { path: string; depth: number; note?: string }[] = [
   {
     path: "library/",
     depth: 1,
-    note: "custom modules, found without configuration",
+    note: "your own modules; Ansible looks here on its own",
   },
 ];
 
@@ -1674,7 +1682,7 @@ export const TRANSPORT: {
       { text: "the module makes and removes its own temp dir" },
       {
         text: "requires: no `requiretty` in sudoers",
-        note: "the one reason it is still off by default",
+        note: "the only reason it is still off by default",
       },
     ],
   },
@@ -1688,28 +1696,28 @@ export const VERDICTS: {
 }[] = [
   {
     id: "ok",
-    what: "ran, asserted, found nothing to do",
+    what: "ran, checked, found nothing to do",
     from: "the module returned `changed: false`",
   },
   {
     id: "changed",
-    what: "ran and altered the host",
-    from: "the module returned `changed: true` — and a handler may be queued",
+    what: "ran and changed the host",
+    from: "the module returned `changed: true`, and a handler may be queued",
   },
   {
     id: "skipped",
-    what: "never ran; no connection opened",
-    from: "a `when` was false on the control node",
+    what: "never ran, and no connection was opened",
+    from: "a `when` was false, tested on the control node",
   },
   {
     id: "failed",
-    what: "ran and the assertion could not be met",
-    from: "the host leaves the play, unless `ignore_errors` or a `rescue` block",
+    what: "ran, but could not get the host into the state asked for",
+    from: "the host leaves the play, unless you use `ignore_errors` or a `rescue` block",
   },
   {
     id: "unreachable",
     what: "could not be reached at all",
-    from: "SSH, not the module — the host leaves the play either way",
+    from: "SSH failed, not the module. Either way the host leaves the play.",
   },
 ];
 
@@ -1717,14 +1725,14 @@ export const VERDICTS: {
 export const CHECK_MODE = [
   {
     text: "ansible-playbook site.yml --check --diff",
-    note: "every module is asked what it WOULD do",
+    note: "every module is asked what it WOULD do, and changes nothing",
   },
   {
     text: "changed  = would change",
-    note: "the verdict becomes a forecast, which is what makes it reviewable",
+    note: "the verdict becomes a prediction, which is what makes it reviewable",
   },
   {
     text: "command, shell",
-    note: "skipped in check mode unless `check_mode: false` — they cannot predict",
+    note: "skipped in check mode unless you set `check_mode: false` — they cannot predict",
   },
 ];

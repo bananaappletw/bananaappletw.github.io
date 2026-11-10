@@ -76,7 +76,7 @@ import {
 
 const title = "Ansible";
 const description =
-  "One ansible-playbook run as a live simulation: the schedule, the forks, the barrier after every task, and what each module actually sends over SSH — with the playbook beside it.";
+  "Learn Ansible in ten steps. One playbook is written in front of you, with the output it prints, then run as a live simulation: every module, every SSH connection, and what decides how long it takes.";
 
 /* ── the star ──────────────────────────────────────────────────────────── */
 
@@ -613,8 +613,8 @@ const payload = {
   <Main pageTitle={title}>
     <div class="app-prose intro">
       <p>
-        A run is a grid: tasks down, hosts across, and every cell one module
-        built on your machine and run on theirs.
+        A run is a grid. Tasks go down, hosts go across, and every cell is one
+        module: built on your machine, run on theirs.
       </p>
     </div>
   </Main>
@@ -629,7 +629,8 @@ const payload = {
     <p class="part-n">Part I</p>
     <h2>Ten steps</h2>
     <p class="part-lead">
-      One file, built in front of you. Scroll and it grows; the pane keeps up.
+      One file, built in front of you. Scroll down and it grows. The pane on the
+      left keeps up, and shows what Ansible prints each time.
     </p>
   </section>
 
@@ -792,8 +793,8 @@ const payload = {
     <p class="part-n">Part II</p>
     <h2>What actually happens</h2>
     <p class="part-lead">
-      That file, run. Nineteen modules built on your machine, thrown at four
-      others, and every byte of the exchange open to inspection.
+      That file, run. Nineteen modules built on your machine and sent to four
+      others, with every byte of the exchange open to inspection.
     </p>
   </section>
 
@@ -868,10 +869,10 @@ const payload = {
 
     <p class="hook-note">
       Thirty-two cells, nineteen of them a module. A host the play does not
-      target has no cell; <code>web3</code> has one that was decided without opening
-      a connection. Give every cell a duration and a worker and the grid becomes a
-      schedule — which is the drawing below, and the only thing on this page that
-      decides how long a run takes.
+      target gets no cell. <code>web3</code> has one that was decided without opening
+      a connection. Give every cell a time and a worker and the grid becomes a schedule.
+      That is the drawing below, and it is the only thing on this page that decides
+      how long a run takes.
     </p>
   </section>
 
@@ -1191,9 +1192,11 @@ const payload = {
       </div>
 
       <p class="map-hint">
-        Real time at 1&times;. The upright hairlines are barriers: under
-        <code>linear</code> no host starts a task until every host has finished the
-        one before. <b>Get it under {(TARGET_MS / 1000).toFixed(1)}s.</b>
+        Real time at 1&times;. The upright dashed lines are barriers: with
+        <code>linear</code>, no host starts a task until every host has finished
+        the one before. <b
+          >Try to get it under {(TARGET_MS / 1000).toFixed(1)}s.</b
+        >
         Two of the thirty-two settings manage it, and editing the playbook is not
         one of them. Space plays, arrows nudge.
       </p>
@@ -1252,8 +1255,8 @@ const payload = {
     <p class="part-n">Part III</p>
     <h2>Reference</h2>
     <p class="part-lead">
-      The four things a run never shows you, because they are decisions taken
-      before it starts.
+      Four things a run never shows you, because you decide them before it
+      starts.
     </p>
   </section>
 
@@ -1267,10 +1270,10 @@ const payload = {
       <figcaption>
         <p class="label">One task, end to end</p>
         <p>
-          A module is a Python program built on your machine and thrown at an
+          A module is a Python program built on your machine and sent to an
           interpreter on theirs. The only question is how many times it has to
           cross, and one line of <code>ansible.cfg</code> answers it. Drawn to scale
-          on <code>db1</code>'s link — fourteen milliseconds each way.
+          on <code>db1</code>'s link: fourteen milliseconds each way.
         </p>
       </figcaption>
 
@@ -1332,10 +1335,10 @@ const payload = {
       </svg>
 
       <p class="aside">
-        The module does the same work either way; only the waiting changes. That
-        is why the knob above barely moves a run across a datacentre and
-        quadruples the overhead of one across an ocean — and why it is still off
-        by default, because it needs no <code>requiretty</code> in
+        The module does the same work either way. Only the waiting changes. That
+        is why the knob above barely moves a run inside one datacentre, and
+        makes a big difference to one across an ocean. It is still off by
+        default because it needs <code>requiretty</code> to be unset in
         <code>sudoers</code>.
       </p>
     </figure>
@@ -1344,10 +1347,10 @@ const payload = {
       <figcaption>
         <p class="label">Where a variable comes from</p>
         <p>
-          Twenty-two rungs, lowest first, and a total order: when two of them
-          define the same name, the higher one wins. Reading the list teaches
-          nobody the rule — so set <code>nginx_port</code> in more than one place
-          and watch which survives.
+          Twenty-two levels, lowest first. When two of them set the same name,
+          the higher one wins. Reading the list does not teach you the rule, so
+          set
+          <code>nginx_port</code> in more than one place and watch which value survives.
         </p>
       </figcaption>
 
@@ -1395,8 +1398,8 @@ const payload = {
       <figcaption>
         <p class="label">Inventory, groups, role</p>
         <p>
-          Two directory layouts carry nearly all of Ansible's structure. A group
-          is a folder name; a role is an interface made of folder names.
+          Two folder layouts carry nearly all of Ansible's structure. A group is
+          a folder name. A role is an interface made of folder names.
         </p>
       </figcaption>
       <div class="trees">
@@ -1414,9 +1417,9 @@ const payload = {
             }
           </ul>
           <p class="tree-foot">
-            Every group may hold <code>group_vars/&lt;name&gt;.yml</code>; every
-            host may hold <code>host_vars/&lt;name&gt;.yml</code>. Host beats
-            group, always.
+            Every group can have a <code>group_vars/&lt;name&gt;.yml</code> file,
+            and every host a <code>host_vars/&lt;name&gt;.yml</code>. A host
+            beats its group, always.
           </p>
         </div>
         <div class="tree">
@@ -1436,7 +1439,7 @@ const payload = {
             }
           </ul>
           <p class="tree-foot">
-            Nothing here is configured. <code>tasks/main.yml</code> is loaded because
+            You configure none of this. <code>tasks/main.yml</code> is loaded because
             of its name, and <code>library/</code> is searched because of its name.
           </p>
         </div>
@@ -1447,9 +1450,9 @@ const payload = {
       <figcaption>
         <p class="label">The five words a run can say</p>
         <p>
-          A verdict is a statement about the host, not about the task. Two of
-          the five are decided before the module runs, and the other three are
-          decided by what it found when it got there.
+          A verdict describes the host, not the task. Two of the five are
+          decided before the module runs. The other three depend on what it
+          found when it got there.
         </p>
       </figcaption>
 
@@ -2119,13 +2122,13 @@ const payload = {
           `<p class="side-task"><b>Gathering Facts</b>` +
           `<span>ansible.builtin.setup — not run</span></p>` +
           `<p class="side-lead">Nothing happened on this host. With ` +
-          `<code>gathering = cached</code> the control node reads the facts a ` +
-          `previous run wrote to disk, so the largest module in Ansible is ` +
-          `never built, never sent and never executed.</p>` +
-          `<p class="swap">It still costs nothing in correctness: task 3's ` +
-          `<code>when</code> reads <code>os_family</code>, and the cache has ` +
-          `it. Turning gathering <em>off</em> would not — that is the ` +
-          `difference between the two fixes.</p>` +
+          `<code>gathering = cached</code>, the control node reads facts that ` +
+          `an earlier run saved to disk. The biggest module in Ansible is ` +
+          `never built, never sent and never run.</p>` +
+          `<p class="swap">Nothing breaks either. Task 3's <code>when</code> ` +
+          `reads <code>os_family</code>, and the cache has it. Turning ` +
+          `gathering <em>off</em> would not. That is the difference between ` +
+          `the two fixes.</p>` +
           `<p class="label sub">What the cache held</p>` +
           `<div class="fields">` +
           host.facts
@@ -2143,7 +2146,7 @@ const payload = {
           row(
             "what it saved",
             `${eventOf(s).runMs} ms`,
-            "on this host alone; multiply by every host and every play",
+            "on this host alone. Multiply by every host and every play.",
           ) +
           `</div>`
         );
@@ -2169,11 +2172,11 @@ const payload = {
           `<span class="chip">${e.verdict}</span>` +
           `<span class="why">${mono(e.why)}</span></p>` +
           (e.module !== task.module
-            ? `<p class="swap">Resolved to <code>${esc(e.module)}</code> on ` +
-              `this host — not the module the YAML names.</p>`
+            ? `<p class="swap">Picked <code>${esc(e.module)}</code> on this ` +
+              `host, which is not the module the YAML names.</p>`
             : "") +
           (e.notified
-            ? `<p class="swap">Notified <code>${esc(e.notified)}</code>, which ` +
+            ? `<p class="swap">Notified <code>${esc(e.notified)}</code>. It ` +
               `will not run until the play is over.</p>`
             : "") +
           `<p class="label sub">Arguments <span class="size">as resolved</span></p>` +
@@ -2219,7 +2222,7 @@ const payload = {
               row(
                 "installed here only",
                 `<code>ansible-core</code>`,
-                "the managed hosts need SSH and a Python, and nothing else",
+                "the managed hosts need SSH and a Python, nothing else",
               ) +
               `</div>`
             : `<div class="fields">` +
@@ -2227,12 +2230,12 @@ const payload = {
               row(
                 "interpreter",
                 `<code>${esc(h.python)}</code>`,
-                "discovered, then every module is piped into it",
+                "found automatically; every module is piped into it",
               ) +
               row(
                 "link",
                 `${h.ms} ms`,
-                "each way, on a connection ControlPersist keeps open",
+                "each way, over a connection ControlPersist keeps open",
               ) +
               row(
                 "this run",
@@ -2280,8 +2283,8 @@ const payload = {
             })
             .join("") +
           `</div>` +
-          `<p class="side-note">Click a bar on the schedule for what went over ` +
-          `the wire.</p>`
+          `<p class="side-note">Click a bar on the schedule to see what went ` +
+          `over the wire.</p>`
         );
       };
 
@@ -2317,54 +2320,54 @@ const payload = {
           `<p class="side-lead">The run finished in ` +
           `<b>${(spent.wall / 1000).toFixed(2)} s</b>` +
           (Math.abs(delta) < 1
-            ? ", on the settings the page opens with."
+            ? ", on the settings the page starts with."
             : delta > 0
-              ? ` — ${(delta / 1000).toFixed(2)} s faster than the ` +
-                `settings the page opens with.`
-              : ` — ${(-delta / 1000).toFixed(2)} s slower than the ` +
-                `settings the page opens with.`) +
+              ? `, which is ${(delta / 1000).toFixed(2)} s faster than the ` +
+                `settings the page starts with.`
+              : `, which is ${(-delta / 1000).toFixed(2)} s slower than the ` +
+                `settings the page starts with.`) +
           `</p>` +
           (beat
             ? `<p class="swap">Under ${(run.target / 1000).toFixed(1)} s. ` +
-              `Nothing in the playbook changed: the whole difference is four ` +
+              `Nothing in the playbook changed. The whole difference is four ` +
               `lines of <code>ansible.cfg</code>.</p>`
             : `<p class="swap">Still over ` +
               `${(run.target / 1000).toFixed(1)} s. The fastest this run can ` +
-              `be made to go is ${(run.best / 1000).toFixed(2)} s, and the ` +
-              `knobs above are the only things that get it there.</p>`) +
+              `go is ${(run.best / 1000).toFixed(2)} s, and the controls ` +
+              `above are the only way to get there.</p>`) +
           `<div class="fields">` +
           row(
             "inside modules",
             `${(spent.module / 1000).toFixed(2)} s`,
             spent.module > spent.wall
-              ? "more than the wall clock, because the forks overlap"
-              : "and nothing overlapped, because there was one fork",
+              ? "more than the clock time, because the forks overlap"
+              : "nothing overlapped, because there was only one fork",
           ) +
           row(
             "the two installs",
             `${(spent.installs / 1000).toFixed(2)} s`,
-            `${pct(spent.installs)} of the run, in one task — and the one ` +
-              `number on this page no setting can move`,
+            `${pct(spent.installs)} of the run, in one task. It is the one ` +
+              `number on this page that no setting can move.`,
           ) +
           row(
             "gathering facts",
             `${(spent.facts / 1000).toFixed(2)} s`,
             spent.facts > 0
-              ? "four hosts, ~1,200 facts each, and this play reads six"
-              : "served from the cache: no host was contacted for them",
+              ? "four hosts, about 1,200 facts each, and this play reads six"
+              : "read from the cache; no host was contacted",
           ) +
           row(
             "on the wire",
             `${spent.wire.toFixed(0)} ms`,
-            `every crossing of every link, added up — ` +
-              `${options.pipelining ? "one" : "four"} round trip` +
-              `${options.pipelining ? "" : "s"} a task`,
+            `every crossing of every link, added up. ` +
+              `${options.pipelining ? "One" : "Four"} round trip` +
+              `${options.pipelining ? "" : "s"} per task.`,
           ) +
           `</div>` +
-          `<p class="side-note">The playbook was never edited. A run's ` +
-          `length is decided by how many hosts are worked at once, whether ` +
-          `they wait for each other, and how often facts are fetched — none ` +
-          `of which is in the YAML.</p>`
+          `<p class="side-note">The playbook was never edited. How long a ` +
+          `run takes depends on how many hosts work at once, whether they ` +
+          `wait for each other, and how often facts are fetched. None of ` +
+          `that is in the YAML.</p>`
         );
       };
 
@@ -2393,7 +2396,7 @@ const payload = {
             kindOut.textContent = "Following the run";
             html =
               `<p class="side-empty">Press play. The first thing any play ` +
-              `does is gather facts, whether or not anything reads them.</p>`;
+              `does is gather facts, whether anything reads them or not.</p>`;
           } else {
             key = `s${i}:${pickedStage}:${litLine}`;
             html = slotPanel(i);
@@ -2724,7 +2727,7 @@ const payload = {
 
           if (!on.length) {
             resolvedEl.innerHTML =
-              `<span class="undef">nginx_port is undefined</span> — and a ` +
+              `<span class="undef">nginx_port is undefined.</span> A ` +
               `template that reads it fails the task, on every host.`;
             return;
           }
@@ -2751,13 +2754,13 @@ const payload = {
 
           resolvedEl.innerHTML =
             `<span class="won-line"><b>nginx_port = ${web.value}</b> ` +
-            `<span>rung ${web.rung} · <code>${esc(fileOf(web.rung))}</code>` +
+            `<span>level ${web.rung} · <code>${esc(fileOf(web.rung))}</code>` +
             `</span></span>` +
             (split
               ? `<span class="won-line split"><b>on web3: ` +
-                `${web3.value}</b> <span>rung ${web3.rung} · ` +
-                `<code>${esc(fileOf(web3.rung))}</code> — host beats group` +
-                `</span></span>`
+                `${web3.value}</b> <span>level ${web3.rung} · ` +
+                `<code>${esc(fileOf(web3.rung))}</code> — a host beats its ` +
+                `group</span></span>`
               : "");
         };
 
@@ -2817,6 +2820,11 @@ const payload = {
         for (const run of runs) {
           run.hidden = Number(run.dataset.step) !== step;
         }
+        /* Steps 1 and 2 have no file yet, so the pane says so rather than
+           showing an empty box. */
+        file.dataset.empty = lines.some(l => l.classList.contains("shown"))
+          ? "false"
+          : "true";
         label.textContent = `step ${step} / ${last}`;
       };
 
@@ -2930,6 +2938,12 @@ const payload = {
     max-height: 56vh;
     overflow-y: auto;
     scrollbar-width: thin;
+  }
+
+  .guide-file[data-empty="true"]::after {
+    content: "no file yet — step 3 writes the first line";
+    color: var(--text-4);
+    font-style: italic;
   }
 
   /* A line that has not arrived is removed, not merely made invisible —

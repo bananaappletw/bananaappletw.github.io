@@ -151,6 +151,18 @@ describe("the steps themselves", () => {
     expect(HOSTS_AT[first.n]).toEqual([]);
     expect(outputAt(first.n)).toEqual([]);
   });
+
+  /* The ad-hoc steps run `ansible`, not `ansible-playbook`, and they print
+     their own transcript. A generated PLAY RECAP there would describe a
+     command the reader has not typed. */
+  it("shows no playbook output before the file exists", () => {
+    for (let step = 1; step < 3; step++) {
+      expect(tasksAt(step)).toEqual([]);
+      expect(outputAt(step), `step ${step}`).toEqual([]);
+    }
+    expect(tasksAt(3).length).toBeGreaterThan(0);
+    expect(outputAt(3).length).toBeGreaterThan(0);
+  });
 });
 
 describe("the terminal output is the simulation's own truth", () => {
