@@ -37,7 +37,9 @@ export type NodeId =
   | "router"
   | "isp"
   | "resolver"
-  | "server";
+  | "server"
+  | "neighbour"
+  | "neighbour-router";
 
 /** One port, socket or radio on a device — a device is its interfaces. */
 export type Iface = {
@@ -74,20 +76,20 @@ export const NODES: Node[] = [
     role: "where the request starts",
     reads: "all seven",
     about:
-      "The only machine on this page that runs the whole stack for its own sake. It holds the socket, counts the bytes, checks the certificate and draws the page — everything between here and the server exists to move its bytes and understands less of them the further out you go.",
+      "The only machine here that runs the whole stack for itself. It holds the socket, counts the bytes, checks the certificate and draws the page. Everything between here and the server only moves its bytes, and understands less of them the further out you go.",
     ifaces: [
       {
         name: "en0",
         mac: "a4:83:e7:1c:9d:40",
         ip: "192.168.1.42/24",
-        note: "address leased by the router's DHCP, valid only inside the house",
+        note: "address given out by the router's DHCP; it only means anything inside the house",
       },
     ],
     ip: "192.168.1.42",
     mac: "a4:83:e7:1c:9d:40",
     port: 1,
     x: 0.09,
-    y: 0.22,
+    y: 0.17,
   },
   {
     id: "phone",
@@ -95,7 +97,7 @@ export const NODES: Node[] = [
     role: "someone else's traffic, on the same wire",
     reads: "all seven",
     about:
-      "It is not sending anything on this page, and it matters anyway: it already holds a connection through the same router, which is why the NAT table has an entry that is nothing to do with the laptop. One public address, several machines — the port number is the only thing keeping them apart.",
+      "It is not sending anything on this page, and it still matters. It already has a connection through the same router, which is why the NAT table has a row that has nothing to do with the laptop. One public address, several machines, and only the port number keeps them apart.",
     ifaces: [
       { name: "wlan0", mac: "6e:1a:bb:04:c7:93", ip: "192.168.1.57/24" },
     ],
@@ -103,21 +105,21 @@ export const NODES: Node[] = [
     mac: "6e:1a:bb:04:c7:93",
     port: 2,
     x: 0.09,
-    y: 0.55,
+    y: 0.42,
   },
   {
     id: "printer",
     name: "Printer",
-    role: "silent, and therefore invisible",
+    role: "silent, so the switch cannot see it",
     reads: "layers 1–4",
     about:
-      "It has said nothing since the switch powered on, so the switch has never learned which port it is on. A frame addressed to it would be flooded out of every port — which is exactly what a switch does when it does not know, and exactly what it stops doing the moment the printer speaks once.",
+      "It has said nothing since the switch powered on, so the switch has never learned which port it is on. A frame sent to it would go out of every port. That is what a switch does when it does not know, and it stops as soon as the printer speaks once.",
     ifaces: [{ name: "eth0", mac: "00:17:c8:2d:41:08", ip: "192.168.1.90/24" }],
     ip: "192.168.1.90",
     mac: "00:17:c8:2d:41:08",
     port: 3,
     x: 0.09,
-    y: 0.86,
+    y: 0.66,
   },
   {
     id: "switch",
@@ -125,7 +127,7 @@ export const NODES: Node[] = [
     role: "the cable the house shares",
     reads: "layer 2 only",
     about:
-      "It reads a destination MAC, looks up which port that address was last heard on, and forwards. It never opens the IP header, which is why nothing it touches comes out different — and why it cannot route, filter by address or translate anything. Watch its table fill as the page runs: it learns by listening to source addresses, never by being told.",
+      "It reads a destination MAC address, looks up which port that address was last heard on, and forwards the frame. It never opens the IP header. That is why nothing it touches above layer 2 ever changes.",
     ifaces: [
       { name: "port 1", note: "Laptop" },
       { name: "port 2", note: "Phone" },
@@ -134,7 +136,7 @@ export const NODES: Node[] = [
     ],
     port: 4,
     x: 0.3,
-    y: 0.54,
+    y: 0.42,
   },
   {
     id: "router",
@@ -142,7 +144,7 @@ export const NODES: Node[] = [
     role: "the edge of the house, and the NAT",
     reads: "layers 2–4",
     about:
-      "Two interfaces in two different worlds: a private address inside, one public address outside. Everything leaving gets that public address and a port the router picks, written into a table so the answer can be sent back to whichever machine asked. It is also the first device here that opens the IP header, decrements the TTL, and therefore has to compute the checksum again.",
+      "Two interfaces in two different worlds: a private address inside, one public address outside. Everything that leaves gets that public address and a port the router picks, and the router writes down the swap so it can undo it when the answer comes back.",
     ifaces: [
       {
         name: "br-lan",
@@ -160,7 +162,7 @@ export const NODES: Node[] = [
     ip: "192.168.1.1 · 203.0.113.7",
     mac: "f0:9f:c2:11:aa:01",
     x: 0.51,
-    y: 0.54,
+    y: 0.42,
   },
   {
     id: "isp",
@@ -168,14 +170,51 @@ export const NODES: Node[] = [
     role: "the first hop that is not yours",
     reads: "layers 2–3",
     about:
-      "A router like the one in the hallway, with a routing table instead of a NAT: it holds no state about this connection at all, and could not reassemble it if it wanted to. It forwards on the destination address alone, and the only thing it changes is the MAC pair and one off the TTL.",
+      "A router like the one in your hallway, but with a routing table instead of a NAT. It keeps no state about this connection at all, and could not put the stream back together if it wanted to. It reads a destination address and picks the next hop.",
     ifaces: [
       { name: "ge-0/0/1", mac: "00:1b:21:3c:77:02", ip: "203.0.113.1/30" },
       { name: "ae0", note: "upstream, toward everything else" },
     ],
     ip: "203.0.113.1",
     x: 0.71,
-    y: 0.54,
+    y: 0.42,
+  },
+  {
+    id: "neighbour-router",
+    name: "Their router",
+    role: "another customer on the same street",
+    reads: "layers 2–4",
+    about:
+      "Someone else's edge, doing to their house what yours does to yours: one public address, a table of swaps, and no knowledge of anything past its own two interfaces. The ISP treats it exactly like yours. That is the whole idea — the internet works at this size because no device in the middle knows anything about the devices at the ends.",
+    ifaces: [
+      {
+        name: "br-lan",
+        ip: "192.168.0.1/24",
+        note: "the same private range, used again; private addresses exist so they can be",
+      },
+      { name: "eth-wan", ip: "198.51.100.23/30" },
+    ],
+    ip: "198.51.100.23",
+    x: 0.71,
+    y: 0.84,
+  },
+  {
+    id: "neighbour",
+    name: "Their laptop",
+    role: "somebody else, loading the same site",
+    reads: "all seven",
+    about:
+      "Not yours, and here for two reasons. It shows that the cable to the street is shared, so your packets and theirs take turns on it. And it shows the far end holding two connections at once, told apart by nothing more than an address and a port.",
+    ifaces: [
+      {
+        name: "wlan0",
+        ip: "192.168.0.31/24",
+        note: "the same address another house might hand out, and that is fine",
+      },
+    ],
+    ip: "192.168.0.31",
+    x: 0.5,
+    y: 0.9,
   },
   {
     id: "resolver",
@@ -183,11 +222,11 @@ export const NODES: Node[] = [
     role: "answers what an address is",
     reads: "all seven",
     about:
-      "A public DNS resolver. It answers one question — what address stands behind this name — and it is the only machine on this page the laptop talks to without having been told an address by anyone: 1.1.1.1 is configured, not discovered.",
+      "A public DNS resolver. It answers one question: what address is behind this name. It is the only machine here that the laptop talks to which is not the site it wants.",
     ifaces: [{ name: "anycast", ip: "1.1.1.1" }],
     ip: "1.1.1.1",
     x: 0.92,
-    y: 0.16,
+    y: 0.11,
   },
   {
     id: "server",
@@ -195,11 +234,11 @@ export const NODES: Node[] = [
     role: "example.com",
     reads: "all seven",
     about:
-      "The far end of the socket. It has never heard of the laptop: everything it knows about this connection is 203.0.113.7 and a port number the router invented, which is what makes the NAT table the only record tying the two together.",
+      "The far end of the socket. It has never heard of the laptop. Everything it knows about this connection is 203.0.113.7 and a port number the router invented.",
     ifaces: [{ name: "eth0", ip: "93.184.216.34" }],
     ip: "93.184.216.34",
     x: 0.92,
-    y: 0.9,
+    y: 0.66,
   },
 ];
 
@@ -210,7 +249,9 @@ export type LinkId =
   | "trunk"
   | "wan"
   | "core-dns"
-  | "core-web";
+  | "core-web"
+  | "street"
+  | "their-lan";
 
 export type Link = {
   id: LinkId;
@@ -261,6 +302,20 @@ export const LINKS: Link[] = [
     to: "isp",
     medium: "the line to the street",
     mtu: 1492,
+  },
+  {
+    id: "street",
+    from: "isp",
+    to: "neighbour-router",
+    medium: "the line to the house next door",
+    mtu: 1492,
+  },
+  {
+    id: "their-lan",
+    from: "neighbour-router",
+    to: "neighbour",
+    medium: "their Wi-Fi",
+    mtu: 1500,
   },
   {
     id: "core-dns",
@@ -618,7 +673,7 @@ const tcp = (
       name: "Sequence number",
       value: `${seq}`,
       bytes: u32(seq),
-      note: "Counts bytes, not packets. This is what lets the far end put a torn stream back in order.",
+      note: "Counts bytes, not packets. This is how the far end puts a broken-up stream back in order.",
     },
     {
       name: "Acknowledgement",
@@ -662,7 +717,8 @@ const tcp = (
   return {
     osi: 4,
     name: "TCP",
-    summary: "Turns a shower of packets into one ordered, acknowledged stream.",
+    summary:
+      "Turns a stream of separate packets into one ordered, acknowledged stream.",
     fields,
   };
 };
@@ -678,13 +734,13 @@ const qname = (host: string) => [
 const dnsQuery = (id: number, host: string): LayerBlock => ({
   osi: 7,
   name: "DNS query",
-  summary: "What address stands behind this name?",
+  summary: "What address is behind this name?",
   fields: [
     {
       name: "Transaction ID",
       value: `0x${id.toString(16)}`,
       bytes: u16(id),
-      note: "UDP has no connection, so this number is the only thread tying an answer to its question.",
+      note: "UDP has no connection, so this number is the only thing linking an answer to its question.",
     },
     {
       name: "Flags",
@@ -728,7 +784,7 @@ const dnsAnswer = (id: number, host: string, addr: string): LayerBlock => ({
       name: "Answer: name",
       value: "pointer to the question's name",
       bytes: u16(0xc00c),
-      note: "A back-reference rather than the name again — DNS was designed when a byte cost something.",
+      note: "A pointer back to the name instead of repeating it. DNS was designed when every byte cost something.",
     },
     {
       name: "Answer: type · class",
@@ -795,7 +851,7 @@ const tlsClientHello = (host: string): LayerBlock => {
         name: "Extension: server_name",
         value: host,
         bytes: sni,
-        note: "Sent before any key exchange, so it is readable by anyone on the path. It is how one address serves a thousand sites — and how a network knows which site you asked for without breaking the encryption.",
+        note: "Sent before any key exchange, so anyone on the path can read it. It is how one address can serve a thousand sites, and how a network can tell which site you asked for.",
       },
       {
         name: "Extension: supported_versions",
@@ -896,7 +952,7 @@ const tlsApplicationData = (bytes: number, seed: number): LayerBlock => ({
       name: "Ciphertext",
       value: `${bytes} bytes, unreadable without the key`,
       bytes: Array.from({ length: 16 }, (_, i) => (i * seed + 97) & 0xff),
-      note: "The HTTP request is inside here. The addresses and ports outside it are not encrypted, and never can be — the routers need them.",
+      note: "The HTTP request is inside here. The addresses and ports outside it are not encrypted, and never can be, because the routers need them.",
     },
   ],
 });
@@ -964,7 +1020,7 @@ const dnsOut = (): Step => {
     label: "DNS query",
     phase: "name",
     summary:
-      "Nothing can be sent to example.com until it is a number. The laptop asks the resolver, over UDP, because one question and one answer do not need a connection.",
+      "Nothing can be sent to example.com until it is a number. The laptop asks the resolver over UDP, because one question and one answer do not need a connection.",
     hops: [
       {
         link: "lan",
@@ -989,7 +1045,7 @@ const dnsOut = (): Step => {
         to: "isp",
         frame: {
           changed:
-            "Everything addressable. New MACs, because the old pair meant something only on the hallway cable. A new source address and port, because 192.168.1.42 is not routable — the router wrote its own, and remembered the swap. TTL down by one, so the checksum had to be recomputed.",
+            "Everything that is an address. New MAC addresses, because the old pair only meant something on the hallway cable. A new source address and port, because 192.168.1.42 means nothing outside the house.",
           blocks: [
             ethernet(ISP_EDGE, ROUTER_WAN, "IPv4"),
             ipv4(WAN_IP, RESOLVER_IP, "UDP", 8 + payload.length, 0x1c3a, 63),
@@ -1004,7 +1060,7 @@ const dnsOut = (): Step => {
         to: "resolver",
         frame: {
           changed:
-            "New MACs again, and one more off the TTL. The question itself has not changed since it left the laptop.",
+            "New MAC addresses again, and one more off the TTL. The question itself has not changed since it left the laptop.",
           blocks: [
             ethernet(FAR, ISP_EDGE, "IPv4"),
             ipv4(WAN_IP, RESOLVER_IP, "UDP", 8 + payload.length, 0x1c3a, 62),
@@ -1042,7 +1098,7 @@ const dnsBack = (): Step => {
     label: "DNS answer",
     phase: "name",
     summary:
-      "93.184.216.34, and permission to remember it for five minutes. The NAT reverses its own rewrite on the way back in — the port it invented is the only reason it knows which laptop to hand this to.",
+      "93.184.216.34, and permission to remember it for five minutes. On the way back in, the NAT undoes its own swap. The port it invented is the only thing that says which machine in the house asked.",
     hops: [
       {
         link: "core-dns",
@@ -1209,7 +1265,7 @@ const clientHello = (): Step => {
     label: "TLS ClientHello",
     phase: "secure",
     summary:
-      "The connection exists; nothing is private yet. This message proposes ciphers and names the host — in the clear, because the server needs to know which certificate to send before it can encrypt anything.",
+      "The connection exists, but nothing is private yet. This message proposes ciphers and names the host, in the clear, because the server needs to know which certificate to send before it can encrypt anything.",
     hops: [
       {
         link: "lan",
@@ -1414,7 +1470,7 @@ const arpOut = (): Step => {
     label: "ARP · who has the router?",
     phase: "name",
     summary:
-      "Nothing has left the house yet. The laptop knows the router's IP address and cannot put an IP address on a cable — Ethernet carries MACs — so it asks the whole segment, and every machine on it hears the question.",
+      "Nothing has left the house yet. The laptop knows the router's IP address, but it cannot put an IP address on a cable — Ethernet carries MAC addresses. So it shouts the question at the whole segment and waits.",
     hops: [
       { link: "lan", from: "laptop", to: "switch", frame: frame() },
       {
@@ -1442,7 +1498,7 @@ const arpBack = (): Step => {
     label: "ARP · it is at f0:9f…",
     phase: "name",
     summary:
-      "One machine recognises its own address and answers directly. The laptop writes the pair into its ARP table, and every frame on this page from here on carries that MAC without asking again.",
+      "One machine recognises its own address and answers directly. The laptop writes the pair into its ARP table, and every frame on this page from here on uses it.",
     hops: [
       { link: "trunk", from: "router", to: "switch", frame: frame() },
       {
@@ -1525,6 +1581,8 @@ export const STEPS: Step[] = [
 /** one-way time on each cable, in milliseconds */
 export const LINK_MS: Record<LinkId, number> = {
   lan: 0.08,
+  street: 4.4,
+  "their-lan": 0.5,
   "lan-phone": 0.4,
   "lan-printer": 0.08,
   trunk: 0.08,
@@ -1541,6 +1599,8 @@ export const LINK_MS: Record<LinkId, number> = {
  */
 export const THINK_MS: Record<NodeId, number> = {
   laptop: 0.15,
+  neighbour: 0.15,
+  "neighbour-router": 0.35,
   phone: 0.2,
   printer: 0.1,
   switch: 0.02,

@@ -59,7 +59,7 @@ const description =
   "A live simulation of one HTTPS request: packets crossing a house and the internet in real proportion, with every frame, header and byte open to inspection.";
 
 const W = 1000;
-const H = 430;
+const H = 500;
 const at = (n: { x: number; y: number }) => ({ x: n.x * W, y: n.y * H });
 const pos = Object.fromEntries(NODES.map(n => [n.id, at(n)]));
 const portOf = Object.fromEntries(NODES.map(n => [n.id, n.port ?? null]));
@@ -182,16 +182,14 @@ const payload = {
     <div class="app-prose intro">
       <p>
         One request for <code>https://example.com/</code>, running. Every cable
-        here has a length in milliseconds and every device takes a moment to
-        think, so the proportions are the real ones: two hops across the house
-        cost less than a fifth of a millisecond, and one hop to the server costs
-        nineteen.
+        has a length in milliseconds. Every device takes a moment to think. So
+        the timings here are the real ones: two hops across the house cost less
+        than a fifth of a millisecond, and one hop to the server costs nineteen.
       </p>
       <p>
         Click anything — a device, a cable, a packet in flight — and the panel
         beside the map says what it is and what it is doing. The tables fill in
-        as the simulation runs, because that is how the devices themselves
-        learn.
+        as the simulation runs, because that is how the devices learn too.
       </p>
     </div>
   </Main>
@@ -207,9 +205,14 @@ const payload = {
         aria-label="A live map of one HTTPS request crossing eight devices"
       >
         <g class="house" aria-hidden="true">
-          <rect x="18" y="34" width="356" height="368" rx="10"></rect>
-          <text class="house-label" x="34" y="60">
+          <rect x="18" y="26" width="352" height="340" rx="10"></rect>
+          <text class="house-label" x="34" y="52">
             192.168.1.0/24 &middot; the house
+          </text>
+          <rect class="theirs" x="402" y="396" width="310" height="92" rx="10"
+          ></rect>
+          <text class="house-label" x="418" y="416">
+            192.168.0.0/24 &middot; next door
           </text>
         </g>
 
@@ -255,7 +258,7 @@ const payload = {
                     d="M-16 -10h32v18h-32zM-22 10h44l-3 5h-38z"
                   />
                 )}
-                {n.id === "phone" && (
+                {(n.id === "phone" || n.id === "neighbour") && (
                   <path class="glyph" d="M-8 -13h16v26h-16zM-3 9h6" />
                 )}
                 {n.id === "printer" && (
@@ -270,7 +273,7 @@ const payload = {
                     d="M-18 -6h36v14h-36zM-12 8v5M-4 8v5M4 8v5M12 8v5"
                   />
                 )}
-                {n.id === "router" && (
+                {(n.id === "router" || n.id === "neighbour-router") && (
                   <path
                     class="glyph"
                     d="M-18 -2h36v12h-36zM-10 -2l-6 -14M10 -2l6 -14"
@@ -318,8 +321,8 @@ const payload = {
         </span>
       </div>
       <p class="map-hint">
-        Virtual milliseconds, slowed about forty times. Space plays, arrows
-        nudge.
+        These are virtual milliseconds, slowed down about forty times. Space
+        plays, arrows nudge.
       </p>
 
       <!-- Where the clock is, and a way to put it somewhere else. Filled at
@@ -419,6 +422,8 @@ const payload = {
       t1: number;
       /** the phone's own traffic: present, and not the subject */
       bg: boolean;
+      /** a copy the switch flooded out of a port nobody asked about */
+      flood?: boolean;
     };
 
     type World = {
@@ -474,12 +479,43 @@ const payload = {
           t1,
           bg: false,
         });
+        /* A broadcast goes out of every port, and the sidebar says so, so
+           the map has to show it: the same frame, at the same moment, to the
+           machines that will look at it and drop it. Copies only — nothing
+           learns from a frame it discards. */
+        if (
+          tick.link === "trunk" &&
+          tick.from === "switch" &&
+          tick.label.startsWith("ARP · who has")
+        ) {
+          (["lan-phone", "lan-printer"] as const).forEach((link, k) => {
+            flights.push({
+              id: `flood${i}-${k}`,
+              tick: i,
+              label: "",
+              link,
+              from: "switch",
+              to: link === "lan-phone" ? "phone" : "printer",
+              t0,
+              t1: t0 + linkById[link].ms,
+              bg: false,
+              flood: true,
+            });
+          });
+        }
+
         cursor = t1 + (think[tick.to] ?? 0.1);
       });
 
       const END = cursor + 5;
 
-      /* The phone, using the same house the whole time. */
+      /**
+       * Two streams of traffic that are nothing to do with the request, and
+       * are the reason the map is a network rather than a line: the phone
+       * upstairs, and another customer two doors down loading the same site.
+       * The second one ends at the server, so the far end is visibly holding
+       * more than one connection at a time.
+       */
       const BG_EVERY = 9;
       for (let launch = 1.5, n = 0; launch < END; launch += BG_EVERY, n++) {
         const path: [string, string, string][] = [
@@ -494,6 +530,30 @@ const payload = {
             id: `bg${n}-${k}`,
             tick: null,
             label: "Phone · a connection of its own",
+            link,
+            from,
+            to,
+            t0: c,
+            t1: c + ms,
+            bg: true,
+          });
+          c += ms + (think[to] ?? 0.1);
+        });
+      }
+
+      for (let launch = 4, n = 0; launch < END; launch += 7.5, n++) {
+        const path: [string, string, string][] = [
+          ["their-lan", "neighbour", "neighbour-router"],
+          ["street", "neighbour-router", "isp"],
+          ["core-web", "isp", "server"],
+        ];
+        let c = launch;
+        path.forEach(([link, from, to], k) => {
+          const ms = linkById[link].ms;
+          flights.push({
+            id: `nb${n}-${k}`,
+            tick: null,
+            label: "Next door · loading the same site",
             link,
             from,
             to,
@@ -591,6 +651,20 @@ const payload = {
       let raf = 0;
       let lastFrame = 0;
       let selection: Selection = { kind: "auto" };
+      /**
+       * True when the panel pinned itself because the pointer arrived in it.
+       * Reaching for a value means you want to read it, and a panel that
+       * moves to the next packet mid-read is useless — so the pointer
+       * entering pins what is on screen, and leaving hands it back.
+       */
+      let pinnedByPointer = false;
+      /**
+       * The hovered field, held as STATE rather than as a class on a node.
+       * A class is wiped by the next rebuild of the panel; the reader's
+       * pointer is not, so the highlight has to be re-applied after every
+       * write rather than painted once.
+       */
+      let litField: number | null = null;
       /** which header the packet panel is opened at; innermost by default */
       let pickedBlock = Infinity;
 
@@ -600,6 +674,7 @@ const payload = {
       /** landed, and being thought about rather than travelling */
       const held = (now: number) =>
         flights.filter(f => {
+          if (f.flood) return false;
           if (now < f.t1) return false;
           const next = flights.find(
             g => g.bg === f.bg && g.t0 >= f.t1 && g.from === f.to,
@@ -639,6 +714,7 @@ const payload = {
             [
               "packet",
               f.bg ? "bg" : "",
+              f.flood ? "flood" : "",
               state === "held" ? "held" : "",
               selection.kind === "packet" &&
               (f.tick !== null
@@ -717,8 +793,8 @@ const payload = {
         if (f.tick === null) {
           return (
             `<p class="side-lead">The phone, keeping a connection of its own ` +
-            `alive. It is here so the map is a network rather than a diagram — ` +
-            `and so the router's table has a row the laptop did not put there.</p>`
+            `alive. It is here so the map is a network and not a diagram, and ` +
+            `so the router's table has a row the laptop did not put there.</p>`
           );
         }
 
@@ -777,6 +853,52 @@ const payload = {
         );
       };
 
+      /**
+       * What the run cost, once it is over. The split is the point: almost
+       * all of it was the wire and the far end, and the two round trips
+       * before a single byte of the page was asked for are the reason a
+       * cold load feels slow on a connection that is not.
+       */
+      const donePanel = () => {
+        const real = flights.filter(f => !f.bg && !f.flood);
+        const onWire = real.reduce((n, f) => n + (f.t1 - f.t0), 0);
+        const firstByte = real[real.length - 1]?.t1 ?? 0;
+        const handshakes = real
+          .filter(f => f.tick !== null && ticks[f.tick].step <= 5)
+          .reduce((n, f) => n + (f.t1 - f.t0), 0);
+
+        return (
+          `<p class="side-lead">The page arrived after <b>${firstByte.toFixed(1)} ms</b>. ` +
+          `Of that, <b>${onWire.toFixed(1)} ms</b> was cable. The rest was devices ` +
+          `thinking, and nearly all of that was the server.</p>` +
+          `<div class="fields">` +
+          `<div class="row"><dt>Cables crossed</dt><dd>${real.length}</dd></div>` +
+          `<div class="row"><dt>Before the request</dt><dd>${handshakes.toFixed(1)} ms` +
+          `<em>Finding the address, opening the connection and agreeing a key. All of ` +
+          `it happens before one byte of the page is even asked for. That is why a cold ` +
+          `load feels slow on a connection that is not.</em></dd></div>` +
+          `<div class="row"><dt>Round trips</dt><dd>four<em>DNS, the handshake, the TLS ` +
+          `hello, then the request. Each one pays the distance to the far end again. ` +
+          `A real TLS 1.3 handshake adds one more exchange, which this page does not draw.` +
+          `</em></dd></div>` +
+          `</div>` +
+          `<p class="side-note">Drag the line back, or click a device to see what it learned.</p>`
+        );
+      };
+
+      const applyLit = () => {
+        bodyOut
+          .querySelectorAll<HTMLElement>(".b")
+          .forEach(b =>
+            b.classList.toggle("lit", Number(b.dataset.field) === litField),
+          );
+        bodyOut
+          .querySelectorAll<HTMLElement>(".row")
+          .forEach(r =>
+            r.classList.toggle("lit", Number(r.dataset.field) === litField),
+          );
+      };
+
       const table = (head: string[], rows: string[][], empty: string) =>
         rows.length
           ? `<table class="t"><thead><tr>${head
@@ -810,7 +932,7 @@ const payload = {
               ]),
               "Empty. It has heard nobody yet, so a frame arriving now would go out of every port.",
             ) +
-            `<p class="side-note">The printer is not in this table and will not be until it speaks. A switch is only ever as clever as what it has overheard.</p>`;
+            `<p class="side-note">The printer is not in this table, and will not be until it speaks. A switch only knows what it has overheard.</p>`;
         }
         if (id === "router") {
           extra =
@@ -824,7 +946,7 @@ const payload = {
               ]),
               "No translations yet.",
             ) +
-            `<p class="side-note">Two machines, one public address. The port in the right-hand column is the whole of what tells them apart on the way back.</p>` +
+            `<p class="side-note">Two machines, one public address. The port in the right-hand column is the only thing that tells them apart on the way back.</p>` +
             `<p class="label sub">ARP cache</p>` +
             table(
               ["Address", "Hardware"],
@@ -848,8 +970,34 @@ const payload = {
               "Empty — which is why the first thing that happens on this page is a question shouted at the whole segment.",
             );
         }
+        if (id === "server") {
+          const mine = world.nat.find(r => r.why === "SYN");
+          extra =
+            `<p class="label sub">Connections it is holding</p>` +
+            table(
+              ["From", "Port", "Who it thinks that is"],
+              [
+                ...(mine
+                  ? [
+                      [
+                        `<code>${mine.outside.split(":")[0]}</code>`,
+                        mine.outside.split(":")[1],
+                        "one customer of that ISP — it cannot tell which machine",
+                      ],
+                    ]
+                  : []),
+                [
+                  "<code>198.51.100.23</code>",
+                  "49211",
+                  "another customer, two doors down",
+                ],
+              ],
+              "Nothing yet.",
+            ) +
+            `<p class="side-note">Both rows are routers, not people. The server has never seen a private address, and could not reach one if it tried.</p>`;
+        }
         if (id === "printer") {
-          extra = `<p class="side-note">Silent since it was plugged in. Nothing here addresses it, and the switch has no row for it.</p>`;
+          extra = `<p class="side-note">Silent since it was plugged in. Nothing here is addressed to it, and the switch has no row for it.</p>`;
         }
 
         return (
@@ -871,7 +1019,7 @@ const payload = {
           }</p>` +
           `<div class="fields">` +
           `<div class="row"><dt>Between</dt><dd>${nodes[l.from].name} and ${nodes[l.to].name}</dd></div>` +
-          `<div class="row"><dt>MTU</dt><dd>${l.mtu} bytes<em>The largest payload one frame may carry here. Anything longer has to be split before it goes on.</em></dd></div>` +
+          `<div class="row"><dt>MTU</dt><dd>${l.mtu} bytes<em>The largest payload one frame can carry here. Anything longer has to be split up first.</em></dd></div>` +
           `<div class="row"><dt>One-way delay</dt><dd>${l.ms} ms</dd></div>` +
           `<div class="row"><dt>Carrying now</dt><dd>${
             on.length ? on.map(f => f.label).join(", ") : "nothing"
@@ -880,15 +1028,47 @@ const payload = {
         );
       };
 
+      /**
+       * The panel is rebuilt only when what it SAYS changes. It used to be
+       * rewritten on every animation frame, which cost sixty innerHTML
+       * writes a second and — worse — replaced the DOM under the reader's
+       * cursor, so a hovered byte lost its highlight within one frame. The
+       * clock and the map still move at sixty; the prose does not.
+       */
+      let lastKey = "";
+
       const paintSidebar = (now: number, visible: Flight[]) => {
         if (selection.kind === "node") {
+          const world = worldAt(now);
+          const key = [
+            "node",
+            selection.id,
+            world.macTable.length,
+            world.nat.length,
+            (world.arp.laptop ?? []).length,
+            (world.arp.router ?? []).length,
+          ].join("|");
+          if (key === lastKey) return;
+          lastKey = key;
           kindOut.textContent = nodes[selection.id].name;
-          bodyOut.innerHTML = nodePanel(selection.id, worldAt(now));
+          bodyOut.innerHTML = nodePanel(selection.id, world);
+          applyLit();
           return;
         }
+
         if (selection.kind === "link") {
-          kindOut.textContent = linkById[selection.id].medium.split(" · ")[0];
-          bodyOut.innerHTML = linkPanel(selection.id, now);
+          /* bound before the callback: narrowing does not survive a closure */
+          const linkId = selection.id;
+          const carrying = inFlight(now)
+            .filter(f => f.link === linkId)
+            .map(f => f.id)
+            .join(",");
+          const key = ["link", linkId, carrying].join("|");
+          if (key === lastKey) return;
+          lastKey = key;
+          kindOut.textContent = linkById[linkId].medium.split(" · ")[0];
+          bodyOut.innerHTML = linkPanel(linkId, now);
+          applyLit();
           return;
         }
 
@@ -910,12 +1090,25 @@ const payload = {
         }
 
         if (!pick) {
-          kindOut.textContent = "Nothing in flight";
-          bodyOut.innerHTML = `<p class="side-empty">Press play, or click a device to look inside it.</p>`;
+          const key = t >= END ? "done" : "idle";
+          if (key === lastKey) return;
+          lastKey = key;
+          if (t >= END) {
+            kindOut.textContent = "Done";
+            bodyOut.innerHTML = donePanel();
+          } else {
+            kindOut.textContent = "Nothing in flight";
+            bodyOut.innerHTML = `<p class="side-empty">Press play, or click a device to look inside it.</p>`;
+          }
           return;
         }
+
+        const key = ["packet", pick.id, pickedBlock].join("|");
+        if (key === lastKey) return;
+        lastKey = key;
         kindOut.textContent = pick.label;
         bodyOut.innerHTML = packetPanel(pick);
+        applyLit();
       };
 
       /* ── the loop ───────────────────────────────────────────────────── */
@@ -994,7 +1187,9 @@ const payload = {
 
       const select = (s: Selection) => {
         selection = s;
+        pinnedByPointer = false;
         pickedBlock = Infinity;
+        lastKey = "";
         render();
       };
 
@@ -1055,6 +1250,26 @@ const payload = {
         if (!node) return;
         e.preventDefault();
         select({ kind: "node", id: node.getAttribute("data-node")! });
+      });
+
+      bodyOut.addEventListener("pointerenter", () => {
+        if (selection.kind !== "auto") return;
+        const pick = inFlight(t).find(f => !f.bg && !f.flood);
+        if (!pick || pick.tick === null) return;
+        selection = { kind: "packet", step: ticks[pick.tick].step, bg: false };
+        pinnedByPointer = true;
+        lastKey = "";
+        render();
+      });
+
+      bodyOut.addEventListener("pointerleave", () => {
+        litField = null;
+        applyLit();
+        if (!pinnedByPointer) return;
+        pinnedByPointer = false;
+        selection = { kind: "auto" };
+        lastKey = "";
+        render();
       });
 
       /* Pointing at a header in the sidebar opens it, and lights its bytes. */
@@ -1144,6 +1359,11 @@ const payload = {
     fill: none;
     stroke: var(--border);
     stroke-dasharray: 3 7;
+  }
+
+  /* Their house is drawn fainter: it is context, not the subject. */
+  .house rect.theirs {
+    opacity: 0.6;
   }
 
   .house-label {
@@ -1248,6 +1468,17 @@ const payload = {
   }
 
   .packets :global(.packet.bg .glow) {
+    fill: none;
+  }
+
+  /* A flooded copy: the same frame, on its way to a machine that will look
+     at it and drop it. */
+  .packets :global(.packet.flood .body) {
+    fill: var(--torch-dim);
+    opacity: 0.5;
+  }
+
+  .packets :global(.packet.flood .glow) {
     fill: none;
   }
 
