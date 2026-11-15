@@ -5116,6 +5116,37 @@ const payload = {
       columns: 1;
     }
 
+    /* Part I was a hard two-column grid with no narrow rule at all, which
+       on a phone put the file and the narration in about 190px each. One
+       column — but the rail stays at the top, shrunk, because watching the
+       file grow IS the guide and losing it to a scroll loses the point. */
+    .guide {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    .guide-rail {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      padding-block: 8px;
+      background: var(--ground);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .guide-file {
+      max-height: 30vh;
+    }
+
+    .term-run {
+      max-height: 22vh;
+      overflow-y: auto;
+    }
+
+    .gstep {
+      padding-block: clamp(24px, 5vh, 44px);
+    }
+
     /* Same rule as the stage: a drawing that is shrunk until its labels are
        four pixels tall has become decoration. These scroll instead. */
     .hook,
