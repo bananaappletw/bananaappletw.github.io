@@ -1674,7 +1674,11 @@ export const CONNECTION: { name: string; what: string }[] = [
  */
 export const LAYOUT: { path: string; depth: number; note?: string }[] = [
   { path: "site.yml", depth: 0, note: "the playbook you run" },
-  { path: "ansible.cfg", depth: 0, note: "settings, found by being here" },
+  {
+    path: "ansible.cfg",
+    depth: 0,
+    note: "settings; found here only because this is where you run from",
+  },
   {
     path: "requirements.yml",
     depth: 0,
@@ -1689,6 +1693,24 @@ export const LAYOUT: { path: string; depth: number; note?: string }[] = [
   { path: "host_vars/", depth: 0 },
   { path: "web3.yml", depth: 1, note: "the one machine that differs" },
   { path: "roles/", depth: 0, note: "your own, and ones from Galaxy" },
+];
+
+/**
+ * Where Ansible looks for its settings, and in what order. The page used to
+ * say "found by being here", which is the one case in the list that is
+ * conditional — and the condition is the surprise.
+ */
+export const CFG_ORDER: { where: string; note?: string }[] = [
+  {
+    where: "ANSIBLE_CONFIG",
+    note: "an environment variable naming a file; beats everything else",
+  },
+  {
+    where: "./ansible.cfg",
+    note: "the directory you run from — ignored if that directory is world-writable, which is why a config in /tmp silently does nothing",
+  },
+  { where: "~/.ansible.cfg", note: "your home directory" },
+  { where: "/etc/ansible/ansible.cfg", note: "the system-wide fallback" },
 ];
 
 /** A role is a directory layout, and the layout is the API. */

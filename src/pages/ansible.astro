@@ -42,6 +42,7 @@ import Footer from "@/components/Footer.astro";
 import config from "@/config";
 import {
   BEST_MS,
+  CFG_ORDER,
   CHECK_MODE,
   CHOICES,
   DEFAULTS,
@@ -1528,6 +1529,23 @@ const payload = {
               ))
             }
           </ul>
+
+          <p class="tree-head sub">where ansible.cfg is looked for</p>
+          <ul class="conn">
+            {
+              CFG_ORDER.map(c => (
+                <li>
+                  <code>{c.where}</code>
+                  {c.note ? <em set:html={ticks(c.note)} /> : null}
+                </li>
+              ))
+            }
+          </ul>
+          <p class="tree-foot">
+            The first one found wins outright — settings are not merged across
+            files. <code>ansible-config dump --only-changed</code> says which file
+            each value came from.
+          </p>
 
           <p class="tree-head sub">a role is its layout</p>
           <ul class="role-tree">

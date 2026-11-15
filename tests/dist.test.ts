@@ -306,6 +306,7 @@ describe("/ansible covers Ansible's own documented topics", () => {
     ["pre_tasks and post_tasks", "pre_tasks"],
     ["vars_files", "vars_files"],
     ["what is inside a role", "roles/webserver/tasks/main.yml"],
+    ["ansible.cfg discovery order", "ANSIBLE_CONFIG"],
   ];
 
   /** every remaining chapter of those guides, and why it is not here */
