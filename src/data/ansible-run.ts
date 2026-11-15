@@ -622,11 +622,18 @@ const hostOf = (id: HostId) => HOSTS.find(h => h.id === id)!;
  * the only way they stay consistent with the payload sizes and the socket
  * paths above.
  */
-const transport = (host: HostId, short: string, become = true): Stage[] => {
+const transport = (
+  host: HostId,
+  short: string,
+  become: boolean | string = true,
+): Stage[] => {
   const h = hostOf(host);
   const kb = PAYLOAD_KB[short];
+  /* `become` may name a user: the database task becomes postgres, not root,
+     and a trace that showed root would contradict the task above it. */
+  const asUser = typeof become === "string" ? become : "root";
   const inner = become
-    ? `sudo -H -S -n -u root /bin/sh -c '${h.python}'`
+    ? `sudo -H -S -n -u ${asUser} /bin/sh -c '${h.python}'`
     : h.python;
 
   return [
@@ -746,7 +753,7 @@ for (const host of ["web1", "web2", "web3", "db1"] as HostId[]) {
       },
     ],
     stages: [
-      ...transport(host, "setup", false),
+      ...transport(host, "setup"),
       {
         name: "Return",
         where: "wire",
@@ -1064,12 +1071,12 @@ for (const host of ["web1", "web2", "web3"] as HostId[]) {
             where: "wire",
             summary:
               verdict === "changed"
-                ? "`permanent` writes the zone file and nothing else: the firewall running right now still has no such rule. `immediate: true`, or a reload, is what applies it — and forgetting that is this module's classic trap."
+                ? "Both halves at once: `permanent` writes the zone file so the rule survives a reboot, `immediate` applies it to the firewall running now. `permanent` on its own is the classic trap — the file changes and the port stays shut until something reloads it."
                 : "Queried, found, and left alone.",
             lines: [
               { text: `"changed": ${verdict === "changed"}` },
               {
-                text: `"msg": "${verdict === "changed" ? "Permanent operation" : "Port 8080/tcp already enabled"}"`,
+                text: `"msg": "${verdict === "changed" ? "Permanent and Non-Permanent(immediate) operation" : "Port 8080/tcp already enabled"}"`,
               },
             ],
           },
@@ -1086,7 +1093,7 @@ for (const host of ["web1", "web2", "web3"] as HostId[]) {
             key: "msg",
             value:
               verdict === "changed"
-                ? "Permanent operation"
+                ? "Permanent and Non-Permanent(immediate) operation"
                 : "Port 8080/tcp already enabled",
           },
         ],
@@ -1245,7 +1252,7 @@ push({
         },
       ],
     },
-    ...transport("db1", "postgresql_db").slice(1),
+    ...transport("db1", "postgresql_db", "postgres").slice(1),
     {
       name: "Return",
       where: "wire",
@@ -1599,8 +1606,11 @@ prod:
   children:
     webservers:
     dbservers:
+
+all:
   vars:
-    ansible_user: deploy`;
+    ansible_user: deploy
+    ansible_python_interpreter: auto_silent`;
 
 /**
  * The twenty-two rungs, lowest first. Everyone meets this ladder the day a
@@ -1719,6 +1729,12 @@ export const LAYOUT: { path: string; depth: number; note?: string }[] = [
   { path: "prod/vault.yml", depth: 1, note: "encrypted; still committed" },
   { path: "host_vars/", depth: 0 },
   { path: "web3.yml", depth: 1, note: "the one machine that differs" },
+  {
+    path: "templates/",
+    depth: 0,
+    note: "`site.conf.j2` lives here; `template:` searches it, so `src:` needs no path",
+  },
+  { path: "files/", depth: 0, note: "what `copy:` sends, byte for byte" },
   { path: "roles/", depth: 0, note: "your own, and ones from Galaxy" },
 ];
 
@@ -1787,8 +1803,11 @@ export const TRANSPORT: {
     trips: 4,
     steps: [
       { text: "mkdir -p ~/.ansible/tmp/ansible-tmp-…/", note: "1" },
-      { text: "sftp put AnsiballZ_dnf.py", note: "2" },
-      { text: "python3 ~/.ansible/tmp/…/AnsiballZ_dnf.py", note: "3" },
+      { text: "sftp put AnsiballZ_postgresql_db.py", note: "2" },
+      {
+        text: "python3 ~/.ansible/tmp/…/AnsiballZ_postgresql_db.py",
+        note: "3",
+      },
       { text: "rm -rf ~/.ansible/tmp/ansible-tmp-…/", note: "4" },
     ],
   },
@@ -1797,7 +1816,7 @@ export const TRANSPORT: {
     trips: 1,
     steps: [
       {
-        text: "python3  <- AnsiballZ_dnf.py on stdin",
+        text: "python3  <- AnsiballZ_postgresql_db.py on stdin",
         note: "1",
       },
       { text: "the module makes and removes its own temp dir" },
@@ -1828,7 +1847,7 @@ export const VERDICTS: {
   {
     id: "skipped",
     what: "never ran on this host",
-    from: "usually a false `when:`, tested on the control node with no connection at all — though `creates:` and check mode also skip, and those do contact the host first",
+    from: "usually a false `when:`, tested on the control node with no connection at all. Check mode also skips, and that one does contact the host first. `creates:` does NOT skip — the module runs and reports `ok`",
   },
   {
     id: "failed",
