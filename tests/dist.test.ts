@@ -288,6 +288,24 @@ describe("/ansible covers Ansible's own documented topics", () => {
     ["set_fact", "Makes a new variable during the run"],
     ["until and retries", "Retry a task until a condition holds"],
     ["forks", "Raising it past the number"],
+    // added after an independent review read the page as a learner
+    ["the playbook/play/task hierarchy", "a playbook is a list of plays"],
+    ["YAML lists and dictionaries", "is an item in a LIST"],
+    ["installing Ansible", "pip install --user ansible"],
+    ["the sudo password (-K)", "Missing sudo password"],
+    ["reading a failure", "stderr_lines"],
+    ["fail and assert", "ansible.builtin.assert"],
+    ["command vs shell", "ansible.builtin.shell"],
+    ["creates and removes", "creates:"],
+    ["loop_control", "loop_control"],
+    ["meta: flush_handlers", "flush_handlers"],
+    [
+      "the always and never tags",
+      "runs whatever `--tags` you pass".replace(/`/g, ""),
+    ],
+    ["pre_tasks and post_tasks", "pre_tasks"],
+    ["vars_files", "vars_files"],
+    ["what is inside a role", "roles/webserver/tasks/main.yml"],
   ];
 
   /** every remaining chapter of those guides, and why it is not here */

@@ -118,6 +118,7 @@ export const HOSTS_AT: Record<number, HostId[]> = {
   11: ["web1", "web2", "web3", "db1"],
   12: ["web1", "web2", "web3", "db1"],
   13: ["web1", "web2", "web3", "db1"],
+  14: ["web1", "web2", "web3", "db1"],
 };
 
 /* ── what Ansible prints ───────────────────────────────────────────────── */
@@ -602,6 +603,14 @@ export const STEPS: Step[] = [
         what: "Environment variables for the task's own process on the target: `http_proxy`, `PATH`, `JAVA_HOME`. It does not change the host's login shell, only this one command.",
       },
       {
+        word: "creates:",
+        what: "The only way `command` and `shell` become idempotent. `creates: /path` skips the task if that path exists; `removes:` skips it if it does not.",
+      },
+      {
+        word: "loop_control:",
+        what: 'Tidies a loop. `label: "{{ item.name }}"` stops the output printing a whole dictionary per item, and `loop_var:` renames `item` so nested loops do not collide.',
+      },
+      {
         word: "set_fact",
         what: "Makes a new variable during the run, from anything you already have. `register` captures what a module returned; `set_fact` computes a value yourself.",
         without:
@@ -620,6 +629,14 @@ export const STEPS: Step[] = [
           "    - nginx",
           "    - curl",
           "    - jq",
+          "",
+          "- name: Add the users",
+          "  ansible.builtin.user:",
+          '    name: "{{ item.name }}"',
+          '    groups: "{{ item.groups }}"',
+          '  loop: "{{ app_users }}"',
+          "  loop_control:",
+          '    label: "{{ item.name }}"',
         ],
         out: [
           "TASK [Install the tools] ****************",
@@ -674,6 +691,35 @@ export const STEPS: Step[] = [
         note: "`set_fact` never reports `changed`, because it does nothing to the host. The variable lives for the rest of the play, on that host only.",
       },
       {
+        title: "command and shell — the escape hatch, and its price",
+        yaml: [
+          "- name: command — no shell, no pipes, safest",
+          "  ansible.builtin.command: /srv/app/migrate --once",
+          "  args:",
+          "    creates: /srv/app/.migrated",
+          "",
+          "- name: shell — only when you need the shell",
+          "  ansible.builtin.shell: >",
+          "    tar czf /backup/app.tgz /srv/app | tee /var/log/bk",
+          "  args:",
+          "    creates: /backup/app.tgz",
+          "",
+          "- name: or decide for yourself what changed means",
+          "  ansible.builtin.command: /usr/sbin/apachectl graceful",
+          "  register: out",
+          "  changed_when: \"'reloaded' in out.stdout\"",
+        ],
+        out: [
+          "TASK [command — no shell, no pipes, safest] *",
+          "changed: [web1]",
+          "",
+          "TASK [command — no shell, no pipes, safest] *",
+          "ok: [web1]",
+          "  (skipped, /srv/app/.migrated exists)",
+        ],
+        note: "Neither module knows what your command does, so both report `changed` every single time. `creates:` is the fix — the task is skipped if that path already exists — and `removes:` is its mirror. `changed_when:` takes any Jinja expression, not only `false`. Prefer `command`: `shell` runs through `/bin/sh`, so a variable in it is an injection risk.",
+      },
+      {
         title: "block — group, and recover",
         yaml: [
           "- name: Try the fast path",
@@ -717,8 +763,35 @@ export const STEPS: Step[] = [
     ],
     output: "one",
     grid: true,
+    insets: [
+      {
+        title: "when the end of the play is too late",
+        yaml: [
+          "- name: Write the site config",
+          "  ansible.builtin.template:",
+          "    src: site.conf.j2",
+          "    dest: /etc/nginx/conf.d/site.conf",
+          "  notify: Reload nginx",
+          "",
+          "- name: Apply the queued handlers now",
+          "  ansible.builtin.meta: flush_handlers",
+          "",
+          "- name: Check the site answers on the new port",
+          "  ansible.builtin.uri:",
+          "    url: http://localhost:8080/health",
+        ],
+        out: [
+          "RUNNING HANDLER [Reload nginx] *********",
+          "changed: [web1]",
+          "",
+          "TASK [Check the site answers] **********",
+          "ok: [web1]",
+        ],
+        note: "`meta: flush_handlers` drains the queue where you put it instead of at the end of the play. Without it the health check above runs against the old config, passes, and tells you nothing. `serial` flushes handlers at the end of every batch too, which is the real reason a rolling restart works.",
+      },
+    ],
     takeaway:
-      "A handler runs only when something changed, only once per host, and only at the end of the play — not where you wrote it.",
+      "A handler runs only when something changed, once per host, at the end of the play — or wherever you put `meta: flush_handlers`.",
   },
   {
     n: 10,
@@ -817,6 +890,10 @@ export const STEPS: Step[] = [
         what: "Encrypts a whole file with a password. The file still lives in git, but as ciphertext. Ansible decrypts it in memory when it reads the variables.",
       },
       {
+        word: "vars_files:",
+        what: "Loads variables from files at the start of the play — which is how a vault file usually gets read: `vars_files: [group_vars/prod/vault.yml]`. Files under `group_vars/` and `host_vars/` are loaded for you; anywhere else needs this.",
+      },
+      {
         word: "encrypt_string",
         what: "Encrypts a single value rather than a whole file. The output pastes straight into a normal vars file, so the rest of that file stays readable in a diff.",
       },
@@ -845,6 +922,10 @@ export const STEPS: Step[] = [
           "",
           "# group_vars/prod/vars.yml, in the clear",
           'db_password: "{{ vault_db_password }}"',
+          "",
+          "# loaded at the start of the play",
+          "vars_files:",
+          "  - group_vars/prod/vault.yml",
           "",
           "# or ask for it, once, at the start of the run",
           "vars_prompt:",
@@ -894,6 +975,10 @@ export const STEPS: Step[] = [
         what: "Static. The tasks are read when the playbook is parsed, so `--tags` and `--list-tasks` can see them. The role name cannot be a variable.",
       },
       {
+        word: "pre_tasks / post_tasks",
+        what: "Roles run between them. `pre_tasks` first, then `roles:`, then `tasks:`, then `post_tasks` — and handlers are flushed after each of those groups, not only at the very end.",
+      },
+      {
         word: "collections:",
         what: "Lists collections to search, so tasks in this play can say `postgresql_db` instead of `community.postgresql.postgresql_db`. Convenient, and the full name is still the safer habit.",
       },
@@ -909,6 +994,45 @@ export const STEPS: Step[] = [
       },
     ],
     insets: [
+      {
+        title: "what is actually inside one",
+        yaml: [
+          "# roles/webserver/defaults/main.yml",
+          "nginx_port: 80          # the knob, overridable",
+          "",
+          "# roles/webserver/tasks/main.yml",
+          "- name: Install nginx",
+          "  ansible.builtin.package:",
+          "    name: nginx",
+          "    state: present",
+          "",
+          "- name: Write the site config",
+          "  ansible.builtin.template:",
+          "    src: site.conf.j2   # found without a path",
+          "    dest: /etc/nginx/conf.d/site.conf",
+          "  notify: Reload nginx",
+          "",
+          "# roles/webserver/handlers/main.yml",
+          "- name: Reload nginx",
+          "  ansible.builtin.service:",
+          "    name: nginx",
+          "    state: reloaded",
+          "",
+          "# requirements.yml — other people's work",
+          "roles:",
+          "  - name: geerlingguy.postgresql",
+          "collections:",
+          "  - name: community.postgresql",
+        ],
+        out: [
+          "TASK [webserver : Install nginx] ********",
+          "changed: [web1]",
+          "",
+          "RUNNING HANDLER [webserver : Reload nginx] *",
+          "changed: [web1]",
+        ],
+        note: "It is the same tasks you already wrote, moved into files whose names Ansible knows. `src: site.conf.j2` needs no path because `templates/` is searched automatically, and the handler is found because it is in `handlers/main.yml`. That is the whole of what a role is.",
+      },
       {
         title: "three ways to use the same role",
         yaml: [
@@ -959,6 +1083,12 @@ export const STEPS: Step[] = [
         what: "Labels on tasks or roles. `--tags nginx` runs only those; `--skip-tags slow` runs everything else.",
       },
       {
+        word: "always / never",
+        what: "Two tag names Ansible treats specially. A task tagged `always` runs whatever `--tags` you pass, which is what you want for a task that sets variables everything else needs. A task tagged `never` only runs if you ask for it by name.",
+        without:
+          "`--list-tags` prints every tag in the playbook, and `apply:` pushes tags down into an `include_role` that would not otherwise inherit them.",
+      },
+      {
         word: "failed_when:",
         what: "Decides what counts as a failure. A command that exits 2 is not always broken, and a command that exits 0 is not always fine.",
       },
@@ -1005,6 +1135,11 @@ export const STEPS: Step[] = [
           "        url: http://lb/drain/{{ inventory_hostname }}",
           "      delegate_to: localhost",
           "      tags: [deploy]",
+          "",
+          "    - name: Work out the release path",
+          "      ansible.builtin.set_fact:",
+          '        release_dir: "/srv/app/{{ build_sha }}"',
+          "      tags: [always]",
           "",
           "    - name: Migrate the database",
           "      ansible.builtin.command: /srv/app/migrate",
@@ -1055,7 +1190,93 @@ export const STEPS: Step[] = [
       },
     ],
     takeaway:
-      "`serial` controls how many hosts at once. `tags` control which tasks. `failed_when` and `any_errors_fatal` control what stops the run. Below, the file from step 10 runs for real.",
+      "`serial` controls how many hosts at once. `tags` control which tasks. `failed_when` and `any_errors_fatal` control what stops the run.",
+  },
+  {
+    n: 14,
+    title: "When it fails",
+    lead: "Everything above assumed it worked. It will not, and reading the failure is the skill you will use more than any other on this page. Ansible prints one JSON object when a task fails, and three of its keys answer almost every question.",
+    shell: [
+      {
+        text: "ansible-playbook -i inventory/hosts.ini site.yml --limit web1",
+        note: "the same run, on a host where nginx is not in the repositories",
+      },
+    ],
+    keywords: [
+      {
+        word: "msg",
+        what: "Ansible's own summary of what went wrong. Read this first; it is right more often than it looks.",
+      },
+      {
+        word: "stderr / stdout",
+        what: "What the command itself printed. `command` and `shell` failures live here, not in `msg` — and `stderr_lines` is the same thing split up, which is far easier to read.",
+      },
+      {
+        word: "rc",
+        what: "The exit status. `rc: 0` with a failure means Ansible decided it failed, so look at your own `failed_when`.",
+      },
+      {
+        word: "ansible.builtin.assert",
+        what: "Fail on purpose, before the damage. `assert` checks a condition and stops with your message; `fail` stops unconditionally. Both are better than discovering it halfway through a rolling deploy.",
+      },
+    ],
+    insets: [
+      {
+        title: "what a failure actually looks like",
+        yaml: [
+          "TASK [Install nginx] ********************",
+          "fatal: [web1]: FAILED! => {",
+          '    "changed": false,',
+          '    "msg": "No package nginx available.",',
+          '    "rc": 1,',
+          '    "results": []',
+          "}",
+          "",
+          "PLAY RECAP ******************************",
+          "web1    : ok=1  changed=0  unreachable=0",
+          "          failed=1  skipped=0",
+        ],
+        out: [
+          "# the same task, with a shell command instead",
+          "fatal: [web1]: FAILED! => {",
+          '    "changed": true,',
+          '    "cmd": "/srv/app/migrate",',
+          '    "rc": 2,',
+          '    "stderr_lines": [',
+          '        "could not connect to database"',
+          "    ],",
+          '    "stdout_lines": []',
+          "}",
+        ],
+        note: "A module failure puts its reason in `msg`. A `command` or `shell` failure puts it in `stderr_lines`, and `msg` says only that the command returned non-zero — which is why so many people conclude Ansible told them nothing. Note `changed: true` on the second one: it ran, it did damage, and then it failed.",
+      },
+      {
+        title: "fail before you break something",
+        yaml: [
+          "- name: Refuse to deploy a dirty build",
+          "  ansible.builtin.assert:",
+          "    that:",
+          "      - build_sha is defined",
+          "      - app_env in ['staging', 'prod']",
+          '    fail_msg: "build_sha and a known app_env are required"',
+          "",
+          "- name: Not on a Friday",
+          "  ansible.builtin.fail:",
+          '    msg: "deploys are blocked today"',
+          "  when: ansible_facts.date_time.weekday == 'Friday'",
+        ],
+        out: [
+          "TASK [Refuse to deploy a dirty build] ***",
+          "fatal: [web1]: FAILED! => {",
+          '    "assertion": "build_sha is defined",',
+          '    "msg": "build_sha and a known app_env are required"',
+          "}",
+        ],
+        note: "`assert` prints which of the conditions failed, which is the whole reason to prefer it over a `when:` that silently skips. A failing host leaves the play; the others carry on unless `any_errors_fatal` says otherwise.",
+      },
+    ],
+    takeaway:
+      "`msg` for module failures, `stderr_lines` for command failures, `rc` for the exit status. `assert` to stop before the damage rather than after. Below, the file from step 10 runs for real.",
   },
 ];
 
