@@ -474,8 +474,8 @@ describe("forks", () => {
 });
 
 describe("gathering", () => {
-  it("contacts no host for facts when they are cached", () => {
-    const { slots } = at({ gathering: "cached" });
+  it("contacts no host for facts that are already cached", () => {
+    const { slots } = at({ gathering: "smart" });
     const setup = slots.filter(s => EVENTS[s.event].module.endsWith("setup"));
     expect(setup.length).toBeGreaterThan(0);
     for (const s of setup) {
@@ -487,7 +487,7 @@ describe("gathering", () => {
 
   it("is the single biggest lever on this run", () => {
     const base = at({}).end;
-    const cached = at({ gathering: "cached" }).end;
+    const cached = at({ gathering: "smart" }).end;
     const freed = at({ strategy: "free" }).end;
     const unpiped = at({ pipelining: false }).end;
     expect(base - cached).toBeGreaterThan(base - freed);

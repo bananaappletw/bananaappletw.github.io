@@ -283,7 +283,7 @@ describe("/ansible covers Ansible's own documented topics", () => {
       "ok, changed, skipped, failed, unreachable",
       "could not be reached at all",
     ],
-    ["Fact caching", "reads facts that an earlier run saved"],
+    ["Fact caching", "fact_caching = jsonfile"],
     ["Pipelining", "pipelining = True"],
     ["set_fact", "Makes a new variable during the run"],
     ["until and retries", "Retry a task until a condition holds"],

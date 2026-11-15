@@ -886,11 +886,11 @@ const payload = {
     </svg>
 
     <p class="hook-note">
-      Thirty-two cells, nineteen of them a module. A host the play does not
-      target gets no cell. <code>web3</code> has one that was decided without opening
-      a connection. Give every cell a time and a worker and the grid becomes a schedule.
-      That is the drawing below, and it is the only thing on this page that decides
-      how long a run takes.
+      Thirty-two cells. Nineteen are events and eighteen send a module: a host
+      the play does not target gets no cell at all, and <code>web3</code> has one
+      that was decided without opening a connection. Give every cell a time and a
+      worker and the grid becomes a schedule. That is the drawing below, and it is
+      the only thing on this page that decides how long a run takes.
     </p>
   </section>
 
@@ -910,7 +910,7 @@ const payload = {
       <p class="label sub">ansible.cfg</p>
       <pre
         class="code ini"
-        id="cfg"><code><span>[defaults]</span><span>forks = <b id="cfg-forks">{DEFAULTS.forks}</b></span><span>strategy = <b id="cfg-strategy">{DEFAULTS.strategy}</b></span><span>gathering = <b id="cfg-gathering">{DEFAULTS.gathering}</b></span><span> </span><span>[ssh_connection]</span><span>pipelining = <b id="cfg-pipelining">True</b></span><span>ssh_args = -o ControlMaster=auto -o ControlPersist=60s</span></code></pre>
+        id="cfg"><code><span>[defaults]</span><span>forks = <b id="cfg-forks">{DEFAULTS.forks}</b></span><span>strategy = <b id="cfg-strategy">{DEFAULTS.strategy}</b></span><span>gathering = <b id="cfg-gathering">{DEFAULTS.gathering}</b></span><span>fact_caching = jsonfile</span><span>fact_caching_connection = ~/.ansible/facts</span><span> </span><span>[ssh_connection]</span><span>pipelining = <b id="cfg-pipelining">True</b></span><span>ssh_args = -o ControlMaster=auto -o ControlPersist=60s</span></code></pre>
     </div>
 
     <div class="stage">
@@ -1232,9 +1232,12 @@ const payload = {
           <dt><code>gathering</code></dt>
           <dd>
             <code>implicit</code> runs <code>setup</code> on every host at the start
-            of every play. <code>cached</code> reads facts that an earlier run saved
-            to disk, so no host is contacted for them at all. It is the biggest lever
-            here.
+            of every play, and ignores any cache. <code>smart</code> only scans a
+            host it has no facts for, so one already in the cache is never contacted.
+            Caching is two further settings —
+            <code>fact_caching = jsonfile</code> and
+            <code>fact_caching_connection</code> — and together they are the biggest
+            lever here.
           </dd>
         </div>
         <div>
@@ -1252,8 +1255,8 @@ const payload = {
         the one before. <b
           >Try to get it under {(TARGET_MS / 1000).toFixed(1)}s.</b
         >
-        Two of the thirty-two settings manage it, and editing the playbook is not
-        one of them. Space plays, arrows nudge.
+        Two of the thirty-two combinations these four knobs make will manage it, and
+        editing the playbook is not one of them. Space plays, arrows nudge.
       </p>
 
       <ol class="rail" id="rail">
@@ -2225,13 +2228,16 @@ const payload = {
           `<p class="side-task"><b>Gathering Facts</b>` +
           `<span>ansible.builtin.setup — not run</span></p>` +
           `<p class="side-lead">Nothing happened on this host. With ` +
-          `<code>gathering = cached</code>, the control node reads facts that ` +
-          `an earlier run saved to disk. The biggest module in Ansible is ` +
-          `never built, never sent and never run.</p>` +
+          `<code>gathering = smart</code> and a <code>fact_caching</code> ` +
+          `plugin, the control node reads facts an earlier run saved, and ` +
+          `only scans a host it has none for. The biggest module in Ansible ` +
+          `is never built, never sent and never run.</p>` +
           `<p class="swap">Nothing breaks either. Task 3's <code>when</code> ` +
-          `reads <code>os_family</code>, and the cache has it. Turning ` +
-          `gathering <em>off</em> would not. That is the difference between ` +
-          `the two fixes.</p>` +
+          `reads <code>os_family</code>, and the cache has it. ` +
+          `<code>explicit</code> uses the cache too; only ` +
+          `<code>implicit</code> ignores it. Turning gathering off with ` +
+          `<code>gather_facts: false</code> is the one that would break the ` +
+          `conditional.</p>` +
           `<p class="label sub">What the cache held</p>` +
           `<div class="fields">` +
           host.facts

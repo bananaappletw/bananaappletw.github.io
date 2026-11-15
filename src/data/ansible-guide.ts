@@ -312,7 +312,7 @@ export const STEPS: Step[] = [
       },
       {
         word: "-m",
-        what: "The module. A module is one unit of work: `ping`, `package`, `copy`, `service`. About a thousand of them exist.",
+        what: "The module. A module is one unit of work: `ping`, `package`, `copy`, `service`. About ninety ship in `ansible.builtin`, and several thousand more across the collections.",
       },
       {
         word: "-a",
@@ -509,7 +509,7 @@ export const STEPS: Step[] = [
       },
       {
         word: 'mode: "0644"',
-        what: "Always put quotes around it. Without them YAML reads `0644` as a number, and the file gets the wrong permissions.",
+        what: "Always put quotes around it. YAML reads a bare `0644` as octal, which happens to be right, and a bare `644` as the decimal number 644 — which is `0o1204`, a different mode with a sticky bit on it. Quoting is the only form that cannot be misread.",
       },
       {
         word: "when:",
@@ -547,11 +547,11 @@ export const STEPS: Step[] = [
         out: [
           "server {",
           "    listen 8080;",
-          "    server_name web3.example.net;",
+          "    server_name web3;",
           "    root /srv/app;",
           "}",
         ],
-        note: "`{{ }}` inserts a value. `{% %}` is logic and prints nothing. `| default(...)` is a filter, and it is the one you will use most: it supplies a value when the variable was never set, instead of failing the task.",
+        note: "`{{ }}` inserts a value. `{% %}` is logic: the tag itself prints nothing, though what is inside a loop does — the three peer lines all come from one `{% for %}`. `| default(...)` is the filter you will use most: `app_root` is set nowhere on this page, so without it the template would fail the task with `undefined variable` instead of falling back to `/srv/app`.",
       },
     ],
     output: "one",
@@ -949,7 +949,9 @@ export const STEPS: Step[] = [
       },
       {
         word: "run_once: true",
-        what: "Run this task on one host only, even though the play targets many. Database migrations usually want this.",
+        what: "Run this task on one host only — one host per BATCH, which is the part that catches people. With `serial: 1` every host is its own batch, so a `run_once` task runs once per host after all.",
+        without:
+          "To run something exactly once whatever `serial` says, gate it instead: `when: inventory_hostname == ansible_play_hosts_all[0]`.",
       },
       {
         word: "delegate_to:",
@@ -987,7 +989,7 @@ export const STEPS: Step[] = [
           "",
           "    - name: Migrate the database",
           "      ansible.builtin.command: /srv/app/migrate",
-          "      run_once: true",
+          "      when: inventory_hostname == ansible_play_hosts_all[0]",
           "      register: out",
           "      failed_when: out.rc not in [0, 2]",
         ],
@@ -998,7 +1000,7 @@ export const STEPS: Step[] = [
           "PLAY [Web tier] ****** (web2)",
           "changed: [web2]",
         ],
-        note: "With `serial: 1` the play banner repeats, once per host. That repetition is the clearest sign in the output that a rolling deploy is what is happening.",
+        note: "With `serial: 1` the play banner repeats, once per host — the clearest sign in the output that a rolling deploy is happening. Note what the migration does NOT say: `run_once` is once per batch, and under `serial: 1` every host is a batch, so `run_once` there would have migrated the database once per machine. The `when:` gate is the form that survives `serial`.",
       },
       {
         title: "waiting, and deciding what counts as broken",

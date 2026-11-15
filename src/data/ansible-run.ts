@@ -488,7 +488,7 @@ export const TASKS: Task[] = [
     module: "ansible.builtin.service",
     handler: true,
     summary:
-      "Notified three times during the play, and run once per host at the end of it — only on the hosts whose task actually changed. web3's config already matched, so web3 never notified and is not in this row.",
+      "Notified by two hosts during the play, and run once on each of them at the end of it — only on the hosts whose task actually changed. web3's config already matched, so web3 never notified and is not in this row.",
     yaml: [
       "    - name: Reload nginx",
       "      ansible.builtin.service:",
@@ -715,8 +715,8 @@ const skipStage = (expr: string, value: string): Stage => ({
 const RENDERED = [
   "server {",
   "    listen 8080;",
-  "    server_name web3.example.net;",
-  "    root /srv/app/public;",
+  "    server_name web3;",
+  "    root /srv/app;",
   "}",
 ];
 
@@ -898,7 +898,11 @@ for (const host of ["web1", "web2", "web3"] as HostId[]) {
     args: [
       { key: "src", raw: "site.conf.j2", note: "a path on the control node" },
       { key: "dest", raw: "/etc/nginx/conf.d/site.conf" },
-      { key: "mode", raw: '"0644"', note: "quoted, or YAML reads it as octal" },
+      {
+        key: "mode",
+        raw: '"0644"',
+        note: "quoted; an unquoted `644` is decimal, and means `0o1204`",
+      },
       {
         key: "port",
         raw: "{{ nginx_port }}",
@@ -908,8 +912,8 @@ for (const host of ["web1", "web2", "web3"] as HostId[]) {
       {
         key: "server_name",
         raw: "{{ inventory_hostname }}",
-        resolved: h.fqdn,
-        note: "the inventory's name for the host, not a fact",
+        resolved: h.name,
+        note: "the inventory's name for the host — the alias, not `ansible_host` and not a fact",
       },
     ],
     stages: [
@@ -1306,8 +1310,17 @@ export type RunOptions = {
   forks: number;
   /** `linear` puts a barrier after every task; `free` lets hosts run ahead */
   strategy: "linear" | "free";
-  /** `implicit` runs `setup` every play; `cached` reads it off disk */
-  gathering: "implicit" | "cached";
+  /**
+   * `implicit` runs `setup` on every play. `smart` consults the fact cache
+   * and only scans a host it has no facts for.
+   *
+   * These are Ansible's own values. An earlier version of this page offered
+   * `cached`, which does not exist: `gathering` takes `implicit`, `explicit`
+   * or `smart`, and the caching itself is turned on by `fact_caching` plus
+   * `fact_caching_connection`. Inventing a config key and calling it the
+   * biggest lever on the page is the worst thing this page has done.
+   */
+  gathering: "implicit" | "smart";
   /** one SSH operation per task, or four */
   pipelining: boolean;
 };
@@ -1323,7 +1336,7 @@ export const DEFAULTS: RunOptions = {
 export const CHOICES = {
   forks: [1, 2, 3, 5],
   strategy: ["linear", "free"] as const,
-  gathering: ["implicit", "cached"] as const,
+  gathering: ["implicit", "smart"] as const,
   pipelining: [true, false] as const,
 };
 
@@ -1335,12 +1348,13 @@ export const CHOICES = {
  * is a round trip. That is why the knob matters on a far link and barely
  * registers on a near one next to a package manager.
  *
- * A cached fact gathering is not a cheaper `setup`: it is no `setup` at all.
- * The facts are read on the control node, so the host is never contacted.
+ * `gathering = smart` is not a cheaper `setup`: it is no `setup` at all for
+ * a host whose facts are already in the cache. They are read on the control
+ * node, so the host is never contacted.
  */
 const costOf = (event: Event, opt: RunOptions) => {
   if (event.verdict === "skipped") return { run: 0, wire: 0, real: false };
-  if (event.module.endsWith("setup") && opt.gathering === "cached") {
+  if (event.module.endsWith("setup") && opt.gathering === "smart") {
     return { run: 0, wire: 0, real: false };
   }
   const trips = opt.pipelining ? 1 : 4;
@@ -1550,12 +1564,12 @@ export const RECAP: RecapRow[] = MANAGED.map(host => {
  * under `group_vars`, and nothing more mysterious than that.
  */
 export const INVENTORY = `[webservers]
-web1.example.net
-web2.example.net
-web3.example.net
+web1 ansible_host=web1.example.net
+web2 ansible_host=web2.example.net
+web3 ansible_host=web3.example.net
 
 [dbservers]
-db1.example.net
+db1 ansible_host=db1.example.net
 
 [prod:children]
 webservers
