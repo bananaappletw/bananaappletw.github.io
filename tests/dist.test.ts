@@ -182,7 +182,7 @@ describe("/ansible covers Ansible's own documented topics", () => {
     ["Lookups", "lookup("],
     ["Loops", "item is the loop variable"],
     ["Delegation and local actions", "Run this task somewhere else"],
-    ["Conditionals", "If it is false, the task is skipped"],
+    ["Conditionals", "If it is false the task is skipped"],
     ["Blocks", "runs rescue instead of dropping the host"],
     ["Handlers: running operations on change", "Queues the handler by name"],
     ["Error handling in playbooks", "Decides what counts as a failure"],
@@ -263,10 +263,7 @@ describe("/ansible covers Ansible's own documented topics", () => {
     ["Filter, test and lookup plugins", "A Jinja filter"],
     ["Inventory plugins", "inventory plugin"],
     // tips and tricks
-    [
-      "Always name plays, tasks, and blocks",
-      "It only changes what the output prints",
-    ],
+    ["Always name plays, tasks, and blocks", "it is also the name"],
     ["Always mention the state", "It is not a command to run"],
     ["Use fully qualified collection names", "namespace, collection, module"],
     [
@@ -291,7 +288,7 @@ describe("/ansible covers Ansible's own documented topics", () => {
     // added after an independent review read the page as a learner
     ["the playbook/play/task hierarchy", "a playbook is a list of plays"],
     ["YAML lists and dictionaries", "is an item in a LIST"],
-    ["installing Ansible", "pip install --user ansible"],
+    ["installing Ansible", "pipx install --include-deps ansible"],
     ["the sudo password (-K)", "Missing sudo password"],
     ["reading a failure", "stderr_lines"],
     ["fail and assert", "ansible.builtin.assert"],
@@ -307,6 +304,16 @@ describe("/ansible covers Ansible's own documented topics", () => {
     ["vars_files", "vars_files"],
     ["what is inside a role", "roles/webserver/tasks/main.yml"],
     ["ansible.cfg discovery order", "ANSIBLE_CONFIG"],
+    // added after a second independent review of the live page
+    ["when: takes no braces", "ALREADY a Jinja expression"],
+    ["discovering what facts exist", "-m setup"],
+    ["setting inventory in ansible.cfg", "inventory = inventory/hosts.ini"],
+    ["set_fact outlives the play", "lasts for the rest of the RUN"],
+    ["cacheable facts", "cacheable: true"],
+    ["not every state is idempotent", "always act, and so always report"],
+    ["rescued and ignored in the recap", "rescued=0"],
+    ["check mode needs supports_check_mode", "supports_check_mode"],
+    ["become_user", "become_user"],
   ];
 
   /** every remaining chapter of those guides, and why it is not here */

@@ -225,7 +225,7 @@ export const GROUPS: { name: string; members: string[]; note: string }[] = [
   {
     name: "all",
     members: ["prod"],
-    note: "always there, even if you never write it; `group_vars/all` is the lowest level",
+    note: "always there, even if you never write it; `group_vars/all` is the lowest level you can write in a file",
   },
 ];
 
@@ -520,6 +520,7 @@ export const TASKS: Task[] = [
       "        name: app",
       "        state: present",
       "        encoding: UTF-8",
+      "      become_user: postgres",
     ],
     hosts: ["db1"],
   },
@@ -1737,7 +1738,7 @@ export const ROLE_TREE: { path: string; depth: number; note?: string }[] = [
   {
     path: "meta/main.yml",
     depth: 1,
-    note: "dependencies and `argument_specs`",
+    note: "dependencies; `argument_specs` is its own file beside it",
   },
   {
     path: "library/",
@@ -1800,8 +1801,8 @@ export const VERDICTS: {
   },
   {
     id: "skipped",
-    what: "never ran, and no connection was opened",
-    from: "a `when` was false, tested on the control node",
+    what: "never ran on this host",
+    from: "usually a false `when:`, tested on the control node with no connection at all — though `creates:` and check mode also skip, and those do contact the host first",
   },
   {
     id: "failed",

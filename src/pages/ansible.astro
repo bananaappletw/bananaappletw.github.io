@@ -1283,6 +1283,8 @@ const payload = {
             <th>unreachable</th>
             <th>failed</th>
             <th>skipped</th>
+            <th>rescued</th>
+            <th>ignored</th>
           </tr>
         </thead>
         <tbody>
@@ -1295,6 +1297,8 @@ const payload = {
                 <td data-col="unreachable">0</td>
                 <td data-col="failed">0</td>
                 <td data-col="skipped">0</td>
+                <td data-col="rescued">0</td>
+                <td data-col="ignored">0</td>
               </tr>
             ))
           }
@@ -2161,6 +2165,8 @@ const payload = {
           cell("unreachable", 0);
           cell("failed", n("failed"));
           cell("skipped", n("skipped"));
+          cell("rescued", 0);
+          cell("ignored", 0);
           tr.classList.toggle("full", mine.length > 0);
         }
       };

@@ -228,12 +228,17 @@ export const outputAt = (step: number, second = false): OutLine[] => {
     const ok = count("ok") + count("changed");
     lines.push({
       text:
+        /* Seven columns, because that is what Ansible prints. The page
+           teaches `rescue:` and `ignore_errors` and used to show a recap
+           with no way to report either of them. */
         `${host.padEnd(8)}: ` +
-        `ok=${ok}`.padEnd(8) +
-        `changed=${count("changed")}`.padEnd(13) +
-        "unreachable=0".padEnd(16) +
-        "failed=0".padEnd(11) +
-        `skipped=${count("skipped")}`,
+        `ok=${ok}`.padEnd(7) +
+        `changed=${count("changed")}`.padEnd(11) +
+        "unreachable=0".padEnd(15) +
+        "failed=0".padEnd(10) +
+        `skipped=${count("skipped")}`.padEnd(11) +
+        "rescued=0".padEnd(11) +
+        "ignored=0",
       kind: "recap",
       host,
     });
@@ -295,8 +300,13 @@ export const STEPS: Step[] = [
     lead: "Start with no file at all. Ansible can run one module on one host straight from the command line — this is called an AD HOC command, and everything else on this page is this, repeated and written down.",
     shell: [
       {
-        text: "python3 -m pip install --user ansible",
+        text: "pipx install --include-deps ansible",
         note: "on your machine only; the hosts get nothing installed",
+      },
+      {
+        text: "# or apt install ansible / dnf install ansible",
+        note: "a plain `pip install` now fails on most Linux (PEP 668)",
+        out: true,
       },
       {
         text: "ssh-copy-id deploy@web1.example.net",
@@ -364,7 +374,7 @@ export const STEPS: Step[] = [
       },
       {
         word: "- name:",
-        what: "A label. It only changes what the output prints. The task still works without it.",
+        what: "A label. Mostly it is what the output prints — but it is also the name `notify:` looks for and the one `--start-at-task` matches, so by step 9 it is load-bearing.",
         without:
           "Without it the output shows the module name, which is much harder to read.",
       },
@@ -390,7 +400,7 @@ export const STEPS: Step[] = [
       },
       {
         word: "Gathering Facts",
-        what: "A task you did not write. Every play starts by running `setup` on each host to collect about 1,200 facts about it. Step 7 uses one of them.",
+        what: "A task you did not write. Every play starts by running `setup` on each host to collect about 1,200 facts about it. Step 7 uses one. To see the rest: `ansible -i inventory/hosts.ini web1 -m setup`, or `-a 'filter=ansible_os*'` to narrow it.",
         without:
           "`gather_facts: false` turns it off. Then anything that reads a fact breaks.",
       },
@@ -421,7 +431,7 @@ export const STEPS: Step[] = [
       },
     ],
     takeaway:
-      "Idempotent means running it twice does the same as running it once. `state:` modules give you this for free. `shell:` does not.",
+      "Idempotent means running it twice does the same as running it once. Most `state:` values give you this — but not all: `state: reloaded` and `restarted` always act, and so always report `changed`. `command` and `shell` never give it to you at all.",
   },
   {
     n: 5,
@@ -533,7 +543,9 @@ export const STEPS: Step[] = [
       },
       {
         word: "when:",
-        what: "A condition. Ansible tests it on your machine against the facts. If it is false, the task is skipped and no connection is opened.",
+        what: "A condition, tested on your machine against the facts. If it is false the task is skipped, with no connection opened at all.",
+        without:
+          "Do NOT write `when: \"{{ x }} == 'y'\"`. A `when:` is ALREADY a Jinja expression, so the braces are a second layer and the comparison breaks. Bare names: `when: x == 'y'`. This is the commonest mistake there is with conditionals.",
       },
       {
         word: "template:",
@@ -549,29 +561,30 @@ export const STEPS: Step[] = [
           "    server_name {{ inventory_hostname }};",
           "    root {{ app_root | default('/srv/app') }};",
           "",
-          "{% for name in upstreams %}",
-          "    upstream {{ name }} { server {{ name }}:8080; }",
-          "{% endfor %}",
-          "",
           "{% if ansible_facts.os_family == 'Debian' %}",
           "    include /etc/nginx/mime.types;",
           "{% endif %}",
           "",
-          "    # magic variables, and a lookup off your own machine",
           "{% for host in groups['webservers'] %}",
-          "    # peer {{ hostvars[host].ansible_default_ipv4.address }}",
+          "    # peer {{ hostvars[host].ansible_facts.default_ipv4.address }}",
           "{% endfor %}",
-          "    ssl_certificate_key {{ lookup('file', 'tls.key') }};",
           "}",
         ],
         out: [
+          "# rendered for web3, which is Debian",
           "server {",
           "    listen 8080;",
           "    server_name web3;",
           "    root /srv/app;",
+          "",
+          "    include /etc/nginx/mime.types;",
+          "",
+          "    # peer 10.4.0.11",
+          "    # peer 10.4.0.12",
+          "    # peer 10.4.0.13",
           "}",
         ],
-        note: "`{{ }}` inserts a value. `{% %}` is logic: the tag itself prints nothing, though what is inside a loop does — the three peer lines all come from one `{% for %}`. `| default(...)` is the filter you will use most: `app_root` is set nowhere on this page, so without it the template would fail the task with `undefined variable` instead of falling back to `/srv/app`.",
+        note: "`{{ }}` inserts a value. `{% %}` is logic: the tag prints nothing, but what is inside it does — the three peer lines come from one `{% for %}`, and the `include` appears only because web3 is Debian. `| default(...)` is the filter you will use most: `app_root` is set nowhere on this page, so without it this template would fail the task with `undefined variable` instead of falling back.",
       },
     ],
     output: "one",
@@ -604,7 +617,7 @@ export const STEPS: Step[] = [
       },
       {
         word: "creates:",
-        what: "The only way `command` and `shell` become idempotent. `creates: /path` skips the task if that path exists; `removes:` skips it if it does not.",
+        what: "The simplest way to make `command` and `shell` idempotent. `creates: /path` skips the task if that path exists; `removes:` skips it if it does not. `changed_when:` is the other way, and writing a command that is safe to repeat is the best way.",
       },
       {
         word: "loop_control:",
@@ -614,7 +627,7 @@ export const STEPS: Step[] = [
         word: "set_fact",
         what: "Makes a new variable during the run, from anything you already have. `register` captures what a module returned; `set_fact` computes a value yourself.",
         without:
-          "It lasts for the rest of the play, on that host only, and it sits near the top of the precedence list — so it beats almost anything you set in a file.",
+          "It lasts for the rest of the RUN, not just the play — it is written into the host's facts, so a later play sees it. `cacheable: true` goes further and puts it in the fact cache, where the next run will find it. It sits near the top of the precedence list, so it beats almost anything you set in a file.",
       },
     ],
     insets: [
@@ -688,7 +701,7 @@ export const STEPS: Step[] = [
           "TASK [Use it] ***************************",
           "changed: [web1]",
         ],
-        note: "`set_fact` never reports `changed`, because it does nothing to the host. The variable lives for the rest of the play, on that host only.",
+        note: "`set_fact` never reports `changed`, because it does nothing to the host. The variable lives for the rest of the run on that host — later plays see it too, which is not true of `vars:`.",
       },
       {
         title: "command and shell — the escape hatch, and its price",
@@ -698,24 +711,26 @@ export const STEPS: Step[] = [
           "  args:",
           "    creates: /srv/app/.migrated",
           "",
-          "- name: shell — only when you need the shell",
+          "- name: shell — only when you need a pipe or a redirect",
           "  ansible.builtin.shell: >",
-          "    tar czf /backup/app.tgz /srv/app | tee /var/log/bk",
+          "    pg_dump app | gzip > /backup/app-{{ today }}.sql.gz",
           "  args:",
-          "    creates: /backup/app.tgz",
+          "    creates: /backup/app-{{ today }}.sql.gz",
           "",
           "- name: or decide for yourself what changed means",
-          "  ansible.builtin.command: /usr/sbin/apachectl graceful",
+          "  ansible.builtin.command: /usr/sbin/nginx -s reload",
           "  register: out",
-          "  changed_when: \"'reloaded' in out.stdout\"",
+          "  changed_when: out.rc == 0",
+          "  failed_when: out.rc not in [0, 1]",
         ],
         out: [
+          "# first run",
           "TASK [command — no shell, no pipes, safest] *",
           "changed: [web1]",
           "",
+          "# second run: the file exists, so the module skips",
           "TASK [command — no shell, no pipes, safest] *",
-          "ok: [web1]",
-          "  (skipped, /srv/app/.migrated exists)",
+          "skipping: [web1]",
         ],
         note: "Neither module knows what your command does, so both report `changed` every single time. `creates:` is the fix — the task is skipped if that path already exists — and `removes:` is its mirror. `changed_when:` takes any Jinja expression, not only `false`. Prefer `command`: `shell` runs through `/bin/sh`, so a variable in it is an injection risk.",
       },
@@ -812,7 +827,7 @@ export const STEPS: Step[] = [
       },
       {
         text: "ansible-playbook -i inventory/hosts.ini site.yml --tags nginx",
-        note: "run only the tasks with that tag",
+        note: "only tasks tagged nginx — nothing in this file is tagged yet; step 13 adds them",
       },
       {
         text: "ansible-playbook -i inventory/hosts.ini site.yml --start-at-task 'Open the port'",
@@ -835,6 +850,11 @@ export const STEPS: Step[] = [
         note: "which settings are not at their defaults, and where each came from",
       },
       {
+        text: "# put `inventory = inventory/hosts.ini` in ansible.cfg",
+        note: "and stop typing -i on every command, which nobody does in practice",
+        out: true,
+      },
+      {
         text: "ansible-doc ansible.builtin.service",
         note: "every argument a module takes, with examples, offline",
       },
@@ -842,7 +862,7 @@ export const STEPS: Step[] = [
     keywords: [
       {
         word: "--check",
-        what: "A dry run. Ansible asks every module what it would do. `command` and `shell` are skipped, because they cannot predict.",
+        what: "A dry run. Ansible asks each module what it would do — but only a module that declares `supports_check_mode` can answer, and the rest are skipped. `command` and `shell` are the obvious ones; plenty of collection modules are too.",
       },
       {
         word: "--limit",
@@ -976,7 +996,7 @@ export const STEPS: Step[] = [
       },
       {
         word: "pre_tasks / post_tasks",
-        what: "Roles run between them. `pre_tasks` first, then `roles:`, then `tasks:`, then `post_tasks` — and handlers are flushed after each of those groups, not only at the very end.",
+        what: "Roles run between them: `pre_tasks`, then `roles:`, then `tasks:`, then `post_tasks`. Handlers are flushed three times — after `pre_tasks`, after roles and tasks together, and after `post_tasks` — not between roles and tasks.",
       },
       {
         word: "collections:",
@@ -1042,7 +1062,7 @@ export const STEPS: Step[] = [
           "    - community.postgresql",
           "  module_defaults:",
           "    ansible.builtin.uri:",
-          "      validate_certs: false",
+          "      timeout: 30",
           "  roles:",
           "    - webserver",
           "",
@@ -1233,8 +1253,8 @@ export const STEPS: Step[] = [
           "}",
           "",
           "PLAY RECAP ******************************",
-          "web1    : ok=1  changed=0  unreachable=0",
-          "          failed=1  skipped=0",
+          "web1    : ok=1  changed=0  unreachable=0  failed=1",
+          "          skipped=0  rescued=0  ignored=0",
         ],
         out: [
           "# the same task, with a shell command instead",
