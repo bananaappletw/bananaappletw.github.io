@@ -633,6 +633,22 @@ const payload = {
       One file, built in front of you. Scroll down and it grows. The pane on the
       left keeps up, and shows what Ansible prints each time.
     </p>
+
+    <!-- The steps were only ever legible as "step 7 / 13" in the corner of
+         the sticky pane. A reader climbing a ladder should be able to see
+         how many rungs there are and which one they are on. -->
+    <ol class="toc" id="toc">
+      {
+        GUIDE.map(step => (
+          <li data-step={step.n}>
+            <a href={`#step-${step.n}`}>
+              <span class="toc-n">{String(step.n).padStart(2, "0")}</span>
+              <span class="toc-t">{step.title}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ol>
   </section>
 
   <section class="guide" id="guide">
@@ -670,7 +686,7 @@ const payload = {
         GUIDE.map(step => {
           const g = sgridOf(step.n);
           return (
-            <li class="gstep" data-step={step.n}>
+            <li class="gstep" id={`step-${step.n}`} data-step={step.n}>
               <p class="gstep-n">{String(step.n).padStart(2, "0")}</p>
               <h3>{step.title}</h3>
               <p class="gstep-lead" set:html={ticks(step.lead)} />
@@ -1191,6 +1207,43 @@ const payload = {
           >
         </p>
       </div>
+
+      <!-- The knobs had no explanation anywhere a reader could read without
+           clicking something. Fact caching in particular is the biggest
+           lever on this page and its only description lived in a panel you
+           reach by clicking a bar one pixel wide. -->
+      <dl class="knob-note">
+        <div>
+          <dt><code>forks</code></dt>
+          <dd>
+            How many hosts are worked at once. Raising it past the number of
+            hosts in the play buys nothing.
+          </dd>
+        </div>
+        <div>
+          <dt><code>strategy</code></dt>
+          <dd>
+            <code>linear</code> makes every host wait at the end of each task.
+            <code>free</code> lets each host run its own list as fast as it can.
+          </dd>
+        </div>
+        <div>
+          <dt><code>gathering</code></dt>
+          <dd>
+            <code>implicit</code> runs <code>setup</code> on every host at the start
+            of every play. <code>cached</code> reads facts that an earlier run saved
+            to disk, so no host is contacted for them at all. It is the biggest lever
+            here.
+          </dd>
+        </div>
+        <div>
+          <dt><code>pipelining</code></dt>
+          <dd>
+            One SSH operation per task instead of four. It matters on a slow
+            link and barely registers on a fast one.
+          </dd>
+        </div>
+      </dl>
 
       <p class="map-hint">
         Real time at 1&times;. The upright dashed lines are barriers: with
@@ -2818,6 +2871,7 @@ const payload = {
       if (!file || !term || !label || !steps.length) return;
 
       const lines = [...file.querySelectorAll<HTMLElement>(".ln")];
+      const toc = [...document.querySelectorAll<HTMLElement>("#toc li")];
       const runs = [...term.querySelectorAll<HTMLElement>(".term-run")];
       const last = Number(steps[steps.length - 1].dataset.step);
       let at = -1;
@@ -2839,34 +2893,58 @@ const payload = {
           ? "false"
           : "true";
         label.textContent = `step ${step} / ${last}`;
+        for (const li of toc) {
+          const n = Number(li.dataset.step);
+          li.classList.toggle("on", n === step);
+          li.classList.toggle("done", n < step);
+        }
       };
 
-      show(1);
-
-      /* The band is the upper third: a step counts as current once its
-         heading has reached the place a reader is actually looking, not
-         when its last paragraph finally leaves the screen. */
-      const seen = new Map<number, number>();
-      const io = new IntersectionObserver(
-        entries => {
-          for (const e of entries) {
-            const n = Number((e.target as HTMLElement).dataset.step);
-            seen.set(n, e.intersectionRatio);
+      /**
+       * Which step is current, worked out from geometry on every frame that
+       * scrolls rather than from IntersectionObserver.
+       *
+       * The observer version kept a map of each step's last reported ratio
+       * and took the furthest one still above zero. That map goes stale:
+       * a tall step that stopped intersecting without firing a fresh entry
+       * stays in it, and the reader is shown step 8 while reading step 9.
+       * A line across the upper third and "the last step whose top is above
+       * it" cannot drift, because it reads the page rather than remembering
+       * what the page used to be.
+       */
+      const pick = () => {
+        const line = window.innerHeight * 0.33;
+        let current = Number(steps[0].dataset.step);
+        for (const el of steps) {
+          if (el.getBoundingClientRect().top <= line) {
+            current = Number(el.dataset.step);
           }
-          /* Among the steps in the band, the furthest one reached wins:
-             scrolling down should never show the file shrinking. */
-          const live = [...seen.entries()]
-            .filter(([, ratio]) => ratio > 0)
-            .map(([n]) => n);
-          if (live.length) show(Math.max(...live));
-        },
-        { rootMargin: "-20% 0px -55% 0px", threshold: [0, 0.01, 0.5, 1] },
-      );
-      for (const step of steps) io.observe(step);
+        }
+        show(current);
+      };
 
-      document.addEventListener("astro:before-swap", () => io.disconnect(), {
-        once: true,
-      });
+      let ticking = false;
+      const onScroll = () => {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(() => {
+          ticking = false;
+          pick();
+        });
+      };
+
+      window.addEventListener("scroll", onScroll, { passive: true });
+      window.addEventListener("resize", onScroll);
+      pick();
+
+      document.addEventListener(
+        "astro:before-swap",
+        () => {
+          window.removeEventListener("scroll", onScroll);
+          window.removeEventListener("resize", onScroll);
+        },
+        { once: true },
+      );
     };
 
     guide();
@@ -2913,6 +2991,59 @@ const payload = {
     font-size: 16px;
     line-height: 1.7;
     color: var(--text-2);
+  }
+
+  /* The path, up front. Three columns of short numbered titles cost one
+     screen of height and buy the reader a map. */
+  .toc {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 0 clamp(14px, 2vw, 30px);
+    list-style: none;
+    margin: 26px 0 0;
+    padding: 0;
+  }
+
+  .toc li {
+    border-top: 1px solid var(--border-recess);
+  }
+
+  .toc a {
+    display: grid;
+    grid-template-columns: 2.6ch 1fr;
+    align-items: baseline;
+    gap: 9px;
+    padding: 7px 0;
+    text-decoration: none;
+    color: var(--text-4);
+  }
+
+  .toc a:hover {
+    color: var(--text-2);
+  }
+
+  .toc-n {
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+
+  .toc-t {
+    font-family: var(--font-display);
+    font-size: 14px;
+    line-height: 1.3;
+  }
+
+  /* Where the reader has been, and where they are. */
+  .toc li.done a {
+    color: var(--text-3);
+  }
+
+  .toc li.on {
+    border-top-color: var(--arcane);
+  }
+
+  .toc li.on a {
+    color: var(--text);
   }
 
   /* ── the guide ─────────────────────────────────────────────────────── */
@@ -3761,6 +3892,31 @@ const payload = {
     font-variant-numeric: tabular-nums;
     min-width: 7ch;
     text-align: end;
+  }
+
+  .knob-note {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 0 clamp(14px, 2vw, 28px);
+    margin: 14px 0 0;
+  }
+
+  .knob-note div {
+    padding: 9px 0;
+    border-top: 1px solid var(--border-recess);
+  }
+
+  .knob-note dt {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-3);
+  }
+
+  .knob-note dd {
+    margin: 3px 0 0;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--text-4);
   }
 
   .map-hint {

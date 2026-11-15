@@ -529,6 +529,12 @@ export const STEPS: Step[] = [
         word: "-v",
         what: "Verbosity. `-v` prints each module's JSON reply. `-vv` adds the task's file and line. `-vvv` adds the SSH commands. This is the fastest way to find out why something said `changed`.",
       },
+      {
+        word: "set_fact",
+        what: "Makes a new variable during the run, from anything you already have. `register` captures what a module returned; `set_fact` computes a value yourself.",
+        without:
+          "It lasts for the rest of the play, on that host only, and it sits near the top of the precedence list — so it beats almost anything you set in a file.",
+      },
     ],
     insets: [
       {
@@ -570,6 +576,28 @@ export const STEPS: Step[] = [
           "}",
         ],
         note: "`register` saves a module's full JSON reply into a variable. `debug` prints it, and runs on your machine, so it costs nothing. `changed_when: false` stops a read-only command from saying `changed` every time.",
+      },
+      {
+        title: "set_fact — work a value out yourself",
+        yaml: [
+          "- name: Decide where the app lives",
+          "  ansible.builtin.set_fact:",
+          '    app_root: "/srv/{{ app_name }}-{{ release }}"',
+          "    is_rhel: \"{{ ansible_facts.os_family == 'RedHat' }}\"",
+          "",
+          "- name: Use it",
+          "  ansible.builtin.file:",
+          '    path: "{{ app_root }}"',
+          "    state: directory",
+        ],
+        out: [
+          "TASK [Decide where the app lives] *******",
+          "ok: [web1]",
+          "",
+          "TASK [Use it] ***************************",
+          "changed: [web1]",
+        ],
+        note: "`set_fact` never reports `changed`, because it does nothing to the host. The variable lives for the rest of the play, on that host only.",
       },
       {
         title: "block — group, and recover",
@@ -817,6 +845,16 @@ export const STEPS: Step[] = [
         word: "delegate_to:",
         what: "Run this task somewhere else, but with the current host's variables. Taking a host out of a load balancer is the usual reason.",
       },
+      {
+        word: "ignore_errors: true",
+        what: "Carry on even if this task fails. The task still reports `failed` in red; the host just is not removed from the play.",
+        without:
+          "Reach for `failed_when` first. `ignore_errors` hides every failure, including the ones you did want to know about.",
+      },
+      {
+        word: "until:",
+        what: "Retry a task until a condition holds. With `retries` and `delay`, it is how you wait for something to come up instead of guessing with a sleep.",
+      },
     ],
     insets: [
       {
@@ -847,6 +885,33 @@ export const STEPS: Step[] = [
           "changed: [web2]",
         ],
         note: "With `serial: 1` the play banner repeats, once per host. That repetition is the clearest sign in the output that a rolling deploy is what is happening.",
+      },
+      {
+        title: "waiting, and deciding what counts as broken",
+        yaml: [
+          "- name: Wait for the port to answer",
+          "  ansible.builtin.uri:",
+          "    url: http://localhost:8080/health",
+          "  register: health",
+          "  until: health.status == 200",
+          "  retries: 10",
+          "  delay: 3",
+          "",
+          "- name: Tidy up, and never mind if it fails",
+          "  ansible.builtin.command: /srv/app/cleanup",
+          "  ignore_errors: true",
+        ],
+        out: [
+          "TASK [Wait for the port to answer] ******",
+          "FAILED - RETRYING (9 retries left).",
+          "FAILED - RETRYING (8 retries left).",
+          "ok: [web1]",
+          "",
+          "TASK [Tidy up, and never mind if it fails] *",
+          "fatal: [web1]: FAILED! => {...}",
+          "...ignoring",
+        ],
+        note: "`until` needs `register`, because the condition reads the variable the task just set. Ten retries three seconds apart is thirty seconds of patience — and far better than `sleep 30`, which is both too long and too short.",
       },
     ],
     takeaway:
