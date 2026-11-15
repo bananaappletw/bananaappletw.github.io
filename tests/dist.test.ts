@@ -313,7 +313,15 @@ describe("/ansible covers Ansible's own documented topics", () => {
     ["not every state is idempotent", "always act, and so always report"],
     ["rescued and ignored in the recap", "rescued=0"],
     ["check mode needs supports_check_mode", "supports_check_mode"],
-    ["become_user", "become_user"],
+    ["become_user", "become_user: postgres"],
+    // closed after the second review named them as mentions, not teaching
+    ["become_method", "become_method"],
+    ["listen: on handlers", "Lets one"],
+    ["YAML inventory", "hosts.yml"],
+    ["import_tasks and include_tasks", "import_tasks"],
+    ["with_items is the old loop", "with_items"],
+    ["--diff output shown", "listen 80;"],
+    ["installing a collection", "ansible-galaxy collection install"],
   ];
 
   /** every remaining chapter of those guides, and why it is not here */

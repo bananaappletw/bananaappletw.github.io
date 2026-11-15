@@ -1581,6 +1581,28 @@ ansible_user=deploy
 ansible_python_interpreter=auto_silent`;
 
 /**
+ * The same inventory in YAML. The page showed only INI, whose `:children`
+ * and `:vars` syntax does not transfer — and most inventories a reader
+ * meets now are YAML.
+ */
+export const INVENTORY_YAML = `webservers:
+  hosts:
+    web1: { ansible_host: web1.example.net }
+    web2: { ansible_host: web2.example.net }
+    web3: { ansible_host: web3.example.net }
+
+dbservers:
+  hosts:
+    db1: { ansible_host: db1.example.net }
+
+prod:
+  children:
+    webservers:
+    dbservers:
+  vars:
+    ansible_user: deploy`;
+
+/**
  * The twenty-two rungs, lowest first. Everyone meets this ladder the day a
  * variable has the wrong value and no file seems to be wrong, and the only
  * thing that helps is knowing it is a total order with `-e` on top.
@@ -1686,7 +1708,11 @@ export const LAYOUT: { path: string; depth: number; note?: string }[] = [
     note: "roles and collections to fetch",
   },
   { path: "inventory/", depth: 0 },
-  { path: "hosts.ini", depth: 1, note: "or a whole directory of sources" },
+  {
+    path: "hosts.ini",
+    depth: 1,
+    note: "or `hosts.yml`, or a whole directory of sources",
+  },
   { path: "group_vars/", depth: 0 },
   { path: "all.yml", depth: 1, note: "every host, the lowest level" },
   { path: "webservers.yml", depth: 1 },

@@ -51,6 +51,7 @@ import {
   GROUPS,
   HOSTS,
   INVENTORY,
+  INVENTORY_YAML,
   LAYOUT,
   LINKS,
   LINK_MS,
@@ -904,6 +905,11 @@ const payload = {
 
       <p class="label sub">inventory/hosts.ini</p>
       <pre class="code ini"><code>{INVENTORY}</code></pre>
+
+      <!-- INI is what this page runs on; YAML is what most readers will
+           actually be handed, and its group syntax does not transfer. -->
+      <p class="label sub">the same thing as hosts.yml</p>
+      <pre class="code ini"><code>{INVENTORY_YAML}</code></pre>
 
       <!-- Written at runtime: the four knobs below the schedule ARE these
            four lines, and seeing them change is half the point of having

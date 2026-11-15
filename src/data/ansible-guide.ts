@@ -349,7 +349,9 @@ export const STEPS: Step[] = [
       },
       {
         word: "-K",
-        what: "Ask for the sudo password, once, at the start. If your sudo is not passwordless, every `-b` task fails with `Missing sudo password` until you add this — which is the most common first run failure there is. `become_user:` changes who you become; `become_method:` changes how.",
+        what: "Ask for the sudo password, once, at the start. If your sudo is not passwordless, every `-b` task fails with `Missing sudo password` until you add this, which is the most common first-run failure there is.",
+        without:
+          "`become_user: postgres` becomes somebody other than root — needed for any database module, because root is usually not a role in the database. `become_method: doas` or `su` changes the tool. `ansible_become_password` in a vault file is the non-interactive form of `-K`.",
       },
     ],
     takeaway:
@@ -657,7 +659,7 @@ export const STEPS: Step[] = [
           "ok: [web1] => (item=curl)",
           "changed: [web1] => (item=jq)",
         ],
-        note: "`item` is the loop variable. The task reports once per item. The whole task counts as `changed` if any item changed.",
+        note: "`item` is the loop variable. The task reports once per item, and the whole task counts as `changed` if any item did. You will meet `with_items:` in anything written before 2019 — it is the same idea under the old name, and `loop:` is what to write now.",
       },
       {
         title: "register + debug — see what came back",
@@ -770,6 +772,10 @@ export const STEPS: Step[] = [
         what: "Tasks that are written down but do not run yet. They sit next to `tasks:` in the play.",
       },
       {
+        word: "listen:",
+        what: "Lets one `notify:` fire several handlers. Give each handler `listen: restart web stack` and notify that string instead of a task name — which is also how a role exposes a handler without you knowing its internal names.",
+      },
+      {
         word: "notify: Reload nginx",
         what: "Queues the handler by name. It only fires if this task reported `changed`.",
         without:
@@ -790,6 +796,14 @@ export const STEPS: Step[] = [
           "",
           "- name: Apply the queued handlers now",
           "  ansible.builtin.meta: flush_handlers",
+          "",
+          "# and in handlers:, one notify can fire several",
+          "- name: Reload nginx",
+          "  ansible.builtin.service: { name: nginx, state: reloaded }",
+          "  listen: restart web stack",
+          "- name: Reload the cache",
+          "  ansible.builtin.service: { name: varnish, state: restarted }",
+          "  listen: restart web stack",
           "",
           "- name: Check the site answers on the new port",
           "  ansible.builtin.uri:",
@@ -820,6 +834,14 @@ export const STEPS: Step[] = [
       {
         text: "ansible-playbook -i inventory/hosts.ini site.yml --check --diff",
         note: "change nothing; show what WOULD change, and the diffs",
+      },
+      {
+        text: "--- before: /etc/nginx/conf.d/site.conf\n+++ after\n-    listen 80;\n+    listen 8080;",
+        out: true,
+      },
+      {
+        text: "ansible-galaxy collection install community.postgresql",
+        note: "this playbook needs it; `ansible-core` ships no collections at all",
       },
       {
         text: "ansible-playbook -i inventory/hosts.ini site.yml --limit web1",
@@ -989,6 +1011,10 @@ export const STEPS: Step[] = [
       {
         word: "roles:",
         what: "Run these roles before the play's own tasks. Each one brings its own tasks, handlers, templates and defaults.",
+      },
+      {
+        word: "import_tasks / include_tasks",
+        what: "Split a long playbook across files without making a role. `import_tasks: web.yml` is read when the playbook is parsed; `include_tasks:` is read when the play reaches it, so its filename can be a variable. Same static-versus-dynamic split as the role pair below.",
       },
       {
         word: "import_role",
