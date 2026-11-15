@@ -113,6 +113,11 @@ export const HOSTS_AT: Record<number, HostId[]> = {
   8: ["web1", "web2", "web3"],
   9: ["web1", "web2", "web3"],
   10: ["web1", "web2", "web3", "db1"],
+  /* The last three steps add nothing to `site.yml` — they are techniques
+     the file has no use for — so the run behind them is the finished one. */
+  11: ["web1", "web2", "web3", "db1"],
+  12: ["web1", "web2", "web3", "db1"],
+  13: ["web1", "web2", "web3", "db1"],
 };
 
 /* ── what Ansible prints ───────────────────────────────────────────────── */
@@ -454,6 +459,12 @@ export const STEPS: Step[] = [
         what: "Jinja2. It is filled in on YOUR machine, before anything is sent. The host never sees the braces.",
       },
       {
+        word: "| default",
+        what: "A Jinja filter. `{{ app_root | default('/srv/app') }}` uses the variable if it is set, and that value if it is not.",
+        without:
+          "Without it, reading a variable nobody set fails the task with `undefined variable`.",
+      },
+      {
         word: 'mode: "0644"',
         what: "Always put quotes around it. Without them YAML reads `0644` as a number, and the file gets the wrong permissions.",
       },
@@ -464,6 +475,34 @@ export const STEPS: Step[] = [
       {
         word: "template:",
         what: "Fills in a `.j2` file on your machine, compares the result with the file on the host, and only sends it if they differ.",
+      },
+    ],
+    insets: [
+      {
+        title: "inside site.conf.j2",
+        yaml: [
+          "server {",
+          "    listen {{ nginx_port }};",
+          "    server_name {{ inventory_hostname }};",
+          "    root {{ app_root | default('/srv/app') }};",
+          "",
+          "{% for name in upstreams %}",
+          "    upstream {{ name }} { server {{ name }}:8080; }",
+          "{% endfor %}",
+          "",
+          "{% if ansible_facts.os_family == 'Debian' %}",
+          "    include /etc/nginx/mime.types;",
+          "{% endif %}",
+          "}",
+        ],
+        out: [
+          "server {",
+          "    listen 8080;",
+          "    server_name web3.example.net;",
+          "    root /srv/app;",
+          "}",
+        ],
+        note: "`{{ }}` inserts a value. `{% %}` is logic and prints nothing. `| default(...)` is a filter, and it is the one you will use most: it supplies a value when the variable was never set, instead of failing the task.",
       },
     ],
     output: "one",
@@ -622,7 +661,196 @@ export const STEPS: Step[] = [
     output: "one",
     grid: true,
     takeaway:
-      "That is the file the rest of this page runs. Below, it stops being text and becomes nineteen modules crossing four SSH connections.",
+      "That is the whole file. Three more steps cover the things every real playbook needs and this one does not.",
+  },
+  {
+    n: 11,
+    title: "Secrets",
+    lead: "A real playbook needs a database password, an API token, a private key. You cannot put those in a file you commit. Ansible Vault encrypts a file in place, and the playbook reads it as if nothing happened.",
+    shell: [
+      {
+        text: "ansible-vault create group_vars/prod/vault.yml",
+        note: "opens your editor; saves the file encrypted",
+      },
+      {
+        text: "ansible-vault edit group_vars/prod/vault.yml",
+        note: "decrypt, edit, re-encrypt, in one step",
+      },
+      {
+        text: "ansible-playbook -i inventory/hosts.ini site.yml --ask-vault-pass",
+        note: "ask for the password when the run starts",
+      },
+      {
+        text: "ansible-playbook -i inventory/hosts.ini site.yml \\\n    --vault-password-file ~/.vault-pass",
+        note: "or read it from a file, for CI",
+      },
+    ],
+    keywords: [
+      {
+        word: "ansible-vault",
+        what: "Encrypts a whole file with a password. The file still lives in git, but as ciphertext. Ansible decrypts it in memory when it reads the variables.",
+      },
+      {
+        word: "no_log: true",
+        what: "Stops a task printing its arguments and its result. Without it a password you pass to a module appears in the output, and in anything that captures the output.",
+        without:
+          "Without it, `-v` and most CI logs will show the secret in full.",
+      },
+    ],
+    insets: [
+      {
+        title: "the encrypted file, and how it is used",
+        yaml: [
+          "# group_vars/prod/vault.yml, on disk",
+          "$ANSIBLE_VAULT;1.1;AES256",
+          "66383439383437643533...",
+          "",
+          "# group_vars/prod/vars.yml, in the clear",
+          'db_password: "{{ vault_db_password }}"',
+          "",
+          "# and in a task",
+          "- name: Set the database password",
+          "  community.postgresql.postgresql_user:",
+          "    name: app",
+          '    password: "{{ db_password }}"',
+          "  no_log: true",
+        ],
+        out: [
+          "TASK [Set the database password] ********",
+          'ok: [db1] => {"censored": "the output has been',
+          '  hidden due to the fact that no_log is set"}',
+        ],
+        note: "The common pattern: keep the secret in the vault file under a `vault_` name, and point a plain variable at it. That way you can read `vars.yml` to see WHAT is set without decrypting anything.",
+      },
+    ],
+    takeaway:
+      "`ansible-vault` encrypts the file. `no_log: true` keeps the value out of the output. You need both.",
+  },
+  {
+    n: 12,
+    title: "Reuse: roles",
+    lead: "Copying tasks between playbooks stops working quickly. A ROLE is a folder with a fixed layout, and Ansible loads the parts by name. You met the layout in Part III; this is how a play uses one.",
+    shell: [
+      {
+        text: "ansible-galaxy init roles/webserver",
+        note: "create the folder layout",
+      },
+      {
+        text: "ansible-galaxy install -r requirements.yml",
+        note: "fetch roles and collections other people wrote",
+      },
+    ],
+    keywords: [
+      {
+        word: "roles:",
+        what: "Run these roles before the play's own tasks. Each one brings its own tasks, handlers, templates and defaults.",
+      },
+      {
+        word: "import_role",
+        what: "Static. The tasks are read when the playbook is parsed, so `--tags` and `--list-tasks` can see them. The role name cannot be a variable.",
+      },
+      {
+        word: "include_role",
+        what: "Dynamic. The tasks are read when the play reaches that line, so the role name can be a variable or sit in a loop. Tags do not reach inside.",
+        without:
+          "This is the whole static-versus-dynamic split, and it applies to `import_tasks` and `include_tasks` in exactly the same way.",
+      },
+    ],
+    insets: [
+      {
+        title: "three ways to use the same role",
+        yaml: [
+          "- name: Web tier",
+          "  hosts: webservers",
+          "  roles:",
+          "    - webserver",
+          "",
+          "    - role: webserver",
+          "      nginx_port: 8080",
+          "",
+          "  tasks:",
+          "    - ansible.builtin.import_role:",
+          "        name: webserver",
+          "",
+          "    - ansible.builtin.include_role:",
+          '        name: "{{ tier }}_role"',
+        ],
+        out: [
+          "TASK [webserver : Install nginx] ********",
+          "changed: [web1]",
+          "",
+          "TASK [webserver : Write the config] *****",
+          "changed: [web1]",
+        ],
+        note: "The task name is prefixed with the role, which is how you find out where a task you did not write came from. A value passed next to `role:` is a role parameter, and those sit near the top of the precedence list.",
+      },
+    ],
+    takeaway:
+      "A role is reuse with a fixed shape. `roles:` runs it, `import_role` is static, `include_role` is dynamic.",
+  },
+  {
+    n: 13,
+    title: "Rolling it out safely",
+    lead: "Three hosts is fine. Three hundred behind a load balancer is not: you do not want every one of them restarting nginx at the same second. These are the controls for that, and for deciding what counts as a failure.",
+    keywords: [
+      {
+        word: "serial: 1",
+        what: 'Run the whole play on one host at a time, finish it, then move to the next. This is a rolling deploy. `serial: "25%"` works too, and a list like `[1, 5, 10]` ramps up.',
+      },
+      {
+        word: "tags:",
+        what: "Labels on tasks or roles. `--tags nginx` runs only those; `--skip-tags slow` runs everything else.",
+      },
+      {
+        word: "failed_when:",
+        what: "Decides what counts as a failure. A command that exits 2 is not always broken, and a command that exits 0 is not always fine.",
+      },
+      {
+        word: "any_errors_fatal: true",
+        what: "If any host fails, stop the whole play on every host. Without it, the failed host drops out and the others carry on.",
+      },
+      {
+        word: "run_once: true",
+        what: "Run this task on one host only, even though the play targets many. Database migrations usually want this.",
+      },
+      {
+        word: "delegate_to:",
+        what: "Run this task somewhere else, but with the current host's variables. Taking a host out of a load balancer is the usual reason.",
+      },
+    ],
+    insets: [
+      {
+        title: "a rolling deploy, one host at a time",
+        yaml: [
+          "- name: Web tier",
+          "  hosts: webservers",
+          "  serial: 1",
+          "  any_errors_fatal: true",
+          "  tasks:",
+          "    - name: Take it out of the pool",
+          "      ansible.builtin.uri:",
+          "        url: http://lb/drain/{{ inventory_hostname }}",
+          "      delegate_to: localhost",
+          "      tags: [deploy]",
+          "",
+          "    - name: Migrate the database",
+          "      ansible.builtin.command: /srv/app/migrate",
+          "      run_once: true",
+          "      register: out",
+          "      failed_when: out.rc not in [0, 2]",
+        ],
+        out: [
+          "PLAY [Web tier] ****** (web1)",
+          "changed: [web1]",
+          "",
+          "PLAY [Web tier] ****** (web2)",
+          "changed: [web2]",
+        ],
+        note: "With `serial: 1` the play banner repeats, once per host. That repetition is the clearest sign in the output that a rolling deploy is what is happening.",
+      },
+    ],
+    takeaway:
+      "`serial` controls how many hosts at once. `tags` control which tasks. `failed_when` and `any_errors_fatal` control what stops the run. Below, the file from step 10 runs for real.",
   },
 ];
 

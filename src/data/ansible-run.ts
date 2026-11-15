@@ -1619,6 +1619,36 @@ export const PRECEDENCE: { n: number; what: string; note?: string }[] = [
   },
 ];
 
+/**
+ * How Ansible actually reaches a host. These appear in the inventory on
+ * this page and were never explained, which leaves a reader with no way to
+ * connect to anything that is not already set up for them.
+ */
+export const CONNECTION: { name: string; what: string }[] = [
+  {
+    name: "ansible_host",
+    what: "the address or name to connect to, when it differs from the name in the inventory",
+  },
+  { name: "ansible_user", what: "the SSH user to log in as" },
+  { name: "ansible_port", what: "the SSH port, when it is not 22" },
+  {
+    name: "ansible_ssh_private_key_file",
+    what: "the key to use; otherwise your agent and `~/.ssh/config` apply as usual",
+  },
+  {
+    name: "ansible_become_password",
+    what: "the sudo password, if sudo asks for one. Keep it in a vault file, never in the inventory",
+  },
+  {
+    name: "ansible_python_interpreter",
+    what: "which Python to run modules with. `auto_silent` finds one and stops warning about it",
+  },
+  {
+    name: "ansible_connection",
+    what: "`ssh` by default. `local` runs on your own machine, which is what `delegate_to: localhost` uses",
+  },
+];
+
 /** A role is a directory layout, and the layout is the API. */
 export const ROLE_TREE: { path: string; depth: number; note?: string }[] = [
   { path: "roles/webserver/", depth: 0 },
