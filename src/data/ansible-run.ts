@@ -1647,6 +1647,10 @@ export const CONNECTION: { name: string; what: string }[] = [
     name: "ansible_connection",
     what: "`ssh` by default. `local` runs on your own machine, which is what `delegate_to: localhost` uses",
   },
+  {
+    name: "host key checking",
+    what: "the first run against a new host fails with `Host key verification failed` until its key is in `~/.ssh/known_hosts`. `ANSIBLE_HOST_KEY_CHECKING=False` skips the check, and trades away the protection it gives you",
+  },
 ];
 
 /** A role is a directory layout, and the layout is the API. */

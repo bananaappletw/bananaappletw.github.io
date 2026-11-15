@@ -140,13 +140,29 @@ describe("/ansible covers Ansible's own documented topics", () => {
    *   docs.ansible.com/ansible/latest/playbook_guide/index.html
    *   docs.ansible.com/ansible/latest/inventory_guide/index.html
    *
-   * Chapters of theirs that are deliberately absent, so the omissions are
-   * on the record rather than unnoticed: ansible-pull (a different
-   * execution model), Python3-in-templates and the now/undef functions
-   * (version trivia), language-specific version managers, search paths,
-   * YAML anchors, unsafe strings, list comprehensions and complex type
-   * transformations (reference material, not concepts), and play argument
-   * validation (only meaningful once you write roles for other people).
+   * Every chapter and sub-chapter of those three guides is accounted for:
+   * the ones checked below, plus these, left out on purpose so that the
+   * omissions are a decision on the record rather than an oversight.
+   *
+   *   ansible-pull                  a different execution model entirely
+   *   Python3 in templates          version trivia
+   *   the now() and undef() funcs   version trivia
+   *   language-specific managers    rvm and nvm, not an Ansible concept
+   *   search paths (config, task)   reference material
+   *   unsafe or raw strings         reference material
+   *   YAML anchors and aliases      YAML, not Ansible
+   *   list comprehensions           reference material
+   *   complex type transformations  reference material
+   *   play argument validation      only matters writing roles for others
+   *   how variables are merged      hash_behaviour, discouraged by the docs
+   *   inventory scripts (Cobbler)   superseded by inventory plugins
+   *   static groups of dynamic ones a corner of dynamic inventory
+   *   paramiko and other transports ssh is the one that matters
+   *   running against localhost     covered by the implicit host
+   *
+   * The riskier entries below were also checked by reading the sentence the
+   * page prints, not only by finding the term: a needle proves a word
+   * appears, and what is being tested is whether it is explained.
    *
    * It reads the BUILT page, because a concept explained in a source
    * comment is explained to nobody, and the needles are words from the
@@ -218,9 +234,16 @@ describe("/ansible covers Ansible's own documented topics", () => {
 
     // inventory_guide
     ["inventory basics: hosts and groups", ["prod:children"]],
+    ["defining variables in INI format", ["[all:vars]"]],
     ["host and group variables", ["group_vars", "host_vars"]],
+    ["passing multiple inventory sources", ["can be given more than once"]],
+    ["organizing inventory in a directory", ["or pointed at a"]],
     ["dynamic inventory", ["inventory plugin"]],
     ["patterns: targeting hosts and groups", ["webservers:!web3"]],
+    ["implicit localhost", ["an implicit"]],
+    ["setting a remote user", ["ansible_user"]],
+    ["setting up SSH keys", ["ansible_ssh_private_key_file"]],
+    ["managing host key checking", ["Host key verification failed"]],
     [
       "connecting to hosts: behavioral parameters",
       ["ansible_python_interpreter"],

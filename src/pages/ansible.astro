@@ -1477,6 +1477,15 @@ const payload = {
           </p>
 
           <p class="tree-foot">
+            One file is the small case. <code>-i</code> can be given more than once,
+            or pointed at a <b>directory</b>, and Ansible merges everything in
+            it — which is how production and staging stay separate files that
+            never get confused for one another. There is always an implicit <code
+              >localhost</code
+            > too, reachable without appearing in any inventory at all.
+          </p>
+
+          <p class="tree-foot">
             This inventory is a file you write. On a cloud it usually is not: an <b
               >inventory plugin</b
             > asks the provider what exists and builds the groups from tags, so a
