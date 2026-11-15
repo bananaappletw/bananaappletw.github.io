@@ -128,151 +128,219 @@ describe("llms.txt", () => {
 
 describe("/ansible covers Ansible's own documented topics", () => {
   /**
-   * The page's purpose is to teach Ansible, and "teaches Ansible" is not
-   * something the other tests can see: they check the simulation's
-   * arithmetic, not its syllabus.
+   * The page exists to teach Ansible, and "teaches Ansible" is not something
+   * the other tests can see: they check the simulation's arithmetic, not its
+   * syllabus.
    *
-   * The list below is NOT this repository's opinion of what matters. Each
-   * entry is a chapter heading from Ansible's own documentation, so the
-   * standard is theirs and can be re-derived by anyone:
+   * The list below is NOT this repository's opinion of what matters. Every
+   * entry is a chapter or sub-chapter of Ansible's own documentation, taken
+   * from the seven user-facing guides, so the standard is theirs and anyone
+   * can re-derive it:
    *
    *   docs.ansible.com/ansible/latest/getting_started/index.html
    *   docs.ansible.com/ansible/latest/playbook_guide/index.html
    *   docs.ansible.com/ansible/latest/inventory_guide/index.html
+   *   docs.ansible.com/ansible/latest/command_guide/index.html
+   *   docs.ansible.com/ansible/latest/vault_guide/index.html
+   *   docs.ansible.com/ansible/latest/collections_guide/index.html
+   *   docs.ansible.com/ansible/latest/module_plugin_guide/index.html
+   *   docs.ansible.com/ansible/latest/tips_tricks/index.html
    *
-   * Every chapter and sub-chapter of those three guides is accounted for:
-   * the ones checked below, plus these, left out on purpose so that the
-   * omissions are a decision on the record rather than an oversight.
+   * Every chapter of those guides is in one of the two lists here: COVERED,
+   * which is asserted, or OMITTED, which carries the reason beside it. An
+   * omission with a reason is a decision; an omission nobody writes down is
+   * an oversight, and keeping both lists in one place is what stops the
+   * second from being mistaken for the first.
    *
-   *   ansible-pull                  a different execution model entirely
-   *   Python3 in templates          version trivia
-   *   the now() and undef() funcs   version trivia
-   *   language-specific managers    rvm and nvm, not an Ansible concept
-   *   search paths (config, task)   reference material
-   *   unsafe or raw strings         reference material
-   *   YAML anchors and aliases      YAML, not Ansible
-   *   list comprehensions           reference material
-   *   complex type transformations  reference material
-   *   play argument validation      only matters writing roles for others
-   *   how variables are merged      hash_behaviour, discouraged by the docs
-   *   inventory scripts (Cobbler)   superseded by inventory plugins
-   *   static groups of dynamic ones a corner of dynamic inventory
-   *   paramiko and other transports ssh is the one that matters
-   *   running against localhost     covered by the implicit host
-   *
-   * The riskier entries below were also checked by reading the sentence the
-   * page prints, not only by finding the term: a needle proves a word
-   * appears, and what is being tested is whether it is explained.
-   *
-   * It reads the BUILT page, because a concept explained in a source
-   * comment is explained to nobody, and the needles are words from the
-   * explanation rather than the bare keyword — `set_fact`, `ignore_errors`
-   * and `vars_prompt` all passed a looser version of this check while being
-   * nothing but rows in the precedence table.
+   * It reads the BUILT page, because a concept explained in a source comment
+   * is explained to nobody, and the needles are phrases from the explanation
+   * rather than the bare keyword. That distinction has caught real defects:
+   * `set_fact`, `ignore_errors` and `vars_prompt` all passed a looser check
+   * while being nothing but rows in the precedence table, and action plugins
+   * were explained only inside a panel reachable by clicking a bar one pixel
+   * wide.
    */
   const text = readable(
     readFileSync(join(DIST, "ansible", "index.html"), "utf8"),
   );
 
-  /** [the docs' chapter, what proves the page covers it] */
-  const CHAPTERS: [string, string[]][] = [
-    // getting_started: Ansible concepts
-    ["control node", ["control node"]],
-    ["managed nodes need no agent", ["only needs SSH"]],
-    ["inventory", ["inventory/hosts.ini"]],
-    ["creating a playbook", ["A task is three things"]],
-    ["modules", ["A module is one unit of work"]],
+  /** [the docs' chapter, a phrase the page's explanation of it contains] */
+  const COVERED: [string, string][] = [
+    // getting started
+    ["Introduction to Ansible", "control node"],
+    ["Start automating with Ansible", "ansible -i inventory"],
+    ["Building an inventory", "inventory/hosts.ini"],
+    ["Creating a playbook", "A task is three things"],
+    ["Ansible concepts: managed node", "only needs SSH"],
+    // playbook guide
+    ["Playbook syntax", "PLAY [Web tier]"],
+    ["Playbook execution", "Tasks run from top to bottom"],
+    ["Verifying playbooks", "--syntax-check"],
+    ["Templating (Jinja2)", "The host never sees the braces"],
+    ["Using filters to manipulate data", "A Jinja filter"],
+    ["Tests", "A Jinja test"],
+    ["Lookups", "lookup("],
+    ["Loops", "item is the loop variable"],
+    ["Delegation and local actions", "Run this task somewhere else"],
+    ["Conditionals", "If it is false, the task is skipped"],
+    ["Blocks", "runs rescue instead of dropping the host"],
+    ["Handlers: running operations on change", "Queues the handler by name"],
+    ["Error handling in playbooks", "Decides what counts as a failure"],
+    ["Setting the remote environment", "Environment variables for the task"],
+    ["Reusing Ansible artifacts", "The role name cannot be a variable"],
+    ["Roles", "Run these roles before"],
+    ["Module defaults", "Set an argument once"],
+    ["Interactive input: prompts", "Ask for a value when the run starts"],
+    ["Using variables", "Names you set once and use below"],
+    ["Variable precedence", "Twenty-two levels"],
+    ["Discovering variables: facts", "about 1,200 facts"],
+    ["Discovering variables: magic variables", "A magic variable"],
+    ["Rolling upgrades", "Run the whole play on one host at a time"],
+    ["Validating tasks: check mode and diff mode", "A dry run"],
+    ["Understanding privilege escalation: become", "Short for become"],
+    ["Tags", "Labels on tasks or roles"],
+    ["Executing playbooks for troubleshooting", "-vvv adds the SSH commands"],
+    ["Debugging tasks", "ansible.builtin.debug"],
+    ["Asynchronous actions and polling", "Start a long task without"],
     [
-      "collections and fully qualified names",
-      ["namespace, collection, module"],
+      "Controlling playbook execution: strategies",
+      "linear makes every host wait",
     ],
-
-    // playbook_guide: Ansible playbooks
-    ["playbook syntax: plays", ["PLAY [Web tier]"]],
-    ["playbook execution order", ["Tasks run from top to bottom"]],
-    ["verifying playbooks", ["--syntax-check", "ansible-lint"]],
-
-    // playbook_guide: Working with playbooks
-    ["templating (Jinja2)", ["The host never sees the braces"]],
-    ["using filters to manipulate data", ["A Jinja filter"]],
-    ["tests", ["A Jinja test"]],
-    ["lookups", ["lookup('file'", "lookup("]],
-    ["loops", ["item is the loop variable"]],
+    // inventory guide
+    ["Inventory basics: formats, hosts, and groups", "prod:children"],
+    ["Passing multiple inventory sources", "can be given more than once"],
+    ["Organizing inventory in a directory", "or pointed at a"],
+    ["Defining variables in INI format", "[all:vars]"],
+    ["Assigning a variable to one machine: host variables", "host_vars"],
+    ["Assigning a variable to many machines: group variables", "group_vars"],
+    ["Inventory setup examples", "where the files live"],
+    ["Working with dynamic inventory", "inventory plugin"],
+    ["Patterns: targeting hosts and groups", "webservers:!web3"],
+    ["Implicit localhost", "an implicit"],
     [
-      "delegation and local actions",
-      ["Run this task somewhere else", "run_once"],
+      "Connecting to hosts: behavioral parameters",
+      "ansible_python_interpreter",
     ],
-    ["conditionals", ["If it is false, the task is skipped"]],
-    ["blocks", ["Ansible runs rescue instead of dropping the host"]],
-    ["handlers: running operations on change", ["Queues the handler by name"]],
+    ["ControlPersist", "ControlPersist"],
+    ["Setting a remote user", "ansible_user"],
+    ["Setting up SSH keys", "ansible_ssh_private_key_file"],
+    ["Running against localhost", "delegate_to: localhost"],
+    ["Managing host key checking", "Host key verification failed"],
+    // command guide
+    ["Introduction to ad hoc commands", "ansible -i inventory"],
+    ["ansible-config", "ansible-config"],
+    ["ansible-doc", "ansible-doc"],
+    ["ansible-galaxy", "ansible-galaxy install -r"],
+    ["ansible-inventory", "ansible-inventory"],
+    ["ansible-playbook", "ansible-playbook"],
+    ["ansible-vault", "ansible-vault"],
+    // vault guide
+    ["Ansible Vault", "Encrypts a whole file with a password"],
+    ["Managing multiple passwords with vault IDs", "--vault-id"],
+    ["Storing and accessing vault passwords", "--vault-password-file"],
+    ["Encrypting individual variables", "encrypt_string"],
+    ["Encrypting files with Ansible Vault", "ansible-vault create"],
+    ["Passing a single password", "--ask-vault-pass"],
     [
-      "error handling in playbooks",
-      ["Decides what counts as a failure", "Carry on even if this task fails"],
+      "When are encrypted files made visible?",
+      "Stops a task printing its arguments",
     ],
-    ["setting the remote environment", ["environment:"]],
     [
-      "reusing artifacts: import vs include",
-      ["The role name cannot be a variable"],
+      "Format of files encrypted with Ansible Vault",
+      "$ANSIBLE_VAULT;1.1;AES256",
     ],
-    ["roles", ["Run these roles before"]],
-    ["module defaults", ["module_defaults"]],
-    ["interactive input: prompts", ["vars_prompt"]],
-    ["using variables", ["Names you set once and use below"]],
-    ["variable precedence", ["Twenty-two levels"]],
-    ["discovering variables: facts", ["about 1,200 facts"]],
-    ["magic variables", ["A magic variable", "hostvars"]],
-    ["rolling upgrades", ["Run the whole play on one host at a time"]],
-
-    // playbook_guide: Executing playbooks
-    ["check mode and diff mode", ["A dry run"]],
-    ["privilege escalation: become", ["Short for become"]],
-    ["tags", ["Labels on tasks or roles"]],
-    ["troubleshooting with verbosity", ["-vvv adds the SSH commands"]],
-    ["debugging tasks", ["ansible.builtin.debug"]],
-    ["asynchronous actions and polling", ["async:"]],
-    ["strategies and forks", ["no host starts a task until every host"]],
-
-    // inventory_guide
-    ["inventory basics: hosts and groups", ["prod:children"]],
-    ["defining variables in INI format", ["[all:vars]"]],
-    ["host and group variables", ["group_vars", "host_vars"]],
-    ["passing multiple inventory sources", ["can be given more than once"]],
-    ["organizing inventory in a directory", ["or pointed at a"]],
-    ["dynamic inventory", ["inventory plugin"]],
-    ["patterns: targeting hosts and groups", ["webservers:!web3"]],
-    ["implicit localhost", ["an implicit"]],
-    ["setting a remote user", ["ansible_user"]],
-    ["setting up SSH keys", ["ansible_ssh_private_key_file"]],
-    ["managing host key checking", ["Host key verification failed"]],
+    // collections guide
     [
-      "connecting to hosts: behavioral parameters",
-      ["ansible_python_interpreter"],
+      "Install multiple collections with a requirements file",
+      "requirements.yml",
     ],
-    ["ControlPersist", ["ControlPersist"]],
-
-    // things this page teaches that the guides above cover elsewhere
-    ["vault", ["Encrypts a whole file with a password"]],
-    ["no_log", ["Stops a task printing its arguments"]],
-    ["idempotency", ["Idempotent means running it twice"]],
+    ["Using collections in a playbook", "namespace, collection, module"],
+    ["Simplifying module names with the collections keyword", "collections:"],
+    // modules and plugins guide
+    ["Introduction to modules", "A module is one unit of work"],
+    ["Working with plugins", "extends Ansible itself"],
+    ["Action plugins", "an ACTION plugin"],
+    ["Filter, test and lookup plugins", "A Jinja filter"],
+    ["Inventory plugins", "inventory plugin"],
+    // tips and tricks
+    [
+      "Always name plays, tasks, and blocks",
+      "It only changes what the output prints",
+    ],
+    ["Always mention the state", "It is not a command to run"],
+    ["Use fully qualified collection names", "namespace, collection, module"],
+    [
+      "Separate production and staging inventory",
+      "production and staging stay",
+    ],
+    ["Update in batches", "Run the whole play on one host at a time"],
+    ["Handling OS and distro differences", "picks apt instead of dnf"],
+    ["Sample directory layout", "where the files live"],
+    ["Keep vaulted variables safely visible", "readable in a diff"],
+    // taught here, and spread across those guides
+    ["Idempotency", "Idempotent means running it twice"],
     [
       "ok, changed, skipped, failed, unreachable",
-      ["could not be reached at all"],
+      "could not be reached at all",
     ],
-    ["fact caching", ["reads facts that an earlier run saved"]],
-    ["pipelining", ["pipelining = True"]],
-    ["set_fact", ["Makes a new variable during the run"]],
-    ["until and retries", ["Retry a task until a condition holds"]],
-    ["ad-hoc commands", ["ansible -i inventory"]],
-    ["ansible-doc", ["ansible-doc"]],
-    ["ansible-galaxy", ["ansible-galaxy install -r"]],
+    ["Fact caching", "reads facts that an earlier run saved"],
+    ["Pipelining", "pipelining = True"],
+    ["set_fact", "Makes a new variable during the run"],
+    ["until and retries", "Retry a task until a condition holds"],
+    ["forks", "Raising it past the number"],
   ];
 
-  for (const [chapter, needles] of CHAPTERS) {
+  /** every remaining chapter of those guides, and why it is not here */
+  const OMITTED: [string, string][] = [
+    ["Ansible-Pull", "a different execution model entirely"],
+    ["Python3 in templates", "version trivia"],
+    ["The now function", "version trivia"],
+    ["The undef function", "version trivia"],
+    [
+      "Language-specific version managers",
+      "rvm and nvm, not an Ansible concept",
+    ],
+    ["Play Argument Validation", "only matters when writing roles for others"],
+    ["Search paths (config, task)", "reference material"],
+    ["Unsafe or raw strings", "reference material"],
+    ["YAML anchors and aliases", "YAML, not Ansible"],
+    ["Loops and list comprehensions", "reference material"],
+    ["Complex type transformations", "reference material"],
+    ["How variables are merged", "hash_behaviour, discouraged by the docs"],
+    ["Inventory script example: Cobbler", "superseded by inventory plugins"],
+    ["Static groups of dynamic groups", "a corner of dynamic inventory"],
+    ["Other connection methods", "ssh is the one that matters"],
+    ["ansible-console", "an interactive REPL, not a concept"],
+    ["Verifying, listing, downloading collections", "operational detail"],
+    ["Installing collections from git, source, offline", "operational detail"],
+    [
+      "Module maintenance and rejecting modules",
+      "project process, not a concept",
+    ],
+    [
+      "Cache, callback, cliconf, netconf, terminal plugins",
+      "not written or configured to learn Ansible",
+    ],
+    [
+      "Use Execution Environments",
+      "a containerised runtime, a packaging choice",
+    ],
+    ["Managing Windows, BSD and z/OS hosts", "a platform guide, not a concept"],
+  ];
+
+  for (const [chapter, needle] of COVERED) {
     it(`covers "${chapter}"`, () => {
-      expect(
-        needles.some(n => text.includes(n)),
-        chapter,
-      ).toBe(true);
+      expect(text.includes(needle), `${chapter} :: ${needle}`).toBe(true);
     });
   }
+
+  it("keeps the omission list honest", () => {
+    // Every omission carries a reason, and none of them is blank. The list
+    // is the record; this only stops it rotting into bare names.
+    for (const [chapter, why] of OMITTED) {
+      expect(chapter.length, "a chapter with no name").toBeGreaterThan(2);
+      expect(why.length, `${chapter} has no stated reason`).toBeGreaterThan(8);
+    }
+    expect(COVERED.length).toBeGreaterThan(OMITTED.length * 2);
+  });
 });

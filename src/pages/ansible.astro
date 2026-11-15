@@ -50,6 +50,7 @@ import {
   GROUPS,
   HOSTS,
   INVENTORY,
+  LAYOUT,
   LINKS,
   LINK_MS,
   MANAGED,
@@ -1509,7 +1510,23 @@ const payload = {
           </ul>
         </div>
         <div class="tree">
-          <p class="tree-head">a role is its layout</p>
+          <p class="tree-head">where the files live</p>
+          <ul class="role-tree">
+            {
+              LAYOUT.map((r, i) => (
+                <li
+                  class={`${r.depth ? "in" : "root"}${
+                    i === LAYOUT.length - 1 ? " last" : ""
+                  }`}
+                >
+                  <code>{r.path}</code>
+                  {r.note ? <em set:html={ticks(r.note)} /> : null}
+                </li>
+              ))
+            }
+          </ul>
+
+          <p class="tree-head sub">a role is its layout</p>
           <ul class="role-tree">
             {
               ROLE_TREE.map((r, i) => (

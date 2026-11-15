@@ -319,6 +319,10 @@ export const STEPS: Step[] = [
         what: "The module's arguments. Here they are `key=value` pairs. In a file they are YAML.",
       },
       {
+        word: "plugins",
+        what: "A module runs on the target. A PLUGIN runs on the control node and extends Ansible itself. You meet several on this page without the name: an ACTION plugin, which is what `package` and `template` really are, doing work locally before any module is sent; filter, test and lookup plugins inside templates; inventory plugins that build the host list; connection and strategy plugins. `ansible-doc -t lookup -l` lists one kind.",
+      },
+      {
         word: "-b",
         what: "Short for become. Run the module as root, using sudo.",
         without: "Without it you stay the `deploy` user and the install fails.",
@@ -735,6 +739,10 @@ export const STEPS: Step[] = [
         note: "the separate tool that catches what is legal but unwise",
       },
       {
+        text: "ansible-config dump --only-changed",
+        note: "which settings are not at their defaults, and where each came from",
+      },
+      {
         text: "ansible-doc ansible.builtin.service",
         note: "every argument a module takes, with examples, offline",
       },
@@ -768,6 +776,10 @@ export const STEPS: Step[] = [
         note: "decrypt, edit, re-encrypt, in one step",
       },
       {
+        text: "ansible-vault encrypt_string 's3cret' --name db_password",
+        note: "encrypt one value, to paste into an ordinary vars file",
+      },
+      {
         text: "ansible-playbook -i inventory/hosts.ini site.yml --ask-vault-pass",
         note: "ask for the password when the run starts",
       },
@@ -775,11 +787,23 @@ export const STEPS: Step[] = [
         text: "ansible-playbook -i inventory/hosts.ini site.yml \\\n    --vault-password-file ~/.vault-pass",
         note: "or read it from a file, for CI",
       },
+      {
+        text: "ansible-playbook site.yml \\\n    --vault-id dev@prompt --vault-id prod@~/.prod-pass",
+        note: "two passwords at once, each with a label",
+      },
     ],
     keywords: [
       {
         word: "ansible-vault",
         what: "Encrypts a whole file with a password. The file still lives in git, but as ciphertext. Ansible decrypts it in memory when it reads the variables.",
+      },
+      {
+        word: "encrypt_string",
+        what: "Encrypts a single value rather than a whole file. The output pastes straight into a normal vars file, so the rest of that file stays readable in a diff.",
+      },
+      {
+        word: "--vault-id",
+        what: "More than one vault password at a time, each with a label: `--vault-id dev@prompt --vault-id prod@~/.prod-pass`. Developers can then hold the dev key and not the production one.",
       },
       {
         word: "vars_prompt:",
@@ -851,6 +875,10 @@ export const STEPS: Step[] = [
         what: "Static. The tasks are read when the playbook is parsed, so `--tags` and `--list-tasks` can see them. The role name cannot be a variable.",
       },
       {
+        word: "collections:",
+        what: "Lists collections to search, so tasks in this play can say `postgresql_db` instead of `community.postgresql.postgresql_db`. Convenient, and the full name is still the safer habit.",
+      },
+      {
         word: "module_defaults:",
         what: "Set an argument once for every call of a module in the play. Credentials for a cloud module are the usual case, instead of repeating them on twenty tasks.",
       },
@@ -867,6 +895,8 @@ export const STEPS: Step[] = [
         yaml: [
           "- name: Web tier",
           "  hosts: webservers",
+          "  collections:",
+          "    - community.postgresql",
           "  module_defaults:",
           "    ansible.builtin.uri:",
           "      validate_certs: false",

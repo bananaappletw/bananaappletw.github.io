@@ -1653,6 +1653,30 @@ export const CONNECTION: { name: string; what: string }[] = [
   },
 ];
 
+/**
+ * Where all of it lives. Ansible's own tips guide opens its sample setup
+ * with this, and a reader who has met inventories, group_vars, roles and a
+ * vault file separately has no picture of how they sit together.
+ */
+export const LAYOUT: { path: string; depth: number; note?: string }[] = [
+  { path: "site.yml", depth: 0, note: "the playbook you run" },
+  { path: "ansible.cfg", depth: 0, note: "settings, found by being here" },
+  {
+    path: "requirements.yml",
+    depth: 0,
+    note: "roles and collections to fetch",
+  },
+  { path: "inventory/", depth: 0 },
+  { path: "hosts.ini", depth: 1, note: "or a whole directory of sources" },
+  { path: "group_vars/", depth: 0 },
+  { path: "all.yml", depth: 1, note: "every host, the lowest level" },
+  { path: "webservers.yml", depth: 1 },
+  { path: "prod/vault.yml", depth: 1, note: "encrypted; still committed" },
+  { path: "host_vars/", depth: 0 },
+  { path: "web3.yml", depth: 1, note: "the one machine that differs" },
+  { path: "roles/", depth: 0, note: "your own, and ones from Galaxy" },
+];
+
 /** A role is a directory layout, and the layout is the API. */
 export const ROLE_TREE: { path: string; depth: number; note?: string }[] = [
   { path: "roles/webserver/", depth: 0 },
