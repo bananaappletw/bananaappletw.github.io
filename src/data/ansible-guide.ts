@@ -420,6 +420,33 @@ export const STEPS: Step[] = [
         word: "web2 says ok",
         what: "Same task, same file, different answer. web2 already had nginx. A verdict describes the host, not the task.",
       },
+      {
+        word: "patterns",
+        what: "`hosts:` and `--limit` both take a pattern, not only a group name: a wildcard, a union, a difference, an intersection.",
+      },
+    ],
+    insets: [
+      {
+        title: "patterns — the ways to name hosts",
+        yaml: [
+          "all                   every host in the inventory",
+          "webservers            one group",
+          "web1,db1              a list",
+          "web*                  a wildcard",
+          "webservers:dbservers  both groups, a union",
+          "webservers:!web3      the group, except web3",
+          "webservers:&prod      only those in both",
+          "~web[1-2]             a regular expression",
+        ],
+        out: [
+          "$ ansible-playbook site.yml --limit 'webservers:!web3'",
+          "",
+          "PLAY [Web tier] *************************",
+          "ok: [web1]",
+          "ok: [web2]",
+        ],
+        note: "Quote any pattern with `!` or `&` in it, or the shell eats it before Ansible sees it. `--list-hosts` prints who a pattern matches without running anything.",
+      },
     ],
     output: "one",
     grid: true,
@@ -460,9 +487,21 @@ export const STEPS: Step[] = [
       },
       {
         word: "| default",
-        what: "A Jinja filter. `{{ app_root | default('/srv/app') }}` uses the variable if it is set, and that value if it is not.",
+        what: "A Jinja filter. `{{ app_root | default('/srv/app') }}` uses the variable if it is set, and that value if it is not. There are hundreds more: `| length`, `| join`, `| to_json`, `| b64encode`.",
         without:
           "Without it, reading a variable nobody set fails the task with `undefined variable`.",
+      },
+      {
+        word: "is defined",
+        what: "A Jinja test, used in `when:`. `when: cert is defined`, `when: result is succeeded`, `when: path is file`. A test asks a question; a filter changes a value.",
+      },
+      {
+        word: "inventory_hostname",
+        what: "A magic variable — one Ansible sets itself. `inventory_hostname` is this host's name in the inventory, `groups` holds every group and its members, and `hostvars` reaches another host's variables.",
+      },
+      {
+        word: "lookup()",
+        what: "Reads something from YOUR machine while the template renders: `lookup('file', 'tls.key')`, `lookup('env', 'HOME')`, `lookup('password', ...)`.",
       },
       {
         word: 'mode: "0644"',
@@ -493,6 +532,12 @@ export const STEPS: Step[] = [
           "{% if ansible_facts.os_family == 'Debian' %}",
           "    include /etc/nginx/mime.types;",
           "{% endif %}",
+          "",
+          "    # magic variables, and a lookup off your own machine",
+          "{% for host in groups['webservers'] %}",
+          "    # peer {{ hostvars[host].ansible_default_ipv4.address }}",
+          "{% endfor %}",
+          "    ssl_certificate_key {{ lookup('file', 'tls.key') }};",
           "}",
         ],
         out: [
@@ -530,6 +575,10 @@ export const STEPS: Step[] = [
         what: "Verbosity. `-v` prints each module's JSON reply. `-vv` adds the task's file and line. `-vvv` adds the SSH commands. This is the fastest way to find out why something said `changed`.",
       },
       {
+        word: "environment:",
+        what: "Environment variables for the task's own process on the target: `http_proxy`, `PATH`, `JAVA_HOME`. It does not change the host's login shell, only this one command.",
+      },
+      {
         word: "set_fact",
         what: "Makes a new variable during the run, from anything you already have. `register` captures what a module returned; `set_fact` computes a value yourself.",
         without:
@@ -562,6 +611,8 @@ export const STEPS: Step[] = [
         yaml: [
           "- name: Check the config",
           "  ansible.builtin.command: nginx -t",
+          "  environment:",
+          '    PATH: "/usr/local/sbin:{{ ansible_env.PATH }}"',
           "  register: result",
           "  changed_when: false",
           "",
@@ -672,6 +723,18 @@ export const STEPS: Step[] = [
         note: "start again after a failure, without redoing the slow part",
       },
       {
+        text: "ansible-playbook site.yml --syntax-check",
+        note: "is the YAML even valid; parses, runs nothing",
+      },
+      {
+        text: "ansible-playbook site.yml --list-tasks --list-hosts",
+        note: "what would run, and where, without running it",
+      },
+      {
+        text: "ansible-lint site.yml",
+        note: "the separate tool that catches what is legal but unwise",
+      },
+      {
         text: "ansible-doc ansible.builtin.service",
         note: "every argument a module takes, with examples, offline",
       },
@@ -719,6 +782,10 @@ export const STEPS: Step[] = [
         what: "Encrypts a whole file with a password. The file still lives in git, but as ciphertext. Ansible decrypts it in memory when it reads the variables.",
       },
       {
+        word: "vars_prompt:",
+        what: "Ask for a value when the run starts, instead of storing it. Good for a one-off password; no use in CI, where nobody is there to type.",
+      },
+      {
         word: "no_log: true",
         what: "Stops a task printing its arguments and its result. Without it a password you pass to a module appears in the output, and in anything that captures the output.",
         without:
@@ -735,6 +802,12 @@ export const STEPS: Step[] = [
           "",
           "# group_vars/prod/vars.yml, in the clear",
           'db_password: "{{ vault_db_password }}"',
+          "",
+          "# or ask for it, once, at the start of the run",
+          "vars_prompt:",
+          "  - name: db_password",
+          "    prompt: Database password",
+          "    private: true",
           "",
           "# and in a task",
           "- name: Set the database password",
@@ -778,6 +851,10 @@ export const STEPS: Step[] = [
         what: "Static. The tasks are read when the playbook is parsed, so `--tags` and `--list-tasks` can see them. The role name cannot be a variable.",
       },
       {
+        word: "module_defaults:",
+        what: "Set an argument once for every call of a module in the play. Credentials for a cloud module are the usual case, instead of repeating them on twenty tasks.",
+      },
+      {
         word: "include_role",
         what: "Dynamic. The tasks are read when the play reaches that line, so the role name can be a variable or sit in a loop. Tags do not reach inside.",
         without:
@@ -790,6 +867,9 @@ export const STEPS: Step[] = [
         yaml: [
           "- name: Web tier",
           "  hosts: webservers",
+          "  module_defaults:",
+          "    ansible.builtin.uri:",
+          "      validate_certs: false",
           "  roles:",
           "    - webserver",
           "",
@@ -855,6 +935,10 @@ export const STEPS: Step[] = [
         word: "until:",
         what: "Retry a task until a condition holds. With `retries` and `delay`, it is how you wait for something to come up instead of guessing with a sleep.",
       },
+      {
+        word: "async:",
+        what: "Start a long task without holding the connection open for it. `poll: 0` fires and forgets, and a later task with `async_status` collects the result. This is how a job that takes an hour survives an SSH timeout.",
+      },
     ],
     insets: [
       {
@@ -900,6 +984,11 @@ export const STEPS: Step[] = [
           "- name: Tidy up, and never mind if it fails",
           "  ansible.builtin.command: /srv/app/cleanup",
           "  ignore_errors: true",
+          "",
+          "- name: Reindex, which takes an hour",
+          "  ansible.builtin.command: /srv/app/reindex",
+          "  async: 3600",
+          "  poll: 0",
         ],
         out: [
           "TASK [Wait for the port to answer] ******",

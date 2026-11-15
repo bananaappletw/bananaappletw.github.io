@@ -1476,6 +1476,17 @@ const payload = {
             beats its group, always.
           </p>
 
+          <p class="tree-foot">
+            This inventory is a file you write. On a cloud it usually is not: an <b
+              >inventory plugin</b
+            > asks the provider what exists and builds the groups from tags, so a
+            machine created ten minutes ago is already in <code>webservers</code
+            >.
+            <code>ansible-inventory --graph</code> prints whatever it produced, file
+            or plugin, which is the way to find out what Ansible thinks your estate
+            looks like.
+          </p>
+
           <p class="tree-head sub">how it reaches a host</p>
           <ul class="conn">
             {
