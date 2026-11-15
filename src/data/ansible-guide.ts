@@ -291,8 +291,17 @@ export const STEPS: Step[] = [
   {
     n: 2,
     title: "One host, one module",
-    lead: "Start with no file at all. Ansible can run one module on one host straight from the command line. Everything else on this page is this, repeated and written down.",
+    lead: "Start with no file at all. Ansible can run one module on one host straight from the command line — this is called an AD HOC command, and everything else on this page is this, repeated and written down.",
     shell: [
+      {
+        text: "python3 -m pip install --user ansible",
+        note: "on your machine only; the hosts get nothing installed",
+      },
+      {
+        text: "ssh-copy-id deploy@web1.example.net",
+        note: "your key on the host, and its key in your known_hosts",
+      },
+      { text: "", out: true },
       {
         text: "ansible -i inventory/hosts.ini web1 -m ansible.builtin.ping",
         note: "check that SSH works and Python is there",
@@ -300,8 +309,8 @@ export const STEPS: Step[] = [
       { text: 'web1 | SUCCESS => {"ping": "pong"}', out: true },
       { text: "", out: true },
       {
-        text: "ansible -i inventory/hosts.ini web1 \\\n    -m ansible.builtin.package -a 'name=nginx state=present' -b",
-        note: "install nginx, as root",
+        text: "ansible -i inventory/hosts.ini web1 \\\n    -m ansible.builtin.package -a 'name=nginx state=present' -b -K",
+        note: "install nginx, as root, asking for the sudo password",
       },
       { text: "web1 | CHANGED => { … }", out: true },
     ],
@@ -327,6 +336,10 @@ export const STEPS: Step[] = [
         what: "Short for become. Run the module as root, using sudo.",
         without: "Without it you stay the `deploy` user and the install fails.",
       },
+      {
+        word: "-K",
+        what: "Ask for the sudo password, once, at the start. If your sudo is not passwordless, every `-b` task fails with `Missing sudo password` until you add this — which is the most common first run failure there is. `become_user:` changes who you become; `become_method:` changes how.",
+      },
     ],
     takeaway:
       "One module, its arguments, and one host. That is the whole unit. You do not install anything on web1 first — Ansible only needs SSH and a Python.",
@@ -334,7 +347,7 @@ export const STEPS: Step[] = [
   {
     n: 3,
     title: "Write it down",
-    lead: "Now put it in a file. A task is three things: a name, a module, and the module's arguments. That is what you just typed. A task cannot sit alone in a file, so it goes inside a play. `--limit web1` keeps the run on one machine for now.",
+    lead: "Now put it in a file. That file is a PLAYBOOK, and it holds the whole hierarchy: a playbook is a list of plays, a play is a group of hosts plus a list of tasks, and a task is one module with its arguments. That is what you just typed on the command line, written down.",
     shell: [
       {
         text: "ansible-playbook -i inventory/hosts.ini site.yml --limit web1",
@@ -342,6 +355,12 @@ export const STEPS: Step[] = [
       },
     ],
     keywords: [
+      {
+        word: "the YAML itself",
+        what: "Two shapes, and that is nearly all of it. A line starting `- ` is an item in a LIST; `key: value` is an entry in a DICTIONARY. Indentation says what belongs to what, with spaces only — a tab is a syntax error. Most first playbooks fail on YAML, not on Ansible.",
+        without:
+          "`ansible-playbook --syntax-check` catches those before anything connects to anything.",
+      },
       {
         word: "- name:",
         what: "A label. It only changes what the output prints. The task still works without it.",

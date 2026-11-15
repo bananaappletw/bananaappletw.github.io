@@ -170,7 +170,7 @@ describe("/ansible covers Ansible's own documented topics", () => {
     ["Introduction to Ansible", "control node"],
     ["Start automating with Ansible", "ansible -i inventory"],
     ["Building an inventory", "inventory/hosts.ini"],
-    ["Creating a playbook", "A task is three things"],
+    ["Creating a playbook", "a playbook is a list of plays"],
     ["Ansible concepts: managed node", "only needs SSH"],
     // playbook guide
     ["Playbook syntax", "PLAY [Web tier]"],
