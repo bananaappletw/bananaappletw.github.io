@@ -388,7 +388,7 @@ export const STEPS: Step[] = [
       },
       {
         word: "ansible.builtin.package:",
-        what: "The module's full name: namespace, collection, module. `ansible.builtin` comes with Ansible. Others come from Galaxy.",
+        what: "The module's full name: namespace, collection, module. `ansible.builtin` comes with Ansible. Others come from Galaxy. `package` is the generic one: it asks the host which manager it has and picks `dnf` on Rocky, `apt` on Ubuntu, so one task covers both. `ansible.builtin.dnf` and `ansible.builtin.apt` are the specific ones, and Part II shows the run choosing between them.",
       },
       {
         word: "state: present",

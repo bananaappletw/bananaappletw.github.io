@@ -1701,6 +1701,10 @@ export const CONNECTION: { name: string; what: string }[] = [
     what: "`ssh` by default. `local` runs on your own machine, which is what `delegate_to: localhost` uses",
   },
   {
+    name: "ssh_args / ControlPersist",
+    what: "the SSH options Ansible adds to every connection. `-o ControlMaster=auto -o ControlPersist=60s` keeps the first task's socket open and reuses it for all the rest, so only one task pays for the handshake — which is where most of a run's speed comes from on a slow link",
+  },
+  {
     name: "host key checking",
     what: "the first run against a new host fails with `Host key verification failed` until its key is in `~/.ssh/known_hosts`. `ANSIBLE_HOST_KEY_CHECKING=False` skips the check, and trades away the protection it gives you",
   },
