@@ -460,6 +460,7 @@ export const TASKS: Task[] = [
       "      ansible.posix.firewalld:",
       '        port: "{{ nginx_port }}/tcp"',
       "        permanent: true",
+      "        immediate: true",
       "        state: enabled",
       '      when: ansible_facts.os_family == "RedHat"',
     ],
@@ -1035,6 +1036,11 @@ for (const host of ["web1", "web2", "web3"] as HostId[]) {
         key: "permanent",
         raw: "true",
         note: "written to the zone file, so the rule survives a reboot",
+      },
+      {
+        key: "immediate",
+        raw: "true",
+        note: "and applied to the firewall running now. `permanent` alone edits the file and leaves the port shut — the module's classic trap, and the reason both appear here",
       },
       { key: "state", raw: "enabled" },
       {

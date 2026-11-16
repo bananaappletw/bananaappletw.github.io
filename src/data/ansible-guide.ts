@@ -340,7 +340,7 @@ export const STEPS: Step[] = [
       },
       {
         word: "plugins",
-        what: "A module runs on the target. A PLUGIN runs on the control node and extends Ansible itself. You meet several on this page without the name: an ACTION plugin, which is what `package` and `template` really are, doing work locally before any module is sent; filter, test and lookup plugins inside templates; inventory plugins that build the host list; connection and strategy plugins. `ansible-doc -t lookup -l` lists one kind.",
+        what: "A module runs on the target. A PLUGIN runs on the control node and extends Ansible itself. You meet several on this page without the name: an ACTION plugin, which is what `package` and `template` really are, doing work locally before any module is sent; filter, test and lookup plugins inside templates; inventory plugins that build the host list; connection and strategy plugins; and a CALLBACK plugin, which is what produces every line of output on this page. `ansible-doc -t lookup -l` lists one kind.",
       },
       {
         word: "-b",
@@ -615,6 +615,12 @@ export const STEPS: Step[] = [
       },
     ],
     keywords: [
+      {
+        word: "stdout_callback",
+        what: "Every `ok:`, `changed:` and `PLAY RECAP` you have seen is drawn by a callback plugin, and you can change it: `stdout_callback = yaml` in `ansible.cfg` prints module results as readable YAML instead of one long JSON line, which is the single best change you can make to reading failures.",
+        without:
+          "`ANSIBLE_STDOUT_CALLBACK=yaml` does it for one run. `ansible-doc -t callback -l` lists the rest — `minimal`, `oneline`, `json`, and the timing ones.",
+      },
       {
         word: "-v",
         what: "Verbosity. `-v` prints each module's JSON reply. `-vv` adds the task's file and line. `-vvv` adds the SSH commands. This is the fastest way to find out why something said `changed`.",

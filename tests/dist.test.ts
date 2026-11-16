@@ -347,6 +347,8 @@ describe("/ansible covers Ansible's own documented topics", () => {
     ],
     ["y and n are not YAML booleans", "NOT YAML booleans"],
     ["register with loop gives results", "holds `.results`".replace(/`/g, "")],
+    ["callback plugins produce the output", "a CALLBACK plugin"],
+    ["stdout_callback can be changed", "stdout_callback = yaml"],
   ];
 
   /** every remaining chapter of those guides, and why it is not here */
