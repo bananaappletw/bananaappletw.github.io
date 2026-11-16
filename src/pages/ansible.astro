@@ -270,8 +270,8 @@ const TRIPS = [
        truncated command reads better than four that overlap. */
     legs: legsFor([
       "mkdir …/tmp/",
-      "put AnsiballZ_dnf.py",
-      "python3 AnsiballZ_dnf.py",
+      "put AnsiballZ_postgresql_db.py",
+      "python3 AnsiballZ_postgresql_db.py",
       "rm -rf …/tmp/",
     ]),
   },
@@ -280,7 +280,7 @@ const TRIPS = [
     lean: true,
     y: 206,
     ms: 2 * LAT,
-    legs: legsFor(["python3  ← AnsiballZ_dnf.py on stdin"]),
+    legs: legsFor(["python3  ← AnsiballZ_postgresql_db.py on stdin"]),
   },
 ];
 
@@ -813,7 +813,7 @@ const payload = {
     <p class="part-n">Part II</p>
     <h2>What actually happens</h2>
     <p class="part-lead">
-      That file, run. Nineteen modules built on your machine and sent to four
+      That file, run. Eighteen modules built on your machine and sent to four
       others, with every byte of the exchange open to inspection.
     </p>
   </section>

@@ -225,7 +225,7 @@ export const GROUPS: { name: string; members: string[]; note: string }[] = [
   {
     name: "all",
     members: ["prod"],
-    note: "always there, even if you never write it; `group_vars/all` is level 4, under every other group and host file",
+    note: "always there, even if you never write it; a playbook-side `group_vars/all` is level 5, under every other group and host file",
   },
 ];
 
@@ -772,7 +772,7 @@ for (const host of ["web1", "web2", "web3", "db1"] as HostId[]) {
     ret: [
       {
         key: "ansible_facts",
-        value: "1,207 keys",
+        value: "174 top-level keys",
         note: "merged into the host's variables for the rest of the run",
       },
       { key: "changed", value: "false" },
@@ -1727,7 +1727,7 @@ export const LAYOUT: { path: string; depth: number; note?: string }[] = [
   {
     path: "all.yml",
     depth: 1,
-    note: "every host; level 4, above a role's defaults and under every other group file",
+    note: "every host; level 5 beside a playbook, 4 inside an inventory — above a role's defaults, under every other group file",
   },
   { path: "webservers.yml", depth: 1 },
   { path: "prod/vault.yml", depth: 1, note: "encrypted; still committed" },

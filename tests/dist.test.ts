@@ -328,6 +328,9 @@ describe("/ansible covers Ansible's own documented topics", () => {
     ["ansible_play_hosts_all", "ansible_play_hosts_all"],
     ["role argument_specs", "Declares what a role takes"],
     ["role dependencies", "roles listed here run first"],
+    ["sibling groups and merging", "which of two groups at the SAME level"],
+    ["ansible_group_priority", "ansible_group_priority"],
+    ["hash_behaviour and combine", "hash_behaviour = merge"],
   ];
 
   /** every remaining chapter of those guides, and why it is not here */

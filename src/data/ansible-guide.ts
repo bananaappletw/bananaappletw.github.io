@@ -1022,7 +1022,7 @@ export const STEPS: Step[] = [
   {
     n: 12,
     title: "Reuse: roles",
-    lead: "Copying tasks between playbooks stops working quickly. A ROLE is a folder with a fixed layout, and Ansible loads the parts by name. You met the layout in Part III; this is how a play uses one.",
+    lead: "Copying tasks between playbooks stops working quickly. A ROLE is a folder with a fixed layout, and Ansible loads the parts by name. Part III below draws the folder layout; this is what goes in it and how a play uses one.",
     shell: [
       {
         text: "ansible-galaxy init roles/webserver",
@@ -1050,7 +1050,13 @@ export const STEPS: Step[] = [
         word: "meta/argument_specs.yml",
         what: "Declares what a role takes: which variables are required, their types, their defaults. Ansible then validates them before the role's first task runs, so a missing variable fails immediately with a clear message instead of halfway through as `undefined`.",
         without:
-          "It is its own file. Putting the spec in `meta/main.yml`, where `dependencies:` lives, is silently ignored.",
+          "`meta/main.yml` accepts a spec too, and `argument_specs.yml` wins when both exist. Use the separate file: the `meta/main.yml` form does not work before ansible-core 2.11.",
+      },
+      {
+        word: "two groups, one variable",
+        what: "The precedence ladder answers which LEVEL wins. It does not answer which of two groups at the SAME level wins, and a host in both `webservers` and `prod` is the normal case. Ansible merges them alphabetically by group name, so `webservers` beats `prod` — set `ansible_group_priority` on a group to override that.",
+        without:
+          "And when both set a dictionary, the winner REPLACES it rather than merging — `hash_behaviour = merge` changes that globally and is discouraged. Use the `combine` filter on the one variable instead.",
       },
       {
         word: "pre_tasks / post_tasks",
