@@ -376,9 +376,9 @@ export const STEPS: Step[] = [
       },
       {
         word: "yes, no, on, off",
-        what: 'All booleans. YAML reads `yes`, `on`, `y` and `true` as true, and `no`, `off`, `n` and `false` as false — so a value you meant as the string "no" becomes `False`, and a Norwegian country code `no` does the same. Quote it when you mean the word.',
+        what: 'All booleans to YAML: `yes`, `on` and `true` are true; `no`, `off` and `false` are false. So a value you meant as the word "no" becomes `False`, and a Norwegian country code does the same. Quote it when you mean the word.',
         without:
-          "Modules take any of them, but write `true` and `false`: it is what `ansible-lint` wants and what the docs use.",
+          "`y` and `n` are NOT YAML booleans — they stay strings. They work as module arguments only because Ansible coerces them itself, which is a different layer. Write `true` and `false`: it is what `ansible-lint` wants and what the docs use.",
       },
       {
         word: "- name:",
@@ -665,7 +665,7 @@ export const STEPS: Step[] = [
           "ok: [web1] => (item=curl)",
           "changed: [web1] => (item=jq)",
         ],
-        note: '`item` is the loop variable. The task reports once per item, and the whole task counts as `changed` if any item did. You will meet `with_items:` in anything written before 2019. Nearly the same thing: `with_items` flattens one level of nesting and `loop` does not, so a list of lists needs `loop: "{{ x | flatten(levels=1) }}"`.',
+        note: '`item` is the loop variable. The task reports once per item, and the whole task counts as `changed` if any item did. Register a looping task and the variable holds `.results` — a list with one entry per item — not the `.stdout` and `.rc` a single task gives you. You will meet `with_items:` in anything written before 2019. Nearly the same thing: `with_items` flattens one level of nesting and `loop` does not, so a list of lists needs `loop: "{{ x | flatten(levels=1) }}"`.',
       },
       {
         title: "register + debug — see what came back",
@@ -741,7 +741,7 @@ export const STEPS: Step[] = [
           "ok: [web1]",
           "  msg: \"Did not run command since '/srv/app/.migrated' exists\"",
         ],
-        note: "Neither module knows what your command does, so both report `changed` every single time. `creates:` is the fix — the task is skipped if that path already exists — and `removes:` is its mirror. `changed_when:` takes any Jinja expression, not only `false`. Prefer `command`: `shell` runs through `/bin/sh`, so a variable in it is an injection risk.",
+        note: "Neither module knows what your command does, so both report `changed` every single time. `creates:` is the fix — the module does not run the command when that path exists, and reports `ok` — and `removes:` is its mirror. `changed_when:` takes any Jinja expression, not only `false`. Prefer `command`: `shell` runs through `/bin/sh`, so a variable in it is an injection risk.",
       },
       {
         title: "block — group, and recover",
@@ -1085,9 +1085,9 @@ export const STEPS: Step[] = [
       },
       {
         word: "two groups, one variable",
-        what: "The precedence ladder answers which LEVEL wins. It does not answer which of two groups at the SAME level wins, and a host in both `webservers` and `prod` is the normal case. Ansible merges them alphabetically by group name, so `webservers` beats `prod` — set `ansible_group_priority` on a group to override that.",
+        what: "The precedence ladder answers which LEVEL wins. It does not answer which GROUP wins when a host is in several, and that has an order of its own: `all` lowest, then a parent group, then its children, then the host itself. So `webservers` beats `prod` because `[prod:children]` makes `prod` its parent — not for any alphabetical reason.",
         without:
-          "And when both set a dictionary, the winner REPLACES it rather than merging — `hash_behaviour = merge` changes that globally and is discouraged. Use the `combine` filter on the one variable instead.",
+          "Alphabetical order only breaks ties between groups at the SAME level, once that is settled. `ansible_group_priority` overrides the tie-break and must be set in the inventory itself — in `group_vars/` it is silently ignored. And when two of them set a dictionary, the winner REPLACES it rather than merging: reach for the `combine` filter on that variable, not the discouraged global `hash_behaviour = merge`.",
       },
       {
         word: "pre_tasks / post_tasks",
@@ -1309,8 +1309,8 @@ export const STEPS: Step[] = [
         ],
         out: [
           "TASK [Wait for the port to answer] ******",
-          "FAILED - RETRYING: Wait for the port to answer (9 retries left).",
-          "FAILED - RETRYING: Wait for the port to answer (8 retries left).",
+          "FAILED - RETRYING: [web1]: Wait for the port to answer (9 retries left).",
+          "FAILED - RETRYING: [web1]: Wait for the port to answer (8 retries left).",
           "ok: [web1]",
           "",
           "TASK [Tidy up, and never mind if it fails] *",

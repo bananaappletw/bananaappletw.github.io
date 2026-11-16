@@ -328,7 +328,7 @@ describe("/ansible covers Ansible's own documented topics", () => {
     ["ansible_play_hosts_all", "ansible_play_hosts_all"],
     ["role argument_specs", "Declares what a role takes"],
     ["role dependencies", "roles listed here run first"],
-    ["sibling groups and merging", "which of two groups at the SAME level"],
+    ["which group wins", "which GROUP wins when a host is in several"],
     ["ansible_group_priority", "ansible_group_priority"],
     ["hash_behaviour and combine", "hash_behaviour = merge"],
     // the last in-scope gaps the 211-chapter audit named
@@ -339,6 +339,14 @@ describe("/ansible covers Ansible's own documented topics", () => {
     ["ansible-pull", "ansible-pull"],
     ["execution environments", "execution environment"],
     ["per-environment inventories", "one directory per environment"],
+    // from the audit that followed those fixes
+    ["child group beats parent", "then a parent group, then its children"],
+    [
+      "group priority goes in the inventory",
+      "in `group_vars/` it is silently ignored".replace(/`/g, ""),
+    ],
+    ["y and n are not YAML booleans", "NOT YAML booleans"],
+    ["register with loop gives results", "holds `.results`".replace(/`/g, "")],
   ];
 
   /** every remaining chapter of those guides, and why it is not here */
