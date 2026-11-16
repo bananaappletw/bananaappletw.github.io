@@ -322,6 +322,10 @@ describe("/ansible covers Ansible's own documented topics", () => {
     ["with_items is the old loop", "with_items"],
     ["--diff output shown", "listen 80;"],
     ["installing a collection", "ansible-galaxy collection install"],
+    // the fourth review's two blocking errors, kept from coming back
+    ["role defaults are the real floor", "the real floor"],
+    ["the two fact spellings", "Same fact, two spellings"],
+    ["ansible_play_hosts_all", "ansible_play_hosts_all"],
   ];
 
   /** every remaining chapter of those guides, and why it is not here */

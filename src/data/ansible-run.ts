@@ -225,7 +225,7 @@ export const GROUPS: { name: string; members: string[]; note: string }[] = [
   {
     name: "all",
     members: ["prod"],
-    note: "always there, even if you never write it; `group_vars/all` is the lowest level you can write in a file",
+    note: "always there, even if you never write it; `group_vars/all` is level 4, under every other group and host file",
   },
 ];
 
@@ -758,9 +758,9 @@ for (const host of ["web1", "web2", "web3", "db1"] as HostId[]) {
         name: "Return",
         where: "wire",
         summary:
-          "One JSON object with about 1,200 keys. Every one of them becomes a variable you can use in any later task or template on this host.",
+          "One JSON object: around 170 top-level keys, most of them holding more. Every one becomes a variable you can use in any later task or template on this host.",
         lines: [
-          { text: `"ansible_facts": { … 1,207 keys … }` },
+          { text: `"ansible_facts": { … 174 keys … }` },
           ...h.facts.slice(0, 3).map(f => ({
             text: `"${f.key.replace("ansible_facts.", "")}": "${f.value}"`,
             note: f.note,
@@ -1004,7 +1004,7 @@ for (const host of ["web1", "web2", "web3"] as HostId[]) {
 const FIREWALL: Record<string, [Verdict, string]> = {
   web1: [
     "changed",
-    "The port was not in the public zone; it is now — in the zone file only, because `immediate` was not set.",
+    "The port was not in the public zone. `permanent` writes the zone file and `immediate` applies it to the running firewall, so it is open now and after a reboot.",
   ],
   web2: ["ok", "8080/tcp was already enabled in the public zone."],
   web3: [
@@ -1034,7 +1034,7 @@ for (const host of ["web1", "web2", "web3"] as HostId[]) {
       {
         key: "permanent",
         raw: "true",
-        note: "written to the zone file. Add `immediate: true` to change the running firewall too.",
+        note: "written to the zone file, so the rule survives a reboot",
       },
       { key: "state", raw: "enabled" },
       {
@@ -1076,7 +1076,7 @@ for (const host of ["web1", "web2", "web3"] as HostId[]) {
             lines: [
               { text: `"changed": ${verdict === "changed"}` },
               {
-                text: `"msg": "${verdict === "changed" ? "Permanent and Non-Permanent(immediate) operation" : "Port 8080/tcp already enabled"}"`,
+                text: `"msg": "${verdict === "changed" ? "Permanent and Non-Permanent(immediate) operation, Changed port 8080/tcp to enabled" : "Permanent and Non-Permanent(immediate) operation"}"`,
               },
             ],
           },
@@ -1094,7 +1094,7 @@ for (const host of ["web1", "web2", "web3"] as HostId[]) {
             value:
               verdict === "changed"
                 ? "Permanent and Non-Permanent(immediate) operation"
-                : "Port 8080/tcp already enabled",
+                : "Permanent and Non-Permanent(immediate) operation",
           },
         ],
     runMs: skipped ? 0 : MODULE_MS[`firewalld:${host}`],
@@ -1626,7 +1626,7 @@ export const PRECEDENCE: { n: number; what: string; note?: string }[] = [
   {
     n: 2,
     what: "role defaults",
-    note: "`roles/x/defaults/main.yml` — the lowest level, and where a role's settings belong",
+    note: "`roles/x/defaults/main.yml` — the real floor; any vars file you write beats it, which is what makes it a knob",
   },
   { n: 3, what: "inventory file group vars" },
   { n: 4, what: "inventory `group_vars/all`" },
@@ -1724,7 +1724,11 @@ export const LAYOUT: { path: string; depth: number; note?: string }[] = [
     note: "or `hosts.yml`, or a whole directory of sources",
   },
   { path: "group_vars/", depth: 0 },
-  { path: "all.yml", depth: 1, note: "every host, the lowest level" },
+  {
+    path: "all.yml",
+    depth: 1,
+    note: "every host; level 4, above a role's defaults and under every other group file",
+  },
   { path: "webservers.yml", depth: 1 },
   { path: "prod/vault.yml", depth: 1, note: "encrypted; still committed" },
   { path: "host_vars/", depth: 0 },

@@ -332,7 +332,7 @@ export const STEPS: Step[] = [
       },
       {
         word: "-m",
-        what: "The module. A module is one unit of work: `ping`, `package`, `copy`, `service`. About ninety ship in `ansible.builtin`, and several thousand more across the collections.",
+        what: "The module. A module is one unit of work: `ping`, `package`, `copy`, `service`. Around seventy ship in `ansible.builtin`, and several thousand more across the collections.",
       },
       {
         word: "-a",
@@ -402,9 +402,9 @@ export const STEPS: Step[] = [
       },
       {
         word: "Gathering Facts",
-        what: "A task you did not write. Every play starts by running `setup` on each host to collect about 1,200 facts about it. Step 7 uses one. To see the rest: `ansible -i inventory/hosts.ini web1 -m setup`, or `-a 'filter=ansible_os*'` to narrow it.",
+        what: "A task you did not write. Every play starts by running `setup` on each host to collect its facts — around 170 top-level keys, many of them nested. Step 7 uses one. To see them: `ansible -i inventory/hosts.ini web1 -m setup`, or `-a 'filter=ansible_os*'` to narrow it.",
         without:
-          "`gather_facts: false` turns it off. Then anything that reads a fact breaks.",
+          "That command prints `ansible_os_family`, while this page writes `ansible_facts.os_family`. Same fact, two spellings — the flat `ansible_*` names are injected as top-level variables for compatibility, and `ansible_facts.*` is the modern form. Either works; prefer the second. `gather_facts: false` turns the whole thing off, and then anything reading a fact breaks.",
       },
     ],
     output: "one",
@@ -533,7 +533,7 @@ export const STEPS: Step[] = [
       },
       {
         word: "inventory_hostname",
-        what: "A magic variable — one Ansible sets itself. `inventory_hostname` is this host's name in the inventory, `groups` holds every group and its members, and `hostvars` reaches another host's variables.",
+        what: "A magic variable — one Ansible sets itself. `inventory_hostname` is this host's name in the inventory, `groups` holds every group and its members, `hostvars` reaches another host's variables, and `ansible_play_hosts_all` is every host the play targets — which is what makes `ansible_play_hosts_all[0]` mean \"the first one\".",
       },
       {
         word: "lookup()",
@@ -619,7 +619,7 @@ export const STEPS: Step[] = [
       },
       {
         word: "creates:",
-        what: "The simplest way to make `command` and `shell` idempotent. `creates: /path` skips the task if that path exists; `removes:` skips it if it does not. `changed_when:` is the other way, and writing a command that is safe to repeat is the best way.",
+        what: "The simplest way to make `command` and `shell` idempotent. With `creates: /path` the module does not run the command when that path exists — it reports `ok`, not `skipped` — and `removes:` is its mirror. `changed_when:` is the other way, and writing a command that is safe to repeat is the best way.",
       },
       {
         word: "loop_control:",
@@ -908,7 +908,7 @@ export const STEPS: Step[] = [
     keywords: [
       {
         word: "--check",
-        what: "A dry run. Ansible asks each module what it would do — but only a module that declares `supports_check_mode` can answer, and the rest are skipped. `command` and `shell` are the obvious ones; plenty of collection modules are too.",
+        what: "A dry run. A module that does not declare `supports_check_mode` is skipped rather than guessed at, which is a fair number across the collections. `command` and `shell` do declare it, and then skip themselves unless `creates:` or `removes:` gives them something to check.",
       },
       {
         word: "--limit",
