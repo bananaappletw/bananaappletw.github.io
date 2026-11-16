@@ -412,7 +412,7 @@ export const TASKS: Task[] = [
     name: "Gathering Facts",
     module: "ansible.builtin.setup",
     summary:
-      "The task nobody writes. Unless you set `gather_facts: false`, every play starts by running the biggest module in Ansible on every host, to learn about 1,200 facts. Most plays read none of them. In a fast run this is often the most expensive part.",
+      "The task nobody writes. Unless you set `gather_facts: false`, every play starts by running the biggest module in Ansible on every host, to learn a few hundred facts about it. Most plays read none of them. In a fast run this is often the most expensive part.",
     yaml: ["    # implicit: gather_facts"],
     hosts: ["web1", "web2", "web3"],
   },
@@ -503,7 +503,7 @@ export const TASKS: Task[] = [
     name: "Gathering Facts",
     module: "ansible.builtin.setup",
     summary:
-      "Gathered again, because this is a new play. Fact caching is what stops that. Without it, every play pays for the same 1,200 facts.",
+      "Gathered again, because this is a new play. `gathering = smart` with a fact cache is what stops that. Without it, every play pays for the same gather again.",
     yaml: ["    # implicit: gather_facts"],
     hosts: ["db1"],
   },

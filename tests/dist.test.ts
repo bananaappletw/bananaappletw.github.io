@@ -193,7 +193,7 @@ describe("/ansible covers Ansible's own documented topics", () => {
     ["Interactive input: prompts", "Ask for a value when the run starts"],
     ["Using variables", "Names you set once and use below"],
     ["Variable precedence", "Twenty-two levels"],
-    ["Discovering variables: facts", "about 1,200 facts"],
+    ["Discovering variables: facts", "170 top-level keys"],
     ["Discovering variables: magic variables", "A magic variable"],
     ["Rolling upgrades", "Run the whole play on one host at a time"],
     ["Validating tasks: check mode and diff mode", "A dry run"],
