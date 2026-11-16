@@ -331,6 +331,14 @@ describe("/ansible covers Ansible's own documented topics", () => {
     ["sibling groups and merging", "which of two groups at the SAME level"],
     ["ansible_group_priority", "ansible_group_priority"],
     ["hash_behaviour and combine", "hash_behaviour = merge"],
+    // the last in-scope gaps the 211-chapter audit named
+    ["YAML boolean coercion", "All booleans"],
+    ["import_playbook", "import_playbook"],
+    ["collections lifecycle", "ansible-galaxy collection list"],
+    ["where collections install", "~/.ansible/collections"],
+    ["ansible-pull", "ansible-pull"],
+    ["execution environments", "execution environment"],
+    ["per-environment inventories", "one directory per environment"],
   ];
 
   /** every remaining chapter of those guides, and why it is not here */

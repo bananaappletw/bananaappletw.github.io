@@ -1717,12 +1717,23 @@ export const LAYOUT: { path: string; depth: number; note?: string }[] = [
     depth: 0,
     note: "roles and collections to fetch",
   },
-  { path: "inventory/", depth: 0 },
+  { path: "inventory/", depth: 0, note: "the small case: one estate" },
   {
     path: "hosts.ini",
     depth: 1,
     note: "or `hosts.yml`, or a whole directory of sources",
   },
+  {
+    path: "inventories/",
+    depth: 0,
+    note: "the common case instead: one directory per environment",
+  },
+  {
+    path: "production/hosts.yml",
+    depth: 1,
+    note: "with its own `group_vars/` beside it, so staging values can never leak into production",
+  },
+  { path: "staging/hosts.yml", depth: 1, note: "`-i inventories/staging`" },
   { path: "group_vars/", depth: 0 },
   {
     path: "all.yml",

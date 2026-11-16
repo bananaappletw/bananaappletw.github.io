@@ -375,6 +375,12 @@ export const STEPS: Step[] = [
           'One rule beyond those: a value that STARTS with `{{` must be quoted. Bare, the `{` opens a YAML mapping and the file will not parse — `name: "{{ pkg }}"`, never `name: {{ pkg }}`. In the middle of a value it is fine. `--syntax-check` catches it before anything connects.',
       },
       {
+        word: "yes, no, on, off",
+        what: 'All booleans. YAML reads `yes`, `on`, `y` and `true` as true, and `no`, `off`, `n` and `false` as false — so a value you meant as the string "no" becomes `False`, and a Norwegian country code `no` does the same. Quote it when you mean the word.',
+        without:
+          "Modules take any of them, but write `true` and `false`: it is what `ansible-lint` wants and what the docs use.",
+      },
+      {
         word: "- name:",
         what: "A label. Mostly it is what the output prints — but it is also the name `notify:` looks for and the one `--start-at-task` matches, so by step 9 it is load-bearing.",
         without:
@@ -901,6 +907,14 @@ export const STEPS: Step[] = [
         out: true,
       },
       {
+        text: "ansible-pull -U https://git.example.net/cfg.git site.yml",
+        note: "the other direction: the host clones the repo and runs it on itself, from cron. No control node, which is how you manage ten thousand of them",
+      },
+      {
+        text: "ansible-navigator run site.yml --execution-environment-image …",
+        note: "run inside a container image that pins Ansible, the collections and the Python — an execution environment, so CI and your laptop agree",
+      },
+      {
         text: "ansible-doc ansible.builtin.service",
         note: "every argument a module takes, with examples, offline",
       },
@@ -1032,11 +1046,28 @@ export const STEPS: Step[] = [
         text: "ansible-galaxy install -r requirements.yml",
         note: "fetch roles and collections other people wrote",
       },
+      {
+        text: "ansible-galaxy collection list",
+        note: "what is installed, and which version",
+      },
+      {
+        text: "ansible-galaxy collection install community.general:==8.6.0",
+        note: "an exact version; they land in ~/.ansible/collections",
+      },
+      {
+        text: "# a collections/ folder beside the playbook is searched first",
+        note: "which is how a repository pins its own without touching your home",
+        out: true,
+      },
     ],
     keywords: [
       {
         word: "roles:",
         what: "Run these roles before the play's own tasks. Each one brings its own tasks, handlers, templates and defaults.",
+      },
+      {
+        word: "import_playbook",
+        what: "Joins whole playbooks: a `site.yml` that is nothing but `- import_playbook: webservers.yml` and `- import_playbook: dbservers.yml`. That is how most repositories are laid out — one file per tier, one file that runs them all.",
       },
       {
         word: "import_tasks / include_tasks",
@@ -1109,6 +1140,10 @@ export const STEPS: Step[] = [
           "      nginx_port:",
           "        type: int",
           "        required: true",
+          "",
+          "# site.yml — one file per tier, one file to run them",
+          "- import_playbook: webservers.yml",
+          "- import_playbook: dbservers.yml",
           "",
           "# requirements.yml — other people's work",
           "roles:",
