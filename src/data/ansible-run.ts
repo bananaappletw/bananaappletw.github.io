@@ -1784,7 +1784,7 @@ export const ROLE_TREE: { path: string; depth: number; note?: string }[] = [
   {
     path: "meta/main.yml",
     depth: 1,
-    note: "dependencies; `argument_specs` is its own file beside it",
+    note: "the role's own dependencies: roles listed here run first, and are de-duplicated if two roles need the same one",
   },
   {
     path: "library/",

@@ -1047,6 +1047,12 @@ export const STEPS: Step[] = [
         what: "Static. The tasks are read when the playbook is parsed, so `--tags` and `--list-tasks` can see them. The role name cannot be a variable.",
       },
       {
+        word: "meta/argument_specs.yml",
+        what: "Declares what a role takes: which variables are required, their types, their defaults. Ansible then validates them before the role's first task runs, so a missing variable fails immediately with a clear message instead of halfway through as `undefined`.",
+        without:
+          "It is its own file. Putting the spec in `meta/main.yml`, where `dependencies:` lives, is silently ignored.",
+      },
+      {
         word: "pre_tasks / post_tasks",
         what: "Roles run between them: `pre_tasks`, then `roles:`, then `tasks:`, then `post_tasks`. Handlers are flushed three times — after `pre_tasks`, after roles and tasks together, and after `post_tasks` — not between roles and tasks.",
       },
@@ -1089,6 +1095,14 @@ export const STEPS: Step[] = [
           "  ansible.builtin.service:",
           "    name: nginx",
           "    state: reloaded",
+          "",
+          "# roles/webserver/meta/argument_specs.yml",
+          "argument_specs:",
+          "  main:",
+          "    options:",
+          "      nginx_port:",
+          "        type: int",
+          "        required: true",
           "",
           "# requirements.yml — other people's work",
           "roles:",

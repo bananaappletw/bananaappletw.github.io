@@ -326,6 +326,8 @@ describe("/ansible covers Ansible's own documented topics", () => {
     ["role defaults are the real floor", "the real floor"],
     ["the two fact spellings", "Same fact, two spellings"],
     ["ansible_play_hosts_all", "ansible_play_hosts_all"],
+    ["role argument_specs", "Declares what a role takes"],
+    ["role dependencies", "roles listed here run first"],
   ];
 
   /** every remaining chapter of those guides, and why it is not here */
