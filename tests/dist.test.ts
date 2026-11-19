@@ -1420,3 +1420,478 @@ describe("/terraform covers Terraform's own documented topics", () => {
     expect(text).toContain("127.2");
   });
 });
+
+describe("/network covers the stack a request crosses", () => {
+  /**
+   * The same standard as the two blocks above, against a syllabus nobody
+   * here chose. There is no single vendor's documentation for "how a
+   * request crosses a network", so the list is drawn from three published
+   * ones and each row says which:
+   *
+   *   the seven layers of ISO/IEC 7498-1
+   *   MDN's Learn > Web mechanics titles, and its HTTP guide index
+   *   the RFC that defines the mechanism, where one does
+   *
+   * Each row carries a phrase of the page's own explanation and, where
+   * there is one, the literal a reader must also see. CORE is held to the
+   * standing prose — what is on screen before anybody scrolls or clicks.
+   */
+  const html = readFileSync(join(DIST, "network", "index.html"), "utf8");
+  const text = readable(html);
+  const standing = readable(html.replace(/<script[\s\S]*?<\/script>/g, " "));
+
+  /** [the published section, a phrase of the page's explanation, a literal] */
+  const COVERED: [string, string, string?][] = [
+    [
+      "Layer 1 · Physical (ISO/IEC 7498-1)",
+      "the bits, and the thing carrying them",
+    ],
+    ["Layer 2 · Data link", "Ethernet — the address on this cable"],
+    ["Layer 3 · Network", "IP — the address at the far end"],
+    [
+      "Layer 4 · Transport",
+      "An address finds the machine. A port finds the program",
+    ],
+    ["Layer 5 · Session", "the handshake that sets up the seal"],
+    ["Layer 6 · Presentation", "TLS — how it is encoded and sealed"],
+    ["Layer 7 · Application", "HTTP, DNS — what the program means"],
+    [
+      "MDN · What is a URL?",
+      "Seven parts, three jobs: find the machine, find the program",
+      "https://example.com:443/index.html?q=1#top",
+    ],
+    [
+      "MDN · What is a domain name?",
+      "Turning one into the other is a complete request of its own",
+    ],
+    [
+      "MDN · How does the Internet work?",
+      "The MACs change at every hop. The IP addresses do not",
+    ],
+    [
+      "MDN · What is a web server?",
+      "The whole of HTTP is a line, some headers, a blank line and a body",
+    ],
+    [
+      "ARP · request and reply (RFC 826)",
+      "it shouts the question at every machine on the segment",
+      "who-has 192.168.1.1 tell 192.168.1.42",
+    ],
+    [
+      "ARP · the cache",
+      "Without a cache every single packet would begin with a broadcast",
+      "REACHABLE",
+    ],
+    ["ARP · nothing is authenticated", "Whoever answers first is believed"],
+    [
+      "Ethernet · MAC addressing (IEEE 802.3)",
+      "Six bytes. The first three are the OUI",
+      "a4:83:e7:1c:9d:40",
+    ],
+    [
+      "Ethernet · EtherType (RFC 894)",
+      "Two bytes saying what the next header is",
+      "0x0800",
+    ],
+    [
+      "Ethernet · broadcast and learning",
+      "A switch learns from source addresses alone",
+      "ff:ff:ff:ff:ff:ff",
+    ],
+    [
+      "IPv4 · addressing (RFC 791)",
+      "An IP address is handed out, hierarchical, and means the same thing everywhere",
+    ],
+    [
+      "IPv4 · the subnet mask",
+      "The address, and how much of it is the network",
+      "192.168.1.42/24",
+    ],
+    [
+      "IPv4 · time to live",
+      "Every router subtracts one, and at zero the packet is dropped",
+      "TTL",
+    ],
+    [
+      "IPv4 · header checksum (RFC 1071)",
+      "It has to be recomputed at every single hop",
+    ],
+    [
+      "IPv4 · fragmentation and Don't Fragment",
+      "A flag asking routers not to cut the packet up",
+      "Don't fragment",
+    ],
+    [
+      "IPv4 · total length",
+      "Ethernet carries no length of its own, so this field is the only place",
+    ],
+    [
+      "ICMP · Time Exceeded (RFC 792)",
+      "Traceroute abuses the hop counter, one packet per hop",
+      "Time Exceeded",
+    ],
+    [
+      "ICMP · fragmentation needed",
+      "it is dropped and an ICMP message says so",
+    ],
+    [
+      "Routing · the default route",
+      "Anything that matches no other line goes here",
+      "default via 192.168.1.1",
+    ],
+    [
+      "Routing · longest prefix match",
+      "When two routes match, the more specific one wins",
+    ],
+    [
+      "DNS · resource records (RFC 1035)",
+      "The record type: a name to an IPv4 address",
+    ],
+    [
+      "DNS · caching and the TTL",
+      "how long this answer may be cached",
+      "86400",
+    ],
+    [
+      "DNS · recursive resolution (RFC 1034)",
+      "The machine that does the asking around on your behalf",
+      "dig +trace",
+    ],
+    ["DNS · UDP, and when TCP", "do not need a connection", "1.1.1.1#53"],
+    [
+      "DNS · how a resolver is chosen",
+      "put there by DHCP, from the router, when the laptop joined",
+      "/etc/resolv.conf",
+    ],
+    [
+      "Ports · the well-known range (RFC 6335)",
+      "Anything under 1024 is a well-known port that only root may bind",
+      "443",
+    ],
+    [
+      "Ports · the ephemeral range",
+      "picked at random by the laptop out of its ephemeral range",
+      "32768-60999",
+    ],
+    [
+      "Ports · the connection four-tuple",
+      "it is what the kernel looks a packet up by",
+    ],
+    [
+      "TCP · the three-way handshake (RFC 9293)",
+      "three packets carrying no data at all",
+      "Flags [S.]",
+    ],
+    [
+      "TCP · sequence numbers",
+      "Counts BYTES, not packets, and starts from a random number",
+    ],
+    [
+      "TCP · acknowledgement",
+      "The next byte expected, not the last one received",
+    ],
+    [
+      "TCP · flow control and the window",
+      "How many more bytes this side is willing to accept",
+      "Window",
+    ],
+    [
+      "TCP · maximum segment size",
+      "the one piece of arithmetic worth memorising",
+      "mss 1460",
+    ],
+    [
+      "TCP · the pseudo-header checksum",
+      "It is the one place two layers are deliberately not independent",
+    ],
+    [
+      "TCP · reset, and a refused connection",
+      "a machine answered with RST, and nothing was listening on that port",
+    ],
+    [
+      "TLS · the ClientHello (RFC 8446)",
+      "the versions and ciphers on offer, a random number",
+      "ClientHello",
+    ],
+    [
+      "TLS · the key exchange",
+      "Each combines its own secret with the other's public share",
+    ],
+    [
+      "TLS · certificates and verification",
+      "signed by someone your machine already trusts, within its dates",
+      "Verify return code: 0",
+    ],
+    [
+      "TLS · server name indication",
+      "the hostname, sent in the clear in that first message",
+      "SNI",
+    ],
+    ["TLS · ALPN", "The protocol is chosen before the first request", "ALPN"],
+    [
+      "TLS · the record layer",
+      "The length is in the clear; the contents are not",
+      "application data",
+    ],
+    [
+      "TLS · session resumption and 0-RTT",
+      "at the cost of the first request being replayable",
+    ],
+    [
+      "HTTP · the request line (RFC 9112)",
+      "the first time in this whole sequence that the thing you are asking for is named",
+      "GET / HTTP/1.1",
+    ],
+    [
+      "HTTP · the Host header (RFC 9110)",
+      "the reason one IP address can serve a thousand sites",
+      "Host: example.com",
+    ],
+    [
+      "HTTP · status codes",
+      "Four classes, and the first digit is most of what you need",
+      "200 OK",
+    ],
+    [
+      "HTTP · message framing",
+      "cannot tell the end of this response from the start of the next",
+      "Content-Length",
+    ],
+    [
+      "HTTP/2 and HTTP/3 (RFC 9113, RFC 9114)",
+      "binary, compressed, many requests interleaved on one connection",
+      "HTTP/3",
+    ],
+    [
+      "NAT · address and port translation (RFC 3022)",
+      "there is one public address out there and several machines behind it",
+      "203.0.113.7",
+    ],
+    [
+      "NAT · the translation table",
+      "anything arriving for 61001 is turned back into 54312",
+      "conntrack",
+    ],
+    [
+      "NAT · why inbound needs a forwarded port",
+      "an unannounced connection from outside matches nothing and is dropped",
+    ],
+    [
+      "Troubleshooting · reading a failure by layer",
+      "The error names the layer",
+    ],
+    [
+      "Troubleshooting · refused versus timed out",
+      "Refused in milliseconds means you reached the far end",
+      "curl: (7)",
+    ],
+    [
+      "Capture · reading the bytes",
+      "the bytes themselves, every header, exactly as sent",
+      "tcpdump -X",
+    ],
+    [
+      "Performance · round trips and latency",
+      "four separate exchanges have to complete in sequence",
+      "time_appconnect",
+    ],
+    [
+      "MTU and header overhead",
+      "seventy-five bytes, of which fifty-four are addressing",
+      "mtu 1500",
+    ],
+    [
+      "Performance · connection reuse",
+      "skips DNS, TCP and TLS entirely and costs one round trip instead of four",
+    ],
+  ];
+
+  /** what a reader must meet in standing prose, without a click */
+  const CORE: [string, string][] = [
+    [
+      "two addresses, not one",
+      "The MAC addresses a cable. The IP addresses a machine",
+    ],
+    [
+      "the next hop is not the destination",
+      "the destination MAC is the router's, and the destination IP is the server's",
+    ],
+    ["ARP comes before anything", "Layer 3 cannot move a byte on its own"],
+    [
+      "DNS is a separate request",
+      "DNS is a separate request that must finish before yours starts",
+    ],
+    [
+      "a port names a program",
+      "An address finds the machine. A port finds the program",
+    ],
+    [
+      "the handshake costs a round trip",
+      "TCP's guarantee costs one full round trip before a byte of data moves",
+    ],
+    ["TLS makes two promises", "TLS proves who, then hides what"],
+    [
+      "encryption does not hide the conversation",
+      "Encryption hides the bytes. It does not hide the conversation",
+    ],
+    [
+      "HTTP is a line and some headers",
+      "The whole of HTTP is a line, some headers, a blank line and a body",
+    ],
+    [
+      "what NAT actually does",
+      "Four fields rewritten, two checksums redone, one row in a table",
+    ],
+    ["a packet is not a parcel", "It is rewritten at every hop"],
+    [
+      "the addressing is most of a small packet",
+      "Every layer costs bytes at the front",
+    ],
+    ["an error names its layer", "The error names the layer"],
+    ["distance is the cost", "Nearly all of a page load is distance and setup"],
+  ];
+
+  /** named by one of those indexes, and deliberately not here */
+  const OMITTED: [string, string][] = [
+    [
+      "Using HTTP cookies",
+      "state on top of a finished connection, not part of making one",
+    ],
+    [
+      "HTTP caching",
+      "what to do with an answer you already have; the page is about getting the first one",
+    ],
+    [
+      "HTTP conditional requests",
+      "the same: a refinement of a request that already works",
+    ],
+    [
+      "HTTP range requests",
+      "the same, and it needs a working connection to be interesting",
+    ],
+    [
+      "HTTP authentication",
+      "who you are to the application, not how the bytes reached it",
+    ],
+    [
+      "Cross-Origin Resource Sharing (CORS)",
+      "a browser rule about what a page may read, enforced after the response arrives",
+    ],
+    [
+      "Content Security Policy (CSP)",
+      "a browser policy, not a property of the network",
+    ],
+    [
+      "Permissions Policy",
+      "a browser policy too, and about what a page may do rather than how it arrived",
+    ],
+    [
+      "Content negotiation",
+      "headers the server reads once the request has arrived",
+    ],
+    [
+      "Compression in HTTP",
+      "a transformation of the body; the delivery is unchanged",
+    ],
+    ["Media types (MIME types)", "what the body is, not how it travelled"],
+    ["HTTP Client hints", "more headers, same delivery"],
+    [
+      "Browser detection using the user agent string",
+      "a practice, not a mechanism",
+    ],
+    [
+      "Network Error Logging (NEL)",
+      "a reporting system built on top of all of this",
+    ],
+    [
+      "Redirections in HTTP",
+      "a second request, which is this page again rather than something new",
+    ],
+    [
+      "Proxy servers and tunneling",
+      "a fourth machine in the path; the page's path is already four machines long",
+    ],
+    [
+      "Protocol upgrade mechanism",
+      "WebSocket and friends, after everything here has already happened",
+    ],
+    [
+      "IPv6 addressing in full",
+      "named where it matters — NAT, and why it exists — but the simulation is IPv4 throughout",
+    ],
+    [
+      "Wi-Fi, 802.11 and the radio layer",
+      "layer 1 and part of 2 over the air; the house drawn here is wired",
+    ],
+    [
+      "BGP and how an ISP picks a path",
+      "the page stops at the ISP edge on purpose; past it is somebody else's table",
+    ],
+    [
+      "QUIC's own handshake",
+      "named beside HTTP/3, not drawn — it would be a second page, not a section",
+    ],
+  ];
+
+  const words = (s: string) => s.trim().split(/\s+/);
+  const prosey = (w: string) => /^[a-zA-Z]{2,}$/.test(w);
+
+  it("holds every row to a sentence rather than a keyword", () => {
+    for (const [section, prose] of COVERED) {
+      const w = words(prose);
+      expect(
+        w.length,
+        `${section}: "${prose}" is not a phrase`,
+      ).toBeGreaterThanOrEqual(5);
+      expect(
+        prose.length,
+        `${section}: "${prose}" is too short`,
+      ).toBeGreaterThanOrEqual(24);
+      expect(
+        w.filter(prosey).length,
+        `${section}: "${prose}" is all identifiers`,
+      ).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  for (const [section, prose, literal] of COVERED) {
+    it(`explains "${section}"`, () => {
+      expect(text.includes(prose), `${section} :: ${prose}`).toBe(true);
+      if (literal) {
+        expect(text.includes(literal), `${section} :: ${literal}`).toBe(true);
+      }
+    });
+  }
+
+  for (const [concept, prose] of CORE) {
+    it(`teaches "${concept}" without a click`, () => {
+      expect(standing.includes(prose), `${concept} :: ${prose}`).toBe(true);
+    });
+  }
+
+  it("keeps the omission list honest", () => {
+    for (const [section, why] of OMITTED) {
+      expect(section.length, "a section with no name").toBeGreaterThan(2);
+      expect(why.length, `${section} has no stated reason`).toBeGreaterThan(8);
+    }
+    expect(COVERED.length).toBeGreaterThan(OMITTED.length * 2);
+  });
+
+  it("names every section once", () => {
+    const seen = new Set<string>();
+    for (const [section] of COVERED) {
+      expect(seen.has(section), `${section} is listed twice`).toBe(false);
+      seen.add(section);
+    }
+  });
+
+  it("ends the guide on the frame the simulation sends", () => {
+    /* the page's own continuity claim, checked against the built page: the
+       rail's last layer is the request, and the hex the guide dumps is the
+       first six bytes of the frame Part II then carries */
+    expect(text).toContain("HTTP request");
+    expect(text).toContain("f09f c211 aa01");
+    expect(text).toContain("of 75 bytes on the wire");
+    expect(text).toContain("step 1 / 14");
+  });
+});

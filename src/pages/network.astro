@@ -51,8 +51,16 @@ import {
   STEPS,
   LINK_MS,
   THINK_MS,
+  OSI,
   type NodeId,
 } from "@/data/network-flow";
+import {
+  STEPS as GUIDE,
+  RAIL,
+  LAST_STEP,
+  WIRE_BYTES,
+  outputAt,
+} from "@/data/network-guide";
 
 const title = "The network";
 const description =
@@ -122,6 +130,103 @@ const effects = TICKS.map(({ hop, step }, i) => {
   };
 });
 
+/* ── Part I: escaping ─────────────────────────────────────────────────────
+   Every pre on this page is filled with set:html, because JSX inside a pre
+   does not survive Astro's parser — it reports a syntax error hundreds of
+   lines away from the thing that caused it. */
+
+const esc = (s: string) =>
+  s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+
+/** backticks in prose become code, which is the only markup the data carries */
+const ticks = (s: string) => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>");
+
+const outHtml = (step: number) =>
+  outputAt(step)
+    .map(out => `<span class="o-${out.kind}">${esc(out.text)}\n</span>`)
+    .join("") || '<span class="o-plain">nothing on the wire yet\n</span>';
+
+const shellHtml = (lines: { text: string; note?: string }[]) =>
+  lines
+    .map(line =>
+      line.note
+        ? `<span class="sh-cmd">${esc(line.text)}\n</span><span class="sh-note">${esc(
+            line.note,
+          )}\n</span>`
+        : `<span class="sh-cmd">${esc(line.text)}\n</span>`,
+    )
+    .join("");
+
+const insetHtml = (lines: string[]) => lines.map(esc).join("\n");
+
+/* ── Part III: the latency budget ─────────────────────────────────────────
+   Not a table of plausible numbers: the same `LINK_MS` and `THINK_MS` the
+   simulation below runs on, added up along the path the request takes. If
+   the simulation is retimed, this figure retimes with it. */
+
+const LEGS = [
+  { label: "laptop → switch", kind: "cable", ms: LINK_MS.lan },
+  { label: "the switch forwards", kind: "think", ms: THINK_MS.switch },
+  { label: "switch → router", kind: "cable", ms: LINK_MS.trunk },
+  { label: "the router rewrites", kind: "think", ms: THINK_MS.router },
+  { label: "router → ISP edge", kind: "cable", ms: LINK_MS.wan },
+  { label: "the ISP forwards", kind: "think", ms: THINK_MS.isp },
+  { label: "ISP → server", kind: "cable", ms: LINK_MS["core-web"] },
+];
+const ONE_WAY = LEGS.reduce((n, leg) => n + leg.ms, 0);
+const IN_HOUSE = LEGS.slice(0, 4).reduce((n, leg) => n + leg.ms, 0);
+const LONGEST = Math.max(...LEGS.map(leg => leg.ms));
+
+/** what kind of name each layer deals in — the column OSI itself omits */
+const NAMES_AT: Record<number, string> = {
+  7: "a URL, and a host name",
+  6: "a certificate, and a name it is valid for",
+  5: "a session, and the key it agreed",
+  4: "a port number",
+  3: "an IP address",
+  2: "a MAC address",
+  1: "a cable, or a frequency",
+};
+
+/** which tool answers a question at which layer */
+const TOOLS = [
+  {
+    osi: "2",
+    cmd: "ip link · ip neigh",
+    what: "this cable: the MAC addresses, and who holds which IP on it",
+  },
+  {
+    osi: "3",
+    cmd: "ip route · traceroute",
+    what: "the path: which way out, and who is in between",
+  },
+  { osi: "3", cmd: "dig", what: "the name, and which resolver answered it" },
+  {
+    osi: "4",
+    cmd: "ss -tnp",
+    what: "the connections this machine holds, and whose they are",
+  },
+  {
+    osi: "2-7",
+    cmd: "tcpdump -X",
+    what: "the bytes themselves, every header, exactly as sent",
+  },
+  {
+    osi: "6",
+    cmd: "openssl s_client",
+    what: "the certificate, the version, and whether it verified",
+  },
+  {
+    osi: "7",
+    cmd: "curl -v -w",
+    what: "the request, the answer, and where the time went",
+  },
+];
+
 const payload = {
   nodes: Object.fromEntries(
     NODES.map(n => [
@@ -181,18 +286,149 @@ const payload = {
   <Main pageTitle={title}>
     <div class="app-prose intro">
       <p>
-        One request for <code>https://example.com/</code>, running. Every cable
-        has a length in milliseconds. Every device takes a moment to think. So
-        the timings here are the real ones: two hops across the house cost less
-        than a fifth of a millisecond, and one hop to the server costs nineteen.
+        One request for <code>https://example.com/</code>, from the moment it is
+        a name nobody can route to the moment the page arrives. Part I builds
+        the frame that carries it, a field at a time, with the commands that
+        show each piece on a real machine.
       </p>
       <p>
-        Click anything — a device, a cable, a packet in flight — and the panel
-        beside the map says what it is and what it is doing. The tables fill in
-        as the simulation runs, because that is how the devices learn too.
+        Part II then runs the whole thing on a clock, and Part III is the three
+        sheets worth keeping.
       </p>
     </div>
   </Main>
+
+  <!-- ── PART I · the guide ────────────────────────────────────────────── -->
+  <section class="part" id="part-1">
+    <p class="part-n">Part I</p>
+    <h2>Fourteen steps</h2>
+    <p class="part-lead">
+      Nothing has been sent yet. Scroll, and the pane on the left fills in —
+      field by field, in the order the bytes sit on the wire — until it holds
+      the exact frame the simulation below carries across eight devices.
+    </p>
+
+    <ol class="toc" id="toc">
+      {
+        GUIDE.map(step => (
+          <li data-step={step.n}>
+            <a href={`#step-${step.n}`}>
+              <span class="toc-n">{String(step.n).padStart(2, "0")}</span>
+              <span class="toc-t">{step.title}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+
+  <section class="guide" id="guide">
+    <div class="guide-rail">
+      <p class="rail-label">
+        the frame <span class="rail-step" id="rail-step"
+          >step 1 / {LAST_STEP}</span
+        >
+      </p>
+      <ol class="rail" id="rail" data-empty="true">
+        {
+          RAIL.map(line =>
+            line.kind === "layer" ? (
+              <li class="rl rl-layer" data-step={line.step}>
+                <span class="rl-osi">L{line.osi}</span>
+                <span class="rl-name">{line.text}</span>
+                <span class="rl-sum">{line.summary}</span>
+              </li>
+            ) : (
+              <li
+                class:list={["rl", "rl-field", { "rl-off": line.offWire }]}
+                data-step={line.step}
+                data-bytes={line.bytes}
+              >
+                <span class="rl-name">{line.text}</span>
+                <span class="rl-val">{line.value}</span>
+                <span class="rl-b">{line.offWire ? "—" : line.bytes}</span>
+              </li>
+            ),
+          )
+        }
+      </ol>
+      <p class="rail-foot">
+        <span id="rail-bytes">0</span> of {WIRE_BYTES} bytes on the wire
+      </p>
+
+      <p class="rail-label sub">what it prints</p>
+      <div class="term" id="guide-term">
+        {
+          GUIDE.map(step => (
+            <pre
+              class="term-run"
+              data-step={step.n}
+              hidden={step.n !== 1}
+              set:html={outHtml(step.n)}
+            />
+          ))
+        }
+      </div>
+    </div>
+
+    <ol class="steps-list">
+      {
+        GUIDE.map(step => (
+          <li class="gstep" id={`step-${step.n}`} data-step={step.n}>
+            <p class="gstep-n">{String(step.n).padStart(2, "0")}</p>
+            <h3>{step.title}</h3>
+            <p class="gstep-lead" set:html={ticks(step.lead)} />
+
+            {step.shell ? (
+              <pre class="shell" set:html={shellHtml(step.shell)} />
+            ) : null}
+
+            {step.keywords && step.keywords.length ? (
+              <dl class="kw">
+                {step.keywords.map(k => (
+                  <Fragment>
+                    <dt>
+                      <code>{k.word}</code>
+                    </dt>
+                    <dd>
+                      <span set:html={ticks(k.what)} />
+                      {k.without ? <em set:html={ticks(k.without)} /> : null}
+                    </dd>
+                  </Fragment>
+                ))}
+              </dl>
+            ) : null}
+
+            {step.insets
+              ? step.insets.map(inset => (
+                  <div class="inset">
+                    <p class="inset-head">{inset.title}</p>
+                    <pre class="figure" set:html={insetHtml(inset.body)} />
+                    <p class="inset-note" set:html={ticks(inset.note)} />
+                  </div>
+                ))
+              : null}
+
+            <p class="gstep-take" set:html={ticks(step.takeaway)} />
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+
+  <!-- ── PART II · the simulation ──────────────────────────────────────── -->
+  <section class="part" id="part-2">
+    <p class="part-n">Part II</p>
+    <h2>The same request, on a clock</h2>
+    <p class="part-lead">
+      Every cable has a length in milliseconds and every device takes a moment
+      to think, so the proportions are the real ones: two hops across the house
+      cost less than a fifth of a millisecond, and one hop to the server costs
+      nineteen. Click anything — a device, a cable, a packet in flight — and the
+      panel beside the map says what it is and what it is doing. The tables fill
+      in as it runs, because that is how the devices learn too.
+    </p>
+  </section>
 
   <!-- The bench breaks the hall. A map with a panel beside it needs more than
        64rem, and §9's rule governs the reading measure, which this is not. -->
@@ -336,6 +572,87 @@ const payload = {
         <p class="side-empty">Loading the simulation.</p>
       </div>
     </aside>
+  </section>
+
+  <!-- ── PART III · the sheets ─────────────────────────────────────────── -->
+  <section class="part" id="part-3">
+    <p class="part-n">Part III</p>
+    <h2>Three sheets</h2>
+    <p class="part-lead">
+      The parts worth having to hand: what each layer names, where the time
+      actually goes, and which command answers a question at which layer.
+    </p>
+  </section>
+
+  <section class="ref">
+    <figure>
+      <p class="ref-head">What each layer names</p>
+      <ol class="layers">
+        {
+          OSI.map(layer => (
+            <li>
+              <span class="ly-n">{layer.n}</span>
+              <span class="ly-name">{layer.name}</span>
+              <span class="ly-names">{NAMES_AT[layer.n]}</span>
+              <span class="ly-blurb">{layer.blurb}</span>
+            </li>
+          ))
+        }
+      </ol>
+      <figcaption>
+        Seven layers, and only four of them write a header on this page. The
+        useful column is the third: each layer has its own kind of name, and a
+        failure is nearly always a name that could not be turned into the one
+        below it.
+      </figcaption>
+    </figure>
+
+    <figure>
+      <p class="ref-head">Where the time goes, one way</p>
+      <ol class="budget">
+        {
+          LEGS.map(leg => (
+            <li>
+              <span class="bg-label">{leg.label}</span>
+              <span class="bg-bar">
+                <span
+                  class:list={["bg-fill", leg.kind]}
+                  style={`width:${(leg.ms / LONGEST) * 100}%`}
+                />
+              </span>
+              <span class="bg-ms">{leg.ms.toFixed(2)} ms</span>
+            </li>
+          ))
+        }
+      </ol>
+      <figcaption>
+        {ONE_WAY.toFixed(2)} ms from the laptop to the server, of which {
+          IN_HOUSE.toFixed(2)
+        } ms is everything up to and including the router. One cable is {
+          ((LINK_MS["core-web"] / ONE_WAY) * 100).toFixed(0)
+        }% of the whole journey, and nothing anybody does to the house will
+        change it. These are the same numbers Part II runs on.
+      </figcaption>
+    </figure>
+
+    <figure>
+      <p class="ref-head">Which command, which layer</p>
+      <ol class="tools">
+        {
+          TOOLS.map(tool => (
+            <li>
+              <span class="tl-n">L{tool.osi}</span>
+              <code class="tl-cmd">{tool.cmd}</code>
+              <span class="tl-what">{tool.what}</span>
+            </li>
+          ))
+        }
+      </ol>
+      <figcaption>
+        Read the error first: it usually names the layer, and the instinct to
+        start with <code>ping</code> spends the minute in which it told you.
+      </figcaption>
+    </figure>
   </section>
 
   <Footer />
@@ -1329,6 +1646,106 @@ const payload = {
   </script>
 </Layout>
 
+<script>
+  /* ── Part I: the rail follows the reader ──────────────────────────
+       The frame on the left is filled in from how far down the page the
+       reader has scrolled. Not IntersectionObserver: a step taller than
+       the viewport can stop intersecting without firing a fresh entry,
+       and the rail then shows a step the reader left two screens ago. A
+       line across the upper third, and "the last step whose top is above
+       it", reads the page instead of remembering what it was. */
+
+  const rail = document.getElementById("rail");
+  const railStep = document.getElementById("rail-step");
+  const railBytes = document.getElementById("rail-bytes");
+  const guideSteps = [...document.querySelectorAll<HTMLElement>(".gstep")];
+  const tocItems = [...document.querySelectorAll<HTMLElement>("#toc li")];
+  const runs = [
+    ...document.querySelectorAll<HTMLElement>(".term-run[data-step]"),
+  ];
+  const railLines = rail ? [...rail.querySelectorAll<HTMLElement>(".rl")] : [];
+
+  /* the step the rail is currently showing, so the work — and the rail's
+     own scroll position — only happens when it actually changes */
+  let shownStep = 0;
+
+  const showGuideStep = (n: number) => {
+    if (n === shownStep) return;
+    shownStep = n;
+    let bytes = 0;
+    for (const line of railLines) {
+      const at = Number(line.dataset.step);
+      const shown = at <= n;
+      line.classList.toggle("shown", shown);
+      line.classList.toggle("fresh", at === n);
+      if (shown) bytes += Number(line.dataset.bytes ?? 0);
+    }
+    for (const run of runs) run.hidden = Number(run.dataset.step) !== n;
+    for (const item of tocItems) {
+      const at = Number(item.dataset.step);
+      item.classList.toggle("on", at === n);
+      item.classList.toggle("done", at < n);
+    }
+    if (railStep) {
+      railStep.textContent = `step ${n} / ${guideSteps.length}`;
+    }
+    if (railBytes) railBytes.textContent = String(bytes);
+    if (rail) rail.dataset.empty = String(bytes === 0);
+
+    /* Bring the field that just arrived into the rail's own view. The pane
+       is shorter than the finished frame, so by the TLS record the new
+       line is below the fold and the step reads as though nothing
+       happened. offsetTop would be measured against .guide-rail, which is
+       the positioned ancestor, so measure the distance directly. */
+    const fresh = rail?.querySelector<HTMLElement>(".rl.fresh");
+    if (rail && fresh) {
+      const top =
+        fresh.getBoundingClientRect().top -
+        rail.getBoundingClientRect().top +
+        rail.scrollTop;
+      rail.scrollTop = Math.max(0, top - rail.clientHeight / 2);
+    }
+  };
+
+  if (guideSteps.length) {
+    showGuideStep(1);
+
+    const pickGuideStep = () => {
+      const line = window.innerHeight * 0.33;
+      let current = Number(guideSteps[0].dataset.step);
+      for (const step of guideSteps) {
+        if (step.getBoundingClientRect().top <= line) {
+          current = Number(step.dataset.step);
+        }
+      }
+      showGuideStep(current);
+    };
+
+    let guideTicking = false;
+    const onGuideScroll = () => {
+      if (guideTicking) return;
+      guideTicking = true;
+      requestAnimationFrame(() => {
+        guideTicking = false;
+        pickGuideStep();
+      });
+    };
+
+    window.addEventListener("scroll", onGuideScroll, { passive: true });
+    window.addEventListener("resize", onGuideScroll);
+    pickGuideStep();
+
+    document.addEventListener(
+      "astro:before-swap",
+      () => {
+        window.removeEventListener("scroll", onGuideScroll);
+        window.removeEventListener("resize", onGuideScroll);
+      },
+      { once: true },
+    );
+  }
+</script>
+
 <style>
   .intro {
     margin-bottom: clamp(26px, 4vh, 40px);
@@ -1867,6 +2284,535 @@ const payload = {
       border-top: 1px solid var(--border);
       padding-inline-start: 0;
       padding-top: 16px;
+    }
+  }
+
+  /* ── Part I: parts, index, guide ───────────────────────────────────── */
+
+  .part {
+    width: 100%;
+    max-width: 72ch;
+    margin-inline: auto;
+    padding-inline: 16px;
+    padding-block: clamp(56px, 10vh, 112px) 0;
+  }
+  .part-n {
+    font-family: var(--font-display);
+    font-size: 14px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--text-4);
+    margin: 0 0 10px;
+  }
+  .part h2 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(26px, 4vw, 36px);
+    line-height: 1.15;
+    color: var(--text);
+    margin: 0;
+  }
+  .part-lead {
+    max-width: 60ch;
+    margin: 14px 0 0;
+    color: var(--text-3);
+    line-height: 1.6;
+  }
+
+  .toc {
+    list-style: none;
+    margin: 28px 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 2px 20px;
+  }
+  .toc li {
+    border-top: 1px solid var(--border-recess);
+  }
+  .toc a {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    padding: 7px 0;
+    text-decoration: none;
+    color: var(--text-4);
+    font-size: 14.5px;
+  }
+  .toc a:hover {
+    color: var(--text-2);
+  }
+  .toc-n {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--text-4);
+    opacity: 0.7;
+  }
+  .toc li.done a {
+    color: var(--text-3);
+  }
+  .toc li.on {
+    border-top-color: var(--ornament);
+  }
+  .toc li.on a {
+    color: var(--text);
+  }
+
+  .guide {
+    width: 100%;
+    max-width: 1240px;
+    margin-inline: auto;
+    padding-inline: 16px;
+    padding-block: 34px 0;
+    display: grid;
+    grid-template-columns: minmax(0, 460px) minmax(0, 1fr);
+    gap: 40px;
+    align-items: start;
+  }
+  .guide-rail {
+    position: sticky;
+    top: 24px;
+    min-width: 0;
+    /* A sticky box whose contents change is exactly the case Chrome's
+       scroll anchoring mishandles: it compensates for the size change by
+       moving the document, which fights the scroll that caused it. */
+    overflow-anchor: none;
+  }
+  .rail-label {
+    font-family: var(--font-display);
+    font-size: 13px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-4);
+    margin: 0 0 8px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .rail-label.sub {
+    margin-top: 18px;
+  }
+  .rail-step {
+    font-family: var(--font-mono);
+    letter-spacing: 0.04em;
+    text-transform: none;
+  }
+
+  /* ── the frame, filling in ─────────────────────────────────────────── */
+
+  .rail {
+    list-style: none;
+    margin: 0;
+    /* the right padding keeps the byte column clear of the scrollbar the
+       pane grows once the frame is taller than it is */
+    padding: 0 12px 0 14px;
+    border-left: 1px solid var(--border-recess);
+    max-height: 48vh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  .rail[data-empty="true"]::after {
+    content: "nothing on the wire yet — step 3 writes the first field";
+    display: block;
+    color: var(--text-4);
+    font-style: italic;
+    font-size: 13px;
+  }
+  /* A field that has not arrived is removed, not hidden: held open it
+     reads as an empty row in the header, which is a lie about the frame.
+     Growing is the point. */
+  .rl {
+    display: none;
+  }
+  .rl.shown {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2px 10px;
+    align-items: baseline;
+    padding: 2px 0;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  /* The highlight bleeds LEFT into the rail's own padding only. Bleeding
+     right as well makes every fresh row wider than the box, and the box
+     grows a horizontal scrollbar that clips the byte column. */
+  .rl.fresh {
+    background: var(--arcane-tint);
+    box-shadow: inset 2px 0 0 var(--arcane);
+    margin-left: -14px;
+    padding-left: 14px;
+  }
+  .rl-layer.shown {
+    grid-template-columns: auto minmax(0, 1fr);
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-recess);
+  }
+  .rl-layer:first-child.shown {
+    margin-top: 0;
+    border-top: 0;
+  }
+  .rl-osi {
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    color: var(--text-4);
+  }
+  .rl-layer .rl-name {
+    font-family: var(--font-display);
+    font-size: 14px;
+    letter-spacing: 0.04em;
+    color: var(--text);
+  }
+  .rl-sum {
+    grid-column: 2;
+    color: var(--text-4);
+    font-family: var(--font-display);
+    font-size: 12.5px;
+    line-height: 1.45;
+  }
+  .rl-name {
+    color: var(--text-3);
+  }
+  .rl-val {
+    grid-column: 1;
+    color: var(--text-2);
+    word-break: break-word;
+  }
+  .rl-b {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+    color: var(--text-4);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+  }
+  .rl-off .rl-val,
+  .rl-off .rl-name {
+    color: var(--text-4);
+  }
+  .rail-foot {
+    margin: 10px 0 0;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--text-4);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .term {
+    max-height: 30vh;
+    overflow: auto;
+    border-left: 1px solid var(--border-recess);
+    padding-left: 14px;
+  }
+  .term-run,
+  .shell,
+  .figure {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.55;
+    margin: 0;
+    overflow: auto;
+    white-space: pre;
+    color: var(--syn-plain);
+    background: none;
+  }
+  .term-run :global(.o-head) {
+    color: var(--text);
+  }
+  .term-run :global(.o-sent) {
+    color: var(--text-2);
+  }
+  .term-run :global(.o-recv) {
+    color: var(--arcane);
+  }
+  .term-run :global(.o-ok) {
+    color: var(--arcane);
+  }
+  .term-run :global(.o-bad) {
+    color: var(--blood);
+  }
+  .term-run :global(.o-note) {
+    color: var(--text-4);
+    font-style: italic;
+  }
+  .term-run :global(.o-plain) {
+    color: var(--text-4);
+  }
+
+  /* ── the steps ─────────────────────────────────────────────────────── */
+
+  .steps-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .gstep {
+    padding-block: clamp(60px, 11vh, 120px);
+    border-top: 1px solid var(--border-recess);
+  }
+  .gstep:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+  .gstep-n {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    color: var(--text-4);
+    margin: 0 0 6px;
+  }
+  .gstep h3 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(21px, 2.6vw, 27px);
+    color: var(--text);
+    margin: 0 0 12px;
+    line-height: 1.2;
+  }
+  .gstep-lead {
+    max-width: 62ch;
+    color: var(--text-2);
+    line-height: 1.68;
+    margin: 0;
+  }
+  .gstep-take {
+    max-width: 60ch;
+    margin: 26px 0 0;
+    padding-top: 14px;
+    border-top: 1px solid var(--border-recess);
+    color: var(--text-3);
+    font-family: var(--font-display);
+    font-size: 17px;
+    line-height: 1.5;
+  }
+
+  .shell {
+    margin: 22px 0 0;
+    padding-left: 14px;
+    border-left: 1px solid var(--border-recess);
+  }
+  .shell :global(.sh-cmd) {
+    color: var(--text-2);
+  }
+  .shell :global(.sh-note) {
+    color: var(--text-4);
+    font-style: italic;
+  }
+
+  .kw {
+    margin: 24px 0 0;
+    display: grid;
+    grid-template-columns: minmax(150px, auto) minmax(0, 1fr);
+    gap: 10px 22px;
+    align-items: baseline;
+  }
+  .kw dt {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--text-2);
+    word-break: break-word;
+  }
+  .kw dd {
+    margin: 0;
+    color: var(--text-3);
+    line-height: 1.6;
+    max-width: 60ch;
+  }
+  .kw dd em {
+    display: block;
+    margin-top: 4px;
+    color: var(--text-4);
+    font-style: italic;
+  }
+  .kw code,
+  .tl-cmd,
+  .gstep-lead :global(code),
+  .inset-note :global(code),
+  .ref figcaption code,
+  .kw dd :global(code) {
+    font-family: var(--font-mono);
+    font-size: 0.92em;
+    color: var(--text-2);
+  }
+
+  .inset {
+    margin: 26px 0 0;
+    padding: 16px 0 0;
+    border-top: 1px solid var(--border-recess);
+  }
+  .inset-head {
+    font-family: var(--font-display);
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-4);
+    margin: 0 0 10px;
+  }
+  .figure {
+    color: var(--text-3);
+  }
+  .inset-note {
+    margin: 12px 0 0;
+    color: var(--text-4);
+    line-height: 1.6;
+    max-width: 60ch;
+  }
+
+  /* ── Part III: the sheets ──────────────────────────────────────────── */
+
+  .ref {
+    width: 100%;
+    max-width: 1240px;
+    margin-inline: auto;
+    padding: 34px 16px 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+    gap: clamp(32px, 4vw, 56px);
+    align-items: start;
+  }
+  .ref figure {
+    margin: 0;
+    min-width: 0;
+  }
+  .ref-head {
+    font-family: var(--font-display);
+    font-size: 13px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-4);
+    margin: 0 0 12px;
+  }
+  .ref figcaption {
+    margin-top: 16px;
+    color: var(--text-4);
+    line-height: 1.6;
+    font-size: 14.5px;
+  }
+
+  .layers,
+  .budget,
+  .tools {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .layers li {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 2px 12px;
+    padding: 8px 0;
+    border-top: 1px solid var(--border-recess);
+  }
+  .layers li:first-child {
+    border-top: 0;
+  }
+  .ly-n {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--text-4);
+  }
+  .ly-name {
+    font-family: var(--font-display);
+    font-size: 15px;
+    color: var(--text-2);
+  }
+  .ly-names {
+    grid-column: 2;
+    color: var(--text-3);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .ly-blurb {
+    grid-column: 2;
+    color: var(--text-4);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .budget li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 12px;
+    padding: 7px 0;
+    border-top: 1px solid var(--border-recess);
+    align-items: center;
+  }
+  .budget li:first-child {
+    border-top: 0;
+  }
+  .bg-label {
+    color: var(--text-3);
+    font-size: 14px;
+  }
+  .bg-ms {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-4);
+    font-variant-numeric: tabular-nums;
+  }
+  .bg-bar {
+    grid-column: 1 / -1;
+    display: block;
+    height: 3px;
+    background: var(--border-recess);
+  }
+  .bg-fill {
+    display: block;
+    height: 100%;
+    background: var(--text-4);
+  }
+  .bg-fill.cable {
+    background: var(--arcane);
+  }
+
+  .tools li {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 2px 12px;
+    padding: 8px 0;
+    border-top: 1px solid var(--border-recess);
+  }
+  .tools li:first-child {
+    border-top: 0;
+  }
+  .tl-n {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--text-4);
+  }
+  .tl-what {
+    grid-column: 2;
+    color: var(--text-4);
+    font-size: 13.5px;
+    line-height: 1.5;
+  }
+
+  @media (max-width: 1040px) {
+    .guide {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .guide-rail {
+      position: static;
+    }
+    .rail {
+      max-height: 40vh;
+    }
+  }
+
+  /* On a phone the keyword column's `auto` track grows to the longest
+     literal in it — `who-has 192.168.1.1 tell 192.168.1.42` is wider than
+     the screen — and takes the page with it. One column instead. */
+  @media (max-width: 36rem) {
+    .kw {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 2px 0;
+    }
+    .kw dt {
+      margin-top: 12px;
+    }
+    .kw dt:first-child {
+      margin-top: 0;
     }
   }
 </style>
