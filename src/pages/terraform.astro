@@ -1,0 +1,1574 @@
+---
+/**
+ * /terraform — one stack, written in front of you, then applied.
+ *
+ * The third of these pages, and deliberately the same shape as the second:
+ * Part I builds `main.tf` a few lines at a time with the CLI's own output
+ * beside it, Part II runs what Part I wrote, Part III is the reference you
+ * come back for. `tests/terraform-guide.test.ts` asserts that the file the
+ * guide ends on is the stack Part II applies, so the two halves cannot
+ * drift apart.
+ *
+ * ── why a graph and not a grid ───────────────────────────────────────────
+ *
+ * Ansible's page is a grid, because a run is one list of tasks repeated
+ * against many hosts. Terraform is not that: it is thirteen objects, each
+ * waiting on the ones it refers to, walked once. So the picture here is a
+ * layered graph and a schedule over it, and the lesson the schedule
+ * carries is the critical path — ninety-two seconds of load balancer
+ * followed by thirty-one of DNS, with everything else finishing while
+ * those two wait. No knob on the page moves that number, and the page says
+ * so by letting you try.
+ *
+ * ── what is exact and what is invented ───────────────────────────────────
+ *
+ * The durations are plausible AWS create times, not measured ones, and the
+ * bench says as much on its face. The SHAPE is exact: which object waits
+ * for which, what each change does to the plan, which argument forces a
+ * replacement, and what `create_before_destroy` reorders. Those are the
+ * parts a reader would carry away wrong, so those are the parts the tests
+ * hold still.
+ */
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Breadcrumb from "@/components/Breadcrumb.astro";
+import Main from "@/components/Main.astro";
+import Footer from "@/components/Footer.astro";
+import config from "@/config";
+import {
+  ALL_OPTIONS,
+  BY_ADDR,
+  CHANGES,
+  EDGES,
+  LAYOUT,
+  LIFECYCLE,
+  PARALLELISMS,
+  PRECEDENCE,
+  RECAP,
+  RESOURCES,
+  STATE_CMDS,
+  SYMBOLS,
+  buildSchedule,
+  optionKey,
+} from "@/data/terraform-apply";
+import {
+  LAST_STEP,
+  STEPS as GUIDE,
+  addrStep,
+  fileAt,
+  outputAt,
+} from "@/data/terraform-guide";
+
+const title = "Terraform";
+const description =
+  "One stack, written a few lines at a time with the plan beside it, then applied as a graph: thirteen objects, every dependency drawn, and a schedule that shows where the two minutes actually go.";
+
+/* ── escaping and colour ──────────────────────────────────────────────────
+   Every pre on this page is filled with set:html, because JSX inside a pre
+   does not survive Astro's parser — it reports a syntax error hundreds of
+   lines away from the thing that caused it. */
+
+const esc = (s: string) =>
+  s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+
+const KEYWORDS =
+  /^(terraform|provider|resource|data|variable|output|module|locals|import|moved|removed|backend|lifecycle|ingress|filter|route|alias|required_providers|config)$/;
+
+/** HCL, coloured by the few things worth telling apart */
+const hcl = (line: string): string => {
+  if (/^\s*#/.test(line)) return `<span class="s-comment">${esc(line)}</span>`;
+  return esc(line).replace(
+    /(&quot;[^&]*?&quot;)|\b(var|each|data|module|local)\.[\w.[\]&quot;-]+|\b(aws_[a-z0-9_]+)\.[\w.[\]&quot;-]+|\b([a-z_]+)(?=\s*[{=])|\b(true|false|null|\d+)\b/g,
+    (match, str, prefix, aws, word, lit) => {
+      if (str) return `<span class="s-string">${str}</span>`;
+      if (prefix || aws) return `<span class="s-ref">${match}</span>`;
+      if (word)
+        return KEYWORDS.test(word)
+          ? `<span class="s-key">${word}</span>`
+          : `<span class="s-arg">${word}</span>`;
+      if (lit) return `<span class="s-num">${lit}</span>`;
+      return match;
+    },
+  );
+};
+
+/** the rail's file: every line, tagged with the step it arrives at */
+const fileHtml = fileAt(LAST_STEP)
+  .map(
+    line =>
+      `<span class="ln" data-step="${line.step}">${
+        line.text ? hcl(line.text) : ""
+      }\n</span>`,
+  )
+  .join("");
+
+const outHtml = (step: number) =>
+  outputAt(step)
+    .map(out => `<span class="o-${out.kind}">${esc(out.text)}\n</span>`)
+    .join("") || '<span class="o-plain">nothing to run yet\n</span>';
+
+const shellHtml = (lines: { text: string; note?: string; out?: boolean }[]) =>
+  lines
+    .map(line =>
+      line.note
+        ? `<span class="sh-cmd">${esc(line.text)}\n</span><span class="sh-note">${esc(
+            line.note,
+          )}\n</span>`
+        : `<span class="sh-cmd">${esc(line.text)}\n</span>`,
+    )
+    .join("");
+
+const insetHtml = (lines: string[]) =>
+  lines.map(line => (line ? hcl(line) : "")).join("\n");
+
+/** backticks in prose become code, which is the only markup the data carries */
+const ticks = (s: string) => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>");
+
+/* ── the graph figure ─────────────────────────────────────────────────────
+   Laid out by longest path from a root, which is the layering Terraform's
+   own walk implies: everything in column n waits for something in n-1. */
+
+const depth = (addr: string, seen = new Set<string>()): number => {
+  if (seen.has(addr)) return 0;
+  seen.add(addr);
+  const deps = BY_ADDR[addr].deps;
+  return deps.length ? 1 + Math.max(...deps.map(d => depth(d, seen))) : 0;
+};
+
+const DEPTHS = Object.fromEntries(RESOURCES.map(r => [r.addr, depth(r.addr)]));
+const COLUMNS = Math.max(...Object.values(DEPTHS)) + 1;
+const LANES: string[][] = Array.from({ length: COLUMNS }, (_, col) =>
+  RESOURCES.filter(r => DEPTHS[r.addr] === col).map(r => r.addr),
+);
+
+const COL_W = 212;
+const ROW_H = 46;
+const NODE_W = 178;
+const NODE_H = 30;
+const G_W = COLUMNS * COL_W + 20;
+const G_H = Math.max(...LANES.map(l => l.length)) * ROW_H + 44;
+
+const nodeAt = (addr: string) => {
+  const col = DEPTHS[addr];
+  const row = LANES[col].indexOf(addr);
+  const lane = LANES[col].length;
+  const offset = (G_H - 44 - lane * ROW_H) / 2;
+  return {
+    x: 10 + col * COL_W,
+    y: 30 + offset + row * ROW_H,
+  };
+};
+
+const CRITICAL = buildSchedule({
+  parallelism: 10,
+  change: "create",
+  cbd: false,
+  refresh: false,
+}).critical;
+
+const NODES = RESOURCES.map(res => {
+  const { x, y } = nodeAt(res.addr);
+  return {
+    ...res,
+    x,
+    y,
+    critical: CRITICAL.includes(res.addr),
+    /* the address, shortened: the type prefix is the noisy part */
+    short: res.addr.replace(/^aws_/, "").replace(/^data\.aws_/, "data."),
+  };
+});
+
+const WIRES = EDGES.map(edge => {
+  const a = nodeAt(edge.from);
+  const b = nodeAt(edge.to);
+  const x1 = a.x + NODE_W;
+  const y1 = a.y + NODE_H / 2;
+  const x2 = b.x;
+  const y2 = b.y + NODE_H / 2;
+  const bend = Math.max(24, (x2 - x1) / 2);
+  return {
+    ...edge,
+    d: `M ${x1} ${y1} C ${x1 + bend} ${y1}, ${x2 - bend} ${y2}, ${x2} ${y2}`,
+    critical:
+      CRITICAL.includes(edge.from) &&
+      CRITICAL.includes(edge.to) &&
+      CRITICAL.indexOf(edge.to) === CRITICAL.indexOf(edge.from) + 1,
+  };
+});
+
+/* ── the bench's data ─────────────────────────────────────────────────────
+   Forty-eight schedules, all precomputed, so a knob is a lookup rather
+   than a calculation in the browser. */
+
+const schedules = Object.fromEntries(
+  ALL_OPTIONS.map(opt => {
+    const { slots, end, outage, peak, critical } = buildSchedule(opt);
+    return [
+      optionKey(opt),
+      {
+        slots: slots.map(s => ({
+          addr: s.addr,
+          part: s.part,
+          action: s.action,
+          start: Number(s.start.toFixed(3)),
+          end: Number(s.end.toFixed(3)),
+        })),
+        end: Number(end.toFixed(2)),
+        outage: Number(outage.toFixed(1)),
+        peak,
+        critical,
+      },
+    ];
+  }),
+);
+
+const payload = {
+  schedules,
+  rows: RESOURCES.map(res => ({
+    addr: res.addr,
+    short: res.addr.replace(/^aws_/, "").replace(/^data\.aws_/, "data."),
+    kind: res.kind,
+    what: res.what,
+  })),
+  recap: RECAP,
+  changes: CHANGES,
+};
+
+const BEST = Math.min(...ALL_OPTIONS.map(opt => buildSchedule(opt).end));
+const CREATE_END = buildSchedule({
+  parallelism: 10,
+  change: "create",
+  cbd: false,
+  refresh: false,
+}).end;
+---
+
+<Layout title={`${title} | ${config.site.title}`} description={description}>
+  <Header />
+
+  <Breadcrumb />
+
+  <Main pageTitle={title}>
+    <div class="app-prose intro">
+      <p>
+        A stack is a graph. You write what should exist and what refers to what;
+        Terraform works out the order, and the longest chain of references
+        decides how long it all takes.
+      </p>
+    </div>
+  </Main>
+
+  <!-- ── PART I · the guide ────────────────────────────────────────────── -->
+  <section class="part" id="part-1">
+    <p class="part-n">Part I</p>
+    <h2>Fourteen steps</h2>
+    <p class="part-lead">
+      One file, built in front of you. Scroll down and it grows. The pane on the
+      left keeps up, and shows what Terraform prints each time.
+    </p>
+
+    <ol class="toc" id="toc">
+      {
+        GUIDE.map(step => (
+          <li data-step={step.n}>
+            <a href={`#step-${step.n}`}>
+              <span class="toc-n">{String(step.n).padStart(2, "0")}</span>
+              <span class="toc-t">{step.title}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+
+  <section class="guide" id="guide">
+    <div class="guide-rail">
+      <p class="label">
+        main.tf <span class="rail-step" id="rail-step"
+          >step 1 / {LAST_STEP}</span
+        >
+      </p>
+      <pre
+        class="code guide-file"
+        id="guide-file"><code set:html={fileHtml} /></pre>
+
+      <p class="label sub">what it prints</p>
+      <div class="term" id="guide-term">
+        {
+          GUIDE.map(step => (
+            <pre
+              class="term-run"
+              data-step={step.n}
+              hidden={step.n !== 1}
+              set:html={outHtml(step.n)}
+            />
+          ))
+        }
+      </div>
+    </div>
+
+    <ol class="steps-list">
+      {
+        GUIDE.map(step => (
+          <li class="gstep" id={`step-${step.n}`} data-step={step.n}>
+            <p class="gstep-n">{String(step.n).padStart(2, "0")}</p>
+            <h3>{step.title}</h3>
+            <p class="gstep-lead" set:html={ticks(step.lead)} />
+
+            {step.shell ? (
+              <pre class="shell" set:html={shellHtml(step.shell)} />
+            ) : null}
+
+            {step.keywords && step.keywords.length ? (
+              <dl class="kw">
+                {step.keywords.map(k => (
+                  <Fragment>
+                    <dt>
+                      <code>{k.word}</code>
+                    </dt>
+                    <dd>
+                      <span set:html={ticks(k.what)} />
+                      {k.without ? <em set:html={ticks(k.without)} /> : null}
+                    </dd>
+                  </Fragment>
+                ))}
+              </dl>
+            ) : null}
+
+            {step.graph ? (
+              <svg
+                class="minigraph"
+                viewBox={`0 0 ${G_W} ${G_H}`}
+                role="img"
+                aria-label="the dependency graph of the stack, drawn left to right"
+              >
+                {WIRES.filter(
+                  wire =>
+                    addrStep(wire.from) <= step.n &&
+                    addrStep(wire.to) <= step.n,
+                ).map(wire => (
+                  <path
+                    class={`wire${wire.critical ? " on-path" : ""}`}
+                    d={wire.d}
+                  />
+                ))}
+                {NODES.filter(node => addrStep(node.addr) <= step.n).map(
+                  node => (
+                    <g
+                      class={`gnode${node.critical && step.n >= 10 ? " on-path" : ""}`}
+                    >
+                      <rect
+                        x={node.x}
+                        y={node.y}
+                        width={NODE_W}
+                        height={NODE_H}
+                        rx="2"
+                      />
+                      <text x={node.x + 10} y={node.y + 20}>
+                        {node.short}
+                      </text>
+                    </g>
+                  ),
+                )}
+              </svg>
+            ) : null}
+
+            {step.insets
+              ? step.insets.map(inset => (
+                  <div class="inset">
+                    <p class="inset-head">{inset.title}</p>
+                    <div class="inset-body">
+                      <pre class="code" set:html={insetHtml(inset.hcl)} />
+                      {inset.out ? (
+                        <pre
+                          class="term-run inset-out"
+                          set:html={inset.out
+                            .map(
+                              t => `<span class="o-plain">${esc(t)}\n</span>`,
+                            )
+                            .join("")}
+                        />
+                      ) : null}
+                    </div>
+                    <p class="inset-note" set:html={ticks(inset.note)} />
+                  </div>
+                ))
+              : null}
+
+            <p class="gstep-take" set:html={ticks(step.takeaway)} />
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+
+  <!-- ── PART II · the apply ───────────────────────────────────────────── -->
+  <section class="part" id="part-2">
+    <p class="part-n">Part II</p>
+    <h2>What actually happens</h2>
+    <p class="part-lead">
+      That file, applied. Thirteen objects, every edge a reference somebody
+      wrote, and a walk over them that takes {Math.round(CREATE_END)} seconds — nearly
+      all of it waiting for two of the thirteen.
+    </p>
+  </section>
+
+  <section class="hook">
+    <figure>
+      <svg
+        class="graph"
+        viewBox={`0 0 ${G_W} ${G_H}`}
+        role="img"
+        aria-label="Thirteen resources in four columns, each column waiting on the one before it"
+      >
+        {
+          WIRES.map(wire => (
+            <path class={`wire${wire.critical ? " on-path" : ""}`} d={wire.d} />
+          ))
+        }
+        {
+          NODES.map(node => (
+            <g
+              class={`gnode${node.critical ? " on-path" : ""}`}
+              data-addr={node.addr}
+            >
+              <rect
+                x={node.x}
+                y={node.y}
+                width={NODE_W}
+                height={NODE_H}
+                rx="2"
+              />
+              <text x={node.x + 10} y={node.y + 19}>
+                {node.short}
+              </text>
+            </g>
+          ))
+        }
+      </svg>
+      <figcaption>
+        Four columns, because nothing in one can start until something in the
+        one before it has finished. The marked chain is the critical path: the
+        network, the firewall rule, the load balancer, the record. Those four
+        are the whole {Math.round(CREATE_END)} seconds. The other nine objects are
+        made while they wait, and cost nothing at all.
+      </figcaption>
+    </figure>
+  </section>
+
+  <section class="bench">
+    <div class="readout">
+      <p class="big"><span id="total">{CREATE_END.toFixed(1)}</span>s</p>
+      <dl class="stats">
+        <dt>at once, at most</dt>
+        <dd id="peak">5</dd>
+        <dt>nothing serving</dt>
+        <dd id="outage">0.0s</dd>
+        <dt>the run says</dt>
+        <dd id="recap">{RECAP.create}</dd>
+      </dl>
+      <p class="hint">
+        The fastest any of these forty-eight combinations manages is {
+          BEST.toFixed(1)
+        }s, and it is not the one with the biggest number on the knob.
+      </p>
+    </div>
+
+    <div class="knobs" id="knobs">
+      <div class="knob" data-knob="change">
+        <p class="label">what changed</p>
+        <div class="choices">
+          {
+            CHANGES.map((change, i) => (
+              <button
+                type="button"
+                data-value={change.id}
+                aria-pressed={i === 0 ? "true" : "false"}
+              >
+                {change.name}
+              </button>
+            ))
+          }
+        </div>
+        <p class="knob-note" id="note-change">{CHANGES[0].what}</p>
+      </div>
+
+      <div class="knob" data-knob="parallelism">
+        <p class="label">-parallelism</p>
+        <div class="choices">
+          {
+            PARALLELISMS.map(n => (
+              <button
+                type="button"
+                data-value={String(n)}
+                aria-pressed={n === 10 ? "true" : "false"}
+              >
+                {n}
+              </button>
+            ))
+          }
+        </div>
+        <p class="knob-note">
+          How many objects may be worked on at once. Ten by default. Raising it
+          past the width of the graph buys nothing at all.
+        </p>
+      </div>
+
+      <div class="knob" data-knob="cbd">
+        <p class="label">create_before_destroy</p>
+        <div class="choices">
+          <button type="button" data-value="plain" aria-pressed="true"
+            >off</button
+          >
+          <button type="button" data-value="cbd" aria-pressed="false">on</button
+          >
+        </div>
+        <p class="knob-note">
+          On a replacement, make the new object first. Watch the total: it does
+          not move. What moves is the window in which nothing is serving.
+        </p>
+      </div>
+
+      <div class="knob" data-knob="refresh">
+        <p class="label">refresh</p>
+        <div class="choices">
+          <button type="button" data-value="refresh" aria-pressed="true"
+            >on</button
+          >
+          <button type="button" data-value="norefresh" aria-pressed="false">
+            off
+          </button>
+        </div>
+        <p class="knob-note">
+          Reading every object back before planning. It is why a plan on a large
+          estate is slow even when the answer is that nothing changed.
+        </p>
+      </div>
+    </div>
+
+    <div class="gantt-wrap">
+      <svg
+        class="gantt"
+        id="gantt"
+        role="img"
+        aria-label="A schedule of the apply, one bar per object"></svg>
+      <p class="scale">
+        Seconds. The durations are plausible API times, not measured ones; the
+        order is the real one.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── PART III · reference ──────────────────────────────────────────── -->
+  <section class="part" id="part-3">
+    <p class="part-n">Part III</p>
+    <h2>Reference</h2>
+    <p class="part-lead">
+      Four things worth having in one place: what the plan can say, where a
+      value comes from, how to argue with the plan, and where the files go.
+    </p>
+  </section>
+
+  <section class="ref">
+    <figure>
+      <figcaption class="ref-head">What a plan can say</figcaption>
+      <dl class="symbols">
+        {
+          SYMBOLS.map(symbol => (
+            <Fragment>
+              <dt>
+                <code>{symbol.sign}</code>
+                <span>{symbol.name}</span>
+              </dt>
+              <dd>
+                <span set:html={ticks(symbol.what)} />
+                {symbol.note ? <em set:html={ticks(symbol.note)} /> : null}
+              </dd>
+            </Fragment>
+          ))
+        }
+      </dl>
+      <p class="ref-note">
+        Four, and no more. A data source is read while the plan is made rather
+        than acted on, so it has no action of its own.
+      </p>
+    </figure>
+
+    <figure>
+      <figcaption class="ref-head">Where a value comes from</figcaption>
+      <ol class="prec">
+        {
+          PRECEDENCE.map(level => (
+            <li>
+              <span class="prec-n">{level.n}</span>
+              <span class="prec-s">{level.source}</span>
+              {level.note ? <em>{level.note}</em> : null}
+            </li>
+          ))
+        }
+      </ol>
+      <p class="ref-note">
+        Highest first. Six levels against Ansible's twenty-two, and the only
+        trap is at the bottom: a <code>default</code> is a floor, not a value.
+      </p>
+    </figure>
+
+    <figure>
+      <figcaption class="ref-head">Arguing with the plan</figcaption>
+      <dl class="kw ref-kw">
+        {
+          LIFECYCLE.map(item => (
+            <Fragment>
+              <dt>
+                <code>{item.name}</code>
+              </dt>
+              <dd set:html={ticks(item.what)} />
+            </Fragment>
+          ))
+        }
+      </dl>
+      <p class="label sub">state, and the commands that touch it</p>
+      <dl class="kw ref-kw">
+        {
+          STATE_CMDS.map(item => (
+            <Fragment>
+              <dt>
+                <code>{item.cmd}</code>
+              </dt>
+              <dd set:html={ticks(item.what)} />
+            </Fragment>
+          ))
+        }
+      </dl>
+    </figure>
+
+    <figure>
+      <figcaption class="ref-head">Where the files go</figcaption>
+      <ul class="layout">
+        {
+          LAYOUT.map(entry => (
+            <li class={`d-${entry.depth}`}>
+              <code>{entry.path}</code>
+              <span>{entry.note}</span>
+            </li>
+          ))
+        }
+      </ul>
+      <p class="ref-note">
+        Two files decide whether a colleague can reproduce your stack:
+        <code>.terraform.lock.hcl</code>, which must be committed, and the
+        state, which must not.
+      </p>
+    </figure>
+  </section>
+
+  <Footer />
+
+  <!-- Data, not code: is:inline keeps Astro's bundler out of it. -->
+  <script
+    is:inline
+    type="application/json"
+    id="apply"
+    set:html={JSON.stringify(payload)}
+  />
+
+  <script>
+    type Slot = {
+      addr: string;
+      part: "refresh" | "destroy" | "create" | "update" | "read";
+      action: string;
+      start: number;
+      end: number;
+    };
+    type Sched = {
+      slots: Slot[];
+      end: number;
+      outage: number;
+      peak: number;
+      critical: string[];
+    };
+    type Payload = {
+      schedules: Record<string, Sched>;
+      rows: { addr: string; short: string; kind: string; what: string }[];
+      recap: Record<string, string>;
+      changes: { id: string; name: string; edit: string; what: string }[];
+    };
+
+    const node = document.getElementById("apply");
+    if (node?.textContent) {
+      const data: Payload = JSON.parse(node.textContent);
+
+      /* ── Part I: the rail follows the reader ───────────────────────── */
+
+      const file = document.getElementById("guide-file");
+      const railStep = document.getElementById("rail-step");
+      const steps = [...document.querySelectorAll<HTMLElement>(".gstep")];
+      const tocItems = [...document.querySelectorAll<HTMLElement>("#toc li")];
+      const runs = [
+        ...document.querySelectorAll<HTMLElement>(".term-run[data-step]"),
+      ];
+      const lines = file ? [...file.querySelectorAll<HTMLElement>(".ln")] : [];
+
+      const showStep = (n: number) => {
+        for (const line of lines) {
+          const at = Number(line.dataset.step);
+          line.classList.toggle("shown", at <= n);
+          line.classList.toggle("fresh", at === n);
+        }
+        for (const run of runs) {
+          run.hidden = Number(run.dataset.step) !== n;
+        }
+        for (const item of tocItems) {
+          const at = Number(item.dataset.step);
+          item.classList.toggle("on", at === n);
+          item.classList.toggle("done", at < n);
+        }
+        if (railStep) railStep.textContent = `step ${n} / ${steps.length}`;
+        if (file) file.dataset.empty = String(n < 2);
+      };
+
+      showStep(1);
+
+      /**
+       * Which step the reader is on, worked out from where the page is
+       * scrolled to rather than from IntersectionObserver.
+       *
+       * The observer version keeps a map of each step's last reported
+       * ratio and takes the largest. That map goes stale: a step taller
+       * than the viewport can stop intersecting without firing a fresh
+       * entry, and the rail then shows a step the reader left two screens
+       * ago. A line across the upper third, and "the last step whose top
+       * is above it", reads the page instead of remembering what it was.
+       */
+      if (steps.length) {
+        const pick = () => {
+          const line = window.innerHeight * 0.33;
+          let current = Number(steps[0].dataset.step);
+          for (const step of steps) {
+            if (step.getBoundingClientRect().top <= line) {
+              current = Number(step.dataset.step);
+            }
+          }
+          showStep(current);
+        };
+
+        let ticking = false;
+        const onScroll = () => {
+          if (ticking) return;
+          ticking = true;
+          requestAnimationFrame(() => {
+            ticking = false;
+            pick();
+          });
+        };
+
+        window.addEventListener("scroll", onScroll, { passive: true });
+        window.addEventListener("resize", onScroll);
+        pick();
+
+        document.addEventListener(
+          "astro:before-swap",
+          () => {
+            window.removeEventListener("scroll", onScroll);
+            window.removeEventListener("resize", onScroll);
+          },
+          { once: true },
+        );
+      }
+
+      /* ── Part II: the bench ────────────────────────────────────────── */
+
+      const choice = {
+        parallelism: "10",
+        change: "create",
+        cbd: "plain",
+        refresh: "refresh",
+      };
+
+      const svg = document.getElementById("gantt") as SVGSVGElement | null;
+      const ns = "http://www.w3.org/2000/svg";
+      const ROW = 22;
+      const LABEL = 186;
+      const WIDTH = 880;
+
+      const el = (name: string, attrs: Record<string, string | number>) => {
+        const made = document.createElementNS(ns, name);
+        for (const [key, value] of Object.entries(attrs)) {
+          made.setAttribute(key, String(value));
+        }
+        return made;
+      };
+
+      const draw = () => {
+        const key = `${choice.parallelism}|${choice.change}|${choice.cbd}|${choice.refresh}`;
+        const sched = data.schedules[key];
+        if (!sched || !svg) return;
+
+        const rows = data.rows.filter(row =>
+          sched.slots.some(slot => slot.addr === row.addr),
+        );
+        const height = rows.length * ROW + 34;
+        svg.setAttribute("viewBox", `0 0 ${WIDTH} ${height}`);
+        svg.replaceChildren();
+
+        const span = Math.max(sched.end, 1);
+        const x = (t: number) => LABEL + (t / span) * (WIDTH - LABEL - 54);
+
+        /* the axis: a few round seconds, enough to read the shape by */
+        const tick = span > 120 ? 30 : span > 40 ? 10 : span > 10 ? 2 : 1;
+        for (let t = 0; t <= span; t += tick) {
+          svg.append(
+            el("line", {
+              class: "g-axis",
+              x1: x(t),
+              x2: x(t),
+              y1: 16,
+              y2: height - 16,
+            }),
+          );
+          svg.append(
+            Object.assign(el("text", { class: "g-tick", x: x(t), y: 11 }), {
+              textContent: `${t}s`,
+            }),
+          );
+        }
+
+        rows.forEach((row, i) => {
+          const y = 22 + i * ROW;
+          const label = el("text", {
+            class: `g-label${sched.critical.includes(row.addr) ? " on-path" : ""}`,
+            x: LABEL - 10,
+            y: y + 11,
+          });
+          label.textContent = row.short;
+          svg.append(label);
+
+          for (const slot of sched.slots.filter(s => s.addr === row.addr)) {
+            const left = x(slot.start);
+            const right = x(slot.end);
+            svg.append(
+              el("rect", {
+                class: `g-bar p-${slot.part}`,
+                x: left,
+                y: y + 2,
+                width: Math.max(2, right - left),
+                height: ROW - 8,
+                rx: 1,
+              }),
+            );
+          }
+        });
+
+        const total = document.getElementById("total");
+        const peak = document.getElementById("peak");
+        const outage = document.getElementById("outage");
+        const recap = document.getElementById("recap");
+        if (total) total.textContent = sched.end.toFixed(1);
+        if (peak) peak.textContent = String(sched.peak);
+        if (outage) outage.textContent = `${sched.outage.toFixed(1)}s`;
+        if (recap) recap.textContent = data.recap[choice.change] ?? "";
+      };
+
+      const noteChange = document.getElementById("note-change");
+      document.getElementById("knobs")?.addEventListener("click", event => {
+        const button = (event.target as HTMLElement).closest("button");
+        if (!button) return;
+        const knob = button.closest<HTMLElement>("[data-knob]");
+        const name = knob?.dataset.knob as keyof typeof choice | undefined;
+        if (!knob || !name) return;
+        for (const other of knob.querySelectorAll("button")) {
+          other.setAttribute("aria-pressed", String(other === button));
+        }
+        choice[name] = button.dataset.value ?? choice[name];
+        if (name === "change" && noteChange) {
+          const found = data.changes.find(c => c.id === choice.change);
+          if (found) noteChange.textContent = found.what;
+        }
+        draw();
+      });
+
+      draw();
+      window.addEventListener("resize", draw);
+    }
+  </script>
+
+  <style>
+    /* ── parts ──────────────────────────────────────────────────────── */
+    .part {
+      width: 100%;
+      max-width: 72ch;
+      margin-inline: auto;
+      padding-inline: 16px;
+      padding-block: clamp(56px, 10vh, 112px) 0;
+    }
+    .part-n {
+      font-family: var(--font-display);
+      font-size: 14px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--text-4);
+      margin: 0 0 10px;
+    }
+    .part h2 {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: clamp(26px, 4vw, 36px);
+      line-height: 1.15;
+      color: var(--text);
+      margin: 0;
+    }
+    .part-lead {
+      max-width: 60ch;
+      margin: 14px 0 0;
+      color: var(--text-3);
+      line-height: 1.6;
+    }
+
+    .intro p {
+      max-width: 56ch;
+      color: var(--text-2);
+      line-height: 1.65;
+    }
+
+    /* ── the step index ─────────────────────────────────────────────── */
+    .toc {
+      list-style: none;
+      margin: 28px 0 0;
+      padding: 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 2px 20px;
+    }
+    .toc li {
+      border-top: 1px solid var(--border-recess);
+    }
+    .toc a {
+      display: flex;
+      gap: 10px;
+      align-items: baseline;
+      padding: 7px 0;
+      text-decoration: none;
+      color: var(--text-4);
+      font-size: 14.5px;
+    }
+    .toc a:hover {
+      color: var(--text-2);
+    }
+    .toc-n {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--text-4);
+      opacity: 0.7;
+    }
+    .toc li.done a {
+      color: var(--text-3);
+    }
+    .toc li.on {
+      border-top-color: var(--ornament);
+    }
+    .toc li.on a {
+      color: var(--text);
+    }
+
+    /* ── the guide ──────────────────────────────────────────────────── */
+    .guide {
+      width: 100%;
+      max-width: 1240px;
+      margin-inline: auto;
+      padding-inline: 16px;
+      padding-block: 34px 0;
+      display: grid;
+      grid-template-columns: minmax(0, 460px) minmax(0, 1fr);
+      gap: 40px;
+      align-items: start;
+    }
+    .guide-rail {
+      position: sticky;
+      top: 24px;
+      min-width: 0;
+      /* The pane's contents change as the reader scrolls, and a sticky box
+         whose contents change is exactly the case Chrome's scroll
+         anchoring mishandles: it compensates for the size change by
+         moving the document, which fights the scroll that caused it. */
+      overflow-anchor: none;
+    }
+    .label {
+      font-family: var(--font-display);
+      font-size: 13px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-4);
+      margin: 0 0 8px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .label.sub {
+      margin-top: 18px;
+    }
+    .rail-step {
+      font-family: var(--font-mono);
+      letter-spacing: 0.04em;
+      text-transform: none;
+    }
+
+    .code,
+    .shell,
+    .term-run {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      line-height: 1.55;
+      margin: 0;
+      overflow: auto;
+      white-space: pre;
+      color: var(--syn-plain);
+      background: none;
+    }
+    .guide-file {
+      max-height: 52vh;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      border-left: 1px solid var(--border-recess);
+      padding-left: 14px;
+    }
+    .guide-file[data-empty="true"]::after {
+      content: "no file yet — step 2 writes the first line";
+      color: var(--text-4);
+      font-style: italic;
+    }
+    /* A line that has not arrived is removed, not merely made invisible:
+       held open it reads as a blank line in the file, which is worse than
+       the pane growing. Growing is the point. */
+    .guide-file :global(.ln) {
+      display: none;
+    }
+    .guide-file :global(.ln.shown) {
+      display: block;
+    }
+    .guide-file :global(.ln.fresh) {
+      background: var(--arcane-tint);
+      box-shadow: inset 2px 0 0 var(--arcane);
+      margin-inline: -14px;
+      padding-inline: 14px;
+    }
+    .code :global(.s-key),
+    .inset :global(.s-key) {
+      color: var(--syn-keyword);
+    }
+    .code :global(.s-string) {
+      color: var(--syn-string);
+    }
+    .code :global(.s-num) {
+      color: var(--syn-constant);
+    }
+    .code :global(.s-ref) {
+      color: var(--arcane);
+    }
+    .code :global(.s-comment) {
+      color: var(--syn-comment);
+    }
+    .code :global(.s-arg) {
+      color: var(--text-3);
+    }
+
+    .term {
+      max-height: 32vh;
+      overflow: auto;
+      border-left: 1px solid var(--border-recess);
+      padding-left: 14px;
+    }
+    .term-run :global(.o-head) {
+      color: var(--text);
+    }
+    .term-run :global(.o-create) {
+      color: var(--arcane);
+    }
+    .term-run :global(.o-update) {
+      color: var(--text-2);
+    }
+    .term-run :global(.o-destroy) {
+      color: var(--blood);
+    }
+    .term-run :global(.o-note) {
+      color: var(--text-4);
+      font-style: italic;
+    }
+    .term-run :global(.o-ok) {
+      color: var(--text-3);
+    }
+    .term-run :global(.o-plain) {
+      color: var(--text-4);
+    }
+
+    /* ── the steps ──────────────────────────────────────────────────── */
+    .steps-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .gstep {
+      padding-block: clamp(60px, 11vh, 120px);
+      border-top: 1px solid var(--border-recess);
+    }
+    .gstep:first-child {
+      border-top: 0;
+      padding-top: 0;
+    }
+    .gstep-n {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      color: var(--text-4);
+      margin: 0 0 6px;
+    }
+    .gstep h3 {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: clamp(21px, 2.6vw, 27px);
+      color: var(--text);
+      margin: 0 0 12px;
+      line-height: 1.2;
+    }
+    .gstep-lead {
+      max-width: 62ch;
+      color: var(--text-2);
+      line-height: 1.68;
+      margin: 0;
+    }
+    .gstep-take {
+      max-width: 60ch;
+      margin: 26px 0 0;
+      padding-top: 14px;
+      border-top: 1px solid var(--border-recess);
+      color: var(--text-3);
+      font-family: var(--font-display);
+      font-size: 17px;
+      line-height: 1.5;
+    }
+
+    .shell {
+      margin: 22px 0 0;
+      padding-left: 14px;
+      border-left: 1px solid var(--border-recess);
+    }
+    .shell :global(.sh-cmd) {
+      color: var(--text-2);
+    }
+    .shell :global(.sh-note) {
+      color: var(--text-4);
+      font-style: italic;
+    }
+
+    .kw {
+      margin: 24px 0 0;
+      display: grid;
+      grid-template-columns: minmax(150px, auto) minmax(0, 1fr);
+      gap: 10px 22px;
+      align-items: baseline;
+    }
+    .kw dt {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: var(--text-2);
+      word-break: break-word;
+    }
+    .kw dd {
+      margin: 0;
+      color: var(--text-3);
+      line-height: 1.6;
+      max-width: 60ch;
+    }
+    .kw dd em {
+      display: block;
+      margin-top: 4px;
+      color: var(--text-4);
+      font-style: italic;
+    }
+    .kw code,
+    .symbols code,
+    .layout code,
+    .ref-note code,
+    .gstep-lead :global(code),
+    .inset-note :global(code),
+    .kw dd :global(code) {
+      font-family: var(--font-mono);
+      font-size: 0.92em;
+      color: var(--text-2);
+    }
+
+    .inset {
+      margin: 26px 0 0;
+      padding: 16px 0 0;
+      border-top: 1px solid var(--border-recess);
+    }
+    .inset-head {
+      font-family: var(--font-display);
+      font-size: 13px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-4);
+      margin: 0 0 10px;
+    }
+    .inset-body {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 14px;
+    }
+    .inset-out {
+      padding-left: 14px;
+      border-left: 1px solid var(--border-recess);
+    }
+    .inset-note {
+      margin: 12px 0 0;
+      color: var(--text-4);
+      line-height: 1.6;
+      max-width: 60ch;
+    }
+
+    /* ── the graph ──────────────────────────────────────────────────── */
+    .hook {
+      width: 100%;
+      max-width: 1240px;
+      margin-inline: auto;
+      padding: 40px 16px 0;
+    }
+    .hook figure {
+      margin: 0;
+    }
+    .graph,
+    .minigraph {
+      width: 100%;
+      height: auto;
+      overflow: visible;
+    }
+    .minigraph {
+      margin-top: 26px;
+      max-width: 760px;
+    }
+    .wire {
+      fill: none;
+      stroke: var(--border);
+      stroke-width: 1;
+    }
+    .wire.on-path {
+      stroke: var(--ornament);
+      stroke-width: 1.5;
+    }
+    .gnode rect {
+      fill: none;
+      stroke: var(--border);
+      stroke-width: 1;
+    }
+    .gnode text {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      fill: var(--text-3);
+    }
+    .gnode.on-path rect {
+      stroke: var(--ornament);
+    }
+    .gnode.on-path text {
+      fill: var(--text);
+    }
+    figcaption {
+      margin-top: 16px;
+      max-width: 62ch;
+      color: var(--text-4);
+      line-height: 1.6;
+      font-size: 15px;
+    }
+
+    /* ── the bench ──────────────────────────────────────────────────── */
+    .bench {
+      width: 100%;
+      max-width: 1240px;
+      margin-inline: auto;
+      padding: 36px 16px 0;
+      display: grid;
+      grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+      gap: 32px;
+      align-items: start;
+    }
+    .knobs {
+      display: grid;
+      gap: 24px;
+    }
+    .knob .label {
+      display: block;
+      font-family: var(--font-mono);
+      letter-spacing: 0.04em;
+      text-transform: none;
+      font-size: 12.5px;
+      color: var(--text-3);
+    }
+    .choices {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px;
+    }
+    .choices button {
+      font: inherit;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      background: none;
+      border: 1px solid var(--border-recess);
+      color: var(--text-4);
+      padding: 4px 10px;
+      cursor: pointer;
+    }
+    .choices button:hover {
+      color: var(--text-2);
+    }
+    .choices button[aria-pressed="true"] {
+      color: var(--text);
+      border-color: var(--ornament);
+    }
+    .knob-note {
+      margin: 8px 0 0;
+      color: var(--text-4);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .readout {
+      grid-column: 1;
+      margin-bottom: 26px;
+    }
+    .big {
+      font-family: var(--font-display);
+      font-size: clamp(36px, 6vw, 54px);
+      color: var(--text);
+      margin: 0;
+      line-height: 1;
+    }
+    .stats {
+      margin: 16px 0 0;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 6px 16px;
+      font-size: 14px;
+    }
+    .stats dt {
+      color: var(--text-4);
+    }
+    .stats dd {
+      margin: 0;
+      color: var(--text-2);
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+    }
+    .hint {
+      margin: 16px 0 0;
+      color: var(--text-4);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .gantt-wrap {
+      grid-row: 1 / span 2;
+      grid-column: 2;
+      min-width: 0;
+    }
+    .gantt {
+      width: 100%;
+      height: auto;
+    }
+    .gantt :global(.g-axis) {
+      stroke: var(--border-recess);
+      stroke-width: 1;
+      stroke-dasharray: 2 4;
+    }
+    .gantt :global(.g-tick) {
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      fill: var(--text-4);
+      text-anchor: middle;
+    }
+    .gantt :global(.g-label) {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      fill: var(--text-4);
+      text-anchor: end;
+    }
+    .gantt :global(.g-label.on-path) {
+      fill: var(--text-2);
+    }
+    .gantt :global(.g-bar) {
+      fill: var(--text-4);
+      opacity: 0.55;
+    }
+    .gantt :global(.p-create) {
+      fill: var(--arcane);
+      opacity: 0.8;
+    }
+    .gantt :global(.p-update) {
+      fill: var(--text-3);
+      opacity: 0.8;
+    }
+    .gantt :global(.p-destroy) {
+      fill: var(--blood);
+      opacity: 0.75;
+    }
+    .gantt :global(.p-read) {
+      fill: var(--text-4);
+      opacity: 0.5;
+    }
+    .gantt :global(.p-refresh) {
+      fill: var(--text-4);
+      opacity: 0.3;
+    }
+    .scale {
+      margin: 10px 0 0;
+      color: var(--text-4);
+      font-size: 13.5px;
+    }
+
+    /* ── reference ──────────────────────────────────────────────────── */
+    .ref {
+      width: 100%;
+      max-width: 1240px;
+      margin-inline: auto;
+      padding: 36px 16px 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+      gap: 48px 40px;
+      align-items: start;
+    }
+    .ref figure {
+      margin: 0;
+    }
+    .ref-head {
+      font-family: var(--font-display);
+      font-size: 18px;
+      color: var(--text-2);
+      margin: 0 0 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-recess);
+      max-width: none;
+    }
+    .ref-note {
+      margin: 14px 0 0;
+      color: var(--text-4);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .symbols {
+      margin: 0;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 12px 18px;
+      align-items: baseline;
+    }
+    .symbols dt {
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+    }
+    .symbols dt code {
+      font-size: 14px;
+      color: var(--text);
+    }
+    .symbols dt span {
+      font-size: 13px;
+      color: var(--text-4);
+    }
+    .symbols dd {
+      margin: 0;
+      color: var(--text-3);
+      line-height: 1.55;
+      font-size: 14.5px;
+    }
+    .symbols dd em {
+      display: block;
+      margin-top: 4px;
+      color: var(--text-4);
+      font-style: italic;
+      font-size: 13.5px;
+    }
+    .prec {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .prec li {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr);
+      gap: 4px 12px;
+      padding: 7px 0;
+      border-top: 1px solid var(--border-recess);
+      font-size: 14.5px;
+      color: var(--text-3);
+    }
+    .prec li:first-child {
+      border-top: 0;
+    }
+    .prec-n {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--text-4);
+    }
+    .prec em {
+      grid-column: 2;
+      color: var(--text-4);
+      font-style: italic;
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+    .ref-kw {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 4px;
+      margin-top: 0;
+    }
+    .ref-kw dt {
+      margin-top: 12px;
+    }
+    .ref-kw dd {
+      font-size: 14.5px;
+    }
+    .layout {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .layout li {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 12px;
+      padding: 5px 0;
+      font-size: 14px;
+      color: var(--text-4);
+      border-top: 1px solid var(--border-recess);
+    }
+    .layout li:first-child {
+      border-top: 0;
+    }
+    .layout li.d-1 {
+      padding-left: 22px;
+    }
+    .layout code {
+      color: var(--text-2);
+    }
+
+    @media (max-width: 1040px) {
+      .guide,
+      .bench {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .guide-rail {
+        position: static;
+        max-height: none;
+      }
+      .guide-file {
+        max-height: 44vh;
+      }
+      .gantt-wrap {
+        grid-row: auto;
+        grid-column: 1;
+      }
+    }
+  </style>
+</Layout>

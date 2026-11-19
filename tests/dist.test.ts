@@ -1090,3 +1090,333 @@ describe("/ansible covers Ansible's own documented topics", () => {
     }
   });
 });
+
+describe("/terraform covers Terraform's own documented topics", () => {
+  /**
+   * The same standard as the Ansible block above, against the same kind of
+   * list: every entry here is a section of HashiCorp's own documentation
+   * sidebar, so the syllabus is theirs and anyone can re-derive it.
+   *
+   *   developer.hashicorp.com/terraform/intro
+   *   developer.hashicorp.com/terraform/language
+   *   developer.hashicorp.com/terraform/language/state
+   *   developer.hashicorp.com/terraform/cli
+   *
+   * Each row carries a phrase of the page's own explanation and, where
+   * there is one, the literal a reader must also see. CORE is held to the
+   * standing prose — what is on screen before anybody clicks anything.
+   */
+  const html = readFileSync(join(DIST, "terraform", "index.html"), "utf8");
+  const text = readable(html);
+  const standing = readable(html.replace(/<script[\s\S]*?<\/script>/g, " "));
+
+  /** [the docs' section, a phrase of the page's explanation, a literal shown] */
+  const COVERED: [string, string, string?][] = [
+    [
+      "Configuration Language",
+      "A resource block is a noun, not a verb",
+      'resource "aws_vpc" "main"',
+    ],
+    [
+      "The Core Terraform Workflow",
+      "works out what it would do, and changes nothing",
+      "terraform plan",
+    ],
+    [
+      "Initializing Working Directories",
+      "downloads the AWS provider into .terraform/",
+      "terraform init",
+    ],
+    [
+      "Provisioning Infrastructure",
+      "shows the same plan, asks once, then does it",
+      "terraform apply",
+    ],
+    [
+      "Configure providers",
+      "How to reach the API: region, and credentials it finds from the environment",
+      'provider "aws"',
+    ],
+    [
+      "Resources",
+      "Type, then name. Together they make the ADDRESS",
+      "aws_vpc.main",
+    ],
+    [
+      "Data sources",
+      "A read, not a resource. It asks the provider a question",
+      'data "aws_ami" "ubuntu"',
+    ],
+    ["Variables", "An input. type is worth writing", 'variable "region"'],
+    ["Locals", "A name for an expression you use more than once", "locals"],
+    [
+      "Outputs",
+      "A value this stack publishes: to you on screen, to a script",
+      'output "vpc_id"',
+    ],
+    [
+      "Modules",
+      "A module is a folder with inputs and outputs",
+      'module "network"',
+    ],
+    [
+      "Meta-arguments: for_each",
+      "One object per key of a map or set",
+      "for_each",
+    ],
+    ["Meta-arguments: count", "One object per number, addressed", "count"],
+    [
+      "Meta-arguments: depends_on",
+      "For the dependency you cannot express as a reference",
+      "depends_on",
+    ],
+    [
+      "Meta-arguments: lifecycle",
+      "make the new object before taking the old one away",
+      "lifecycle",
+    ],
+    [
+      "Meta-arguments: provider version",
+      "and leaving it off means a stranger can change your infrastructure",
+      "version",
+    ],
+    [
+      "Sensitive data",
+      "Treat it like a secret, because it is one",
+      "terraform.tfstate",
+    ],
+    [
+      "Backends",
+      "State in a bucket instead of beside the file",
+      'backend "s3"',
+    ],
+    ["Search and import", "Adopt an existing object into state", "import {"],
+    [
+      "State",
+      "mapping every address in your file to an ID at the provider",
+      "terraform state list",
+    ],
+    [
+      "State: locking",
+      "so only one run holds it at a time",
+      "use_lockfile = true",
+    ],
+    [
+      "State: remote state",
+      "A data source that reads another stack's outputs",
+      "terraform_remote_state",
+    ],
+    [
+      "State: refactor",
+      "Rename an address in state as part of an ordinary plan",
+      "moved {",
+    ],
+    [
+      "State: remove a resource",
+      "Forget an object without destroying it",
+      "terraform state rm",
+    ],
+    [
+      "State: workspaces",
+      "Workspaces share a backend and a configuration",
+      "one state per environment",
+    ],
+    [
+      "Expressions",
+      "a list built from a collection",
+      "[for s in aws_subnet.public : s.id]",
+    ],
+    [
+      "Extend CRUD operations",
+      "Run a declared action before or after a create, update or destroy",
+      "action_trigger",
+    ],
+    [
+      "Internals: the resource graph",
+      "Every reference is an edge",
+      "the graph",
+    ],
+    [
+      "Files and configuration structure",
+      "the exact provider versions, with checksums",
+      ".terraform.lock.hcl",
+    ],
+    [
+      "Inspecting Infrastructure",
+      "every attribute it recorded for one object",
+      "terraform state show",
+    ],
+    [
+      "Automating Terraform",
+      "plan once, review the file, apply exactly that plan",
+      "-out=tfplan",
+    ],
+    [
+      "Managing Plugins",
+      "Run it once per directory, and again whenever you change a provider",
+      "required_providers",
+    ],
+    [
+      "Plan: create",
+      "The object does not exist yet. Terraform will make it",
+      "+",
+    ],
+    [
+      "Plan: update in place",
+      "the API can change this argument without making a new one",
+      "~",
+    ],
+    [
+      "Plan: destroy",
+      "Deleting code is an instruction to delete infrastructure",
+      "-",
+    ],
+    ["Plan: replace", "so Terraform destroys it and creates a new one", "-/+"],
+    [
+      "Variable precedence",
+      "a default is a floor, not a value",
+      "terraform.tfvars",
+    ],
+    [
+      "parallelism",
+      "How many objects may be worked on at once",
+      "-parallelism",
+    ],
+    ["drift", "The real world changing underneath you", "-refresh-only"],
+    [
+      "errors and partial applies",
+      "What succeeded is in state. Fix the file and run again",
+      "Error: creating",
+    ],
+    [
+      "destroy",
+      "Everything in state, in reverse dependency order",
+      "terraform destroy",
+    ],
+    [
+      "Intro to Terraform",
+      "written down as a file, so the file is the answer to all three",
+      "Terraform",
+    ],
+  ];
+
+  /** what a reader cannot do without, and must meet without clicking */
+  const CORE: [string, string][] = [
+    ["resource", "A resource block is a noun, not a verb"],
+    [
+      "provider",
+      "How to reach the API: region, and credentials it finds from the environment",
+    ],
+    ["plan", "works out what it would do, and changes nothing"],
+    ["apply", "shows the same plan, asks once, then does it"],
+    ["state", "mapping every address in your file to an ID at the provider"],
+    ["the address", "Type, then name. Together they make the ADDRESS"],
+    ["the graph", "a reference IS a dependency"],
+    ["variables", "An input. type is worth writing"],
+    ["outputs", "A value this stack publishes: to you on screen, to a script"],
+    ["modules", "A module is a folder with inputs and outputs"],
+    ["remote state and locking", "so only one run holds it at a time"],
+    ["replacement", "so Terraform destroys it and creates a new one"],
+    ["drift", "The real world changing underneath you"],
+    ["convergence", "The file is a destination, not a journey"],
+  ];
+
+  /** the sections of those guides that are deliberately not here */
+  const OMITTED: [string, string][] = [
+    ["Stacks", "an HCP Terraform feature, not the language"],
+    ["Test and validate", "a testing framework for module authors"],
+    ["Functions", "a reference list; the page uses expressions and names them"],
+    ["Style guide", "formatting advice, with fmt and lint behind it"],
+    ["Writing and Modifying Code", "fmt and validate: commands, not concepts"],
+    ["CLI Configuration", "the CLI's own settings file, reference material"],
+    [
+      "Managing Workspaces",
+      "named workspaces share one configuration; the page teaches a directory per environment instead, and says why",
+    ],
+    [
+      "Using HCP Terraform",
+      "a hosted product; only its place in variable precedence is here",
+    ],
+    ["Terraform Editions", "which product to buy, not how it works"],
+    [
+      "Phases of Terraform Adoption",
+      "an organisational model, not a mechanism",
+    ],
+    [
+      "Terraform vs. Alternatives",
+      "a comparison, and this page is not an argument",
+    ],
+    [
+      "Upgrading and compatibility promises",
+      "version trivia; required_version is covered where it is written",
+    ],
+    ["Provisioners", "the escape hatch the docs themselves call a last resort"],
+    ["Alphabetical List of Commands", "an index, not a concept"],
+    ["Query blocks", "a recent addition for listing existing objects"],
+    [
+      "Built-in resources",
+      "terraform_data; the one that matters here, terraform_remote_state, is covered",
+    ],
+  ];
+
+  const words = (s: string) => s.trim().split(/\s+/);
+  const prosey = (w: string) => /^[a-zA-Z]{2,}$/.test(w);
+
+  it("holds every row to a sentence rather than a keyword", () => {
+    for (const [section, prose] of COVERED) {
+      const w = words(prose);
+      expect(
+        w.length,
+        `${section}: "${prose}" is not a phrase`,
+      ).toBeGreaterThanOrEqual(5);
+      expect(
+        prose.length,
+        `${section}: "${prose}" is too short`,
+      ).toBeGreaterThanOrEqual(24);
+      expect(
+        w.filter(prosey).length,
+        `${section}: "${prose}" is all identifiers`,
+      ).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  for (const [section, prose, literal] of COVERED) {
+    it(`explains "${section}"`, () => {
+      expect(text.includes(prose), `${section} :: ${prose}`).toBe(true);
+      if (literal) {
+        expect(text.includes(literal), `${section} :: ${literal}`).toBe(true);
+      }
+    });
+  }
+
+  for (const [concept, prose] of CORE) {
+    it(`teaches "${concept}" without a click`, () => {
+      expect(standing.includes(prose), `${concept} :: ${prose}`).toBe(true);
+    });
+  }
+
+  it("keeps the omission list honest", () => {
+    for (const [section, why] of OMITTED) {
+      expect(section.length, "a section with no name").toBeGreaterThan(2);
+      expect(why.length, `${section} has no stated reason`).toBeGreaterThan(8);
+    }
+    expect(COVERED.length).toBeGreaterThan(OMITTED.length * 2);
+  });
+
+  it("names every section once", () => {
+    const seen = new Set<string>();
+    for (const [section] of COVERED) {
+      expect(seen.has(section), `${section} is listed twice`).toBe(false);
+      seen.add(section);
+    }
+  });
+
+  it("ends the guide on the stack the simulation applies", () => {
+    /* the page's own continuity claim, checked against the built page:
+       the last step's file holds the load balancer and the record, which
+       are the two objects Part II spends its two minutes on */
+    expect(text).toContain('resource "aws_lb" "app"');
+    expect(text).toContain('resource "aws_route53_record" "app"');
+    expect(text).toContain("127.2");
+  });
+});
